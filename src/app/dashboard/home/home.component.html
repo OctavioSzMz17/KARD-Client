@@ -1,0 +1,174 @@
+<div class="home-page">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Dashboard</h1>
+    <div class="header-actions">
+      <button class="btn-ghost" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+        </svg>
+        Settings
+      </button>
+      <button class="btn-outline" disabled>Customize Dashboard</button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner-lg"></div>
+      <p>Cargando datos...</p>
+    </div>
+  } @else {
+    <div class="dashboard-grid">
+
+      <!-- Card 1: Summary -->
+      <div class="card card-summary">
+        <div class="card-header">
+          <div>
+            <h3>Resumen de Inventario</h3>
+          </div>
+          <div class="card-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="summary-stat">
+          <span class="stat-number">{{ totalProducts() }}</span>
+          <span class="stat-label">Productos totales</span>
+        </div>
+        <div class="summary-row">
+          <div class="mini-stat">
+            <span class="mini-number text-warning">{{ lowStockCount() }}</span>
+            <span class="mini-label">Stock bajo</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-number text-danger">{{ outOfStockCount() }}</span>
+            <span class="mini-label">Sin stock</span>
+          </div>
+        </div>
+        <svg class="sparkline" viewBox="0 0 280 80" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#5b6ef5" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#5b6ef5" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path [attr.d]="salesChartPoints + ' L280,80 L0,80 Z'" fill="url(#g1)"/>
+          <path [attr.d]="salesChartPoints" fill="none" stroke="#5b6ef5" stroke-width="2"/>
+        </svg>
+      </div>
+
+      <!-- Card 2: Sales chart -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Actividad (últimos 7 días)</h3>
+        </div>
+        <svg class="chart" viewBox="0 0 280 100" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#5b6ef5" stop-opacity="0.25"/>
+              <stop offset="100%" stop-color="#5b6ef5" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path [attr.d]="salesChartPoints + ' L280,100 L0,100 Z'" fill="url(#g2)"/>
+          <path [attr.d]="salesChartPoints" fill="none" stroke="#5b6ef5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="chart-labels">
+          <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Totals -->
+      <div class="card">
+        <h3 class="card-title">Total de Productos</h3>
+        <div class="totals-grid">
+          <div class="total-item">
+            <span class="total-number">{{ totalProducts() }}</span>
+            <span class="total-label">Productos</span>
+          </div>
+          <div class="total-item">
+            <span class="total-number">{{ totalInventory() }}</span>
+            <span class="total-label">Unidades en stock</span>
+          </div>
+          <div class="total-item">
+            <span class="total-number text-warning">{{ lowStockCount() }}</span>
+            <span class="total-label">Alertas de stock bajo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Stock trends -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Tendencia de Stock</h3>
+        </div>
+        <svg class="chart" viewBox="0 0 280 100" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="g3" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#10b981" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path [attr.d]="stockChartPoints + ' L280,100 L0,100 Z'" fill="url(#g3)"/>
+          <path [attr.d]="stockChartPoints" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path [attr.d]="salesChartPoints" fill="none" stroke="#5b6ef5" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/>
+        </svg>
+        <div class="legend">
+          <span class="legend-item"><i style="background:#10b981"></i> Stock actual</span>
+          <span class="legend-item"><i style="background:#5b6ef5"></i> Promedio</span>
+        </div>
+      </div>
+
+      <!-- Card 5: Recent activity -->
+      <div class="card">
+        <h3 class="card-title">Actividad Reciente</h3>
+        @if (recentProducts().length === 0) {
+          <p class="empty-state">No hay productos registrados aún.</p>
+        } @else {
+          <div class="activity-list">
+            @for (item of recentProducts(); track item.product_id) {
+              <div class="activity-item">
+                <div class="activity-dot" [style.background]="getStockColor(item)"></div>
+                <div class="activity-text">
+                  <span class="activity-name">{{ item.name }}</span>
+                  <span class="activity-meta">{{ item.inventory_count }} unidades en stock</span>
+                </div>
+                <span class="activity-price">${{ item.price }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Card 6: Low stock alerts -->
+      <div class="card">
+        <h3 class="card-title">Alertas de Stock</h3>
+        @if (lowStockItems().length === 0) {
+          <div class="no-alerts">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <p>Todo el inventario está en niveles normales</p>
+          </div>
+        } @else {
+          <div class="alert-list">
+            @for (item of lowStockItems(); track item.product_id) {
+              <div class="alert-item">
+                <div class="alert-bar" [style.background]="getStockColor(item)"></div>
+                <div class="alert-info">
+                  <span class="alert-name">{{ item.name }}</span>
+                  <span class="alert-stock">{{ item.inventory_count }} / {{ item.low_stock_threshold }} unidades</span>
+                </div>
+                <span class="alert-tag" [style.color]="getStockColor(item)" [style.background]="getStockColor(item) + '20'">
+                  {{ item.inventory_count === 0 ? 'Sin stock' : 'Bajo' }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+</div>

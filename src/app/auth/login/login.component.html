@@ -1,0 +1,117 @@
+<div class="auth-layout">
+  <!-- Left Panel -->
+  <div class="auth-left">
+    <div class="brand">
+      <div class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+          <path d="M10 10H18L24 20L18 30H10L16 20L10 10Z" fill="white"/>
+          <path d="M20 10H28L22 20L28 30H20L14 20L20 10Z" fill="white" fill-opacity="0.6"/>
+        </svg>
+        <span class="logo-text">KARD</span>
+      </div>
+      <p class="tagline">Smart Inventory<br>for Small Business</p>
+    </div>
+    <div class="illustration">
+      <svg width="260" height="200" viewBox="0 0 260 200" fill="none">
+        <!-- Background card -->
+        <rect x="30" y="30" width="180" height="130" rx="12" fill="white" fill-opacity="0.25"/>
+        <!-- Document lines -->
+        <rect x="55" y="55" width="90" height="8" rx="4" fill="white" fill-opacity="0.6"/>
+        <rect x="55" y="72" width="70" height="6" rx="3" fill="white" fill-opacity="0.4"/>
+        <rect x="55" y="86" width="80" height="6" rx="3" fill="white" fill-opacity="0.4"/>
+        <rect x="55" y="100" width="60" height="6" rx="3" fill="white" fill-opacity="0.3"/>
+        <!-- Avatar circle -->
+        <circle cx="175" cy="75" r="20" fill="white" fill-opacity="0.3"/>
+        <circle cx="175" cy="70" r="10" fill="white" fill-opacity="0.5"/>
+        <path d="M155 95 Q175 85 195 95" stroke="white" stroke-width="2" fill="none" stroke-opacity="0.5"/>
+        <!-- Person left -->
+        <circle cx="60" cy="145" r="12" fill="white" fill-opacity="0.4"/>
+        <path d="M48 170 Q60 158 72 170" stroke="white" stroke-width="3" fill="none" stroke-opacity="0.4"/>
+        <!-- Person right -->
+        <circle cx="190" cy="140" r="12" fill="white" fill-opacity="0.4"/>
+        <path d="M178 165 Q190 153 202 165" stroke="white" stroke-width="3" fill="none" stroke-opacity="0.4"/>
+        <!-- Connecting element -->
+        <rect x="80" y="130" width="90" height="50" rx="8" fill="white" fill-opacity="0.15"/>
+        <rect x="92" y="142" width="50" height="5" rx="2.5" fill="white" fill-opacity="0.5"/>
+        <rect x="92" y="155" width="35" height="5" rx="2.5" fill="white" fill-opacity="0.4"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="auth-right">
+    <div class="form-card">
+      <h1>Welcome Back</h1>
+      <p class="subtitle">Login to your KARD account</p>
+
+      @if (error()) {
+        <div class="error-banner">{{ error() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="field">
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="Email"
+            [class.invalid]="emailControl?.invalid && emailControl?.touched"
+          />
+          <span class="field-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </span>
+          @if (emailControl?.invalid && emailControl?.touched) {
+            <span class="field-error">
+              {{ emailControl?.errors?.['required'] ? 'El email es requerido' : 'Email inválido' }}
+            </span>
+          }
+        </div>
+
+        <div class="field">
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Password"
+            [class.invalid]="passwordControl?.invalid && passwordControl?.touched"
+          />
+          <button type="button" class="field-icon clickable" (click)="showPassword.set(!showPassword())">
+            @if (showPassword()) {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            } @else {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            }
+          </button>
+          @if (passwordControl?.invalid && passwordControl?.touched) {
+            <span class="field-error">La contraseña es requerida</span>
+          }
+        </div>
+
+        <div class="forgot">
+          <a href="#">Forgot Password?</a>
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner"></span>
+          } @else {
+            Login
+          }
+        </button>
+      </form>
+
+      <p class="switch-auth">
+        Don't have an account? <a routerLink="/register">Sign Up</a>
+      </p>
+    </div>
+  </div>
+</div>

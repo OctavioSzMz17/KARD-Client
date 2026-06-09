@@ -1,0 +1,386 @@
+<div class="products-page">
+
+  <!-- ── Header ────────────────────────────────────────── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Products</h1>
+      @if (!loading()) {
+        <span class="count-badge">{{ counts().all }}</span>
+      }
+    </div>
+    <div class="header-right">
+      <div class="search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Buscar productos..." (input)="onSearch($event)"/>
+      </div>
+      <button class="btn-add" (click)="openAdd()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Agregar Producto
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Filter chips ──────────────────────────────────── -->
+  <div class="filter-row">
+    <button class="chip" [class.active]="activeFilter()==='all'" (click)="setFilter('all')">
+      Todos <span>{{ counts().all }}</span>
+    </button>
+    <button class="chip" [class.active]="activeFilter()==='in-stock'" (click)="setFilter('in-stock')">
+      En Stock <span>{{ counts().inStock }}</span>
+    </button>
+    <button class="chip chip-warn" [class.active]="activeFilter()==='low-stock'" (click)="setFilter('low-stock')">
+      Stock Bajo <span>{{ counts().lowStock }}</span>
+    </button>
+    <button class="chip chip-danger" [class.active]="activeFilter()==='out-of-stock'" (click)="setFilter('out-of-stock')">
+      Sin Stock <span>{{ counts().outOfStock }}</span>
+    </button>
+  </div>
+
+  <!-- ── Loading skeletons ─────────────────────────────── -->
+  @if (loading()) {
+    <div class="loading-grid">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <div class="card-skeleton"></div>
+      }
+    </div>
+  }
+
+  <!-- ── Empty state ───────────────────────────────────── -->
+  @else if (filteredProducts().length === 0) {
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#c5cef8" stroke-width="1.5">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+        </svg>
+      </div>
+      <p class="empty-title">No hay productos</p>
+      <p class="empty-sub">{{ searchQuery() ? 'Sin resultados para "' + searchQuery() + '"' : 'Agregá tu primer producto para empezar.' }}</p>
+      @if (!searchQuery()) {
+        <button class="btn-add" (click)="openAdd()">Agregar Producto</button>
+      }
+    </div>
+  }
+
+  <!-- ── Product grid ──────────────────────────────────── -->
+  @else {
+    <div class="product-grid">
+      @for (p of filteredProducts(); track p.product_id) {
+        <div class="product-card" [class.status-low]="stockStatus(p)==='low'" [class.status-out]="stockStatus(p)==='out'">
+
+          <!-- Image -->
+          <div class="card-image">
+            @if (primaryImage(p.images); as img) {
+              <img [src]="img.url" [alt]="img.alt_text || p.name" loading="lazy"/>
+            } @else {
+              <div class="card-image-placeholder">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+            }
+            @if (p.images?.length > 1) {
+              <span class="img-count">+{{ p.images.length - 1 }}</span>
+            }
+          </div>
+
+          <!-- Status + meta + actions -->
+          <div class="card-top">
+            <div class="status-dot" [class.dot-ok]="stockStatus(p)==='ok'" [class.dot-low]="stockStatus(p)==='low'" [class.dot-out]="stockStatus(p)==='out'"></div>
+            @if (metaLabel(p)) {
+              <span class="meta-chip">{{ metaLabel(p) }}</span>
+            }
+            <div class="card-actions-top">
+              <button class="icon-btn" title="Editar" (click)="openEdit(p)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </button>
+              <button class="icon-btn icon-btn-danger" title="Eliminar" (click)="confirmDelete(p.product_id)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Name + description -->
+          <div class="card-body">
+            <h3 class="product-name">{{ p.name }}</h3>
+            @if (p.description) {
+              <p class="product-desc">{{ p.description }}</p>
+            }
+          </div>
+
+          <!-- Price -->
+          <div class="product-price">${{ p.price }}</div>
+
+          <!-- Stock bar -->
+          <div class="stock-section">
+            <div class="stock-bar-track">
+              <div class="stock-bar-fill"
+                [class.fill-ok]="stockStatus(p)==='ok'"
+                [class.fill-low]="stockStatus(p)==='low'"
+                [class.fill-out]="stockStatus(p)==='out'"
+                [style.width.%]="stockPercent(p)">
+              </div>
+            </div>
+            <div class="stock-numbers">
+              <span class="stock-count" [class.text-low]="stockStatus(p)==='low'" [class.text-out]="stockStatus(p)==='out'">
+                {{ p.inventory_count }} uds
+              </span>
+              <span class="stock-threshold">mín {{ p.low_stock_threshold }}</span>
+            </div>
+          </div>
+
+          <!-- Quick action OR normal buttons -->
+          @if (quickAction()?.id === p.product_id) {
+            <div class="quick-action">
+              <span class="quick-label">{{ quickAction()!.type === 'sell' ? 'Vender' : 'Abastecer' }}</span>
+              <div class="qty-control">
+                <button (click)="adjustQty(-1)" [disabled]="quickAction()!.qty <= 1">−</button>
+                <span>{{ quickAction()!.qty }}</span>
+                <button (click)="adjustQty(1)">+</button>
+              </div>
+              <div class="quick-btns">
+                <button class="btn-confirm" (click)="confirmQuick()" [disabled]="quickLoading()">
+                  @if (quickLoading()) { ··· } @else { ✓ }
+                </button>
+                <button class="btn-cancel-quick" (click)="cancelQuick()">✕</button>
+              </div>
+            </div>
+          } @else {
+            <div class="card-actions">
+              <button class="action-btn action-sell" (click)="startQuick(p.product_id, 'sell')" [disabled]="p.inventory_count === 0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Vender
+              </button>
+              <button class="action-btn action-restock" (click)="startQuick(p.product_id, 'restock')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Abastecer
+              </button>
+            </div>
+          }
+
+          <!-- Delete confirm overlay -->
+          @if (deleteConfirmId() === p.product_id) {
+            <div class="delete-overlay">
+              <p>¿Eliminar <strong>{{ p.name }}</strong>?</p>
+              <div class="delete-btns">
+                <button class="btn-del-confirm" (click)="deleteProduct(p.product_id)">Sí, eliminar</button>
+                <button class="btn-del-cancel" (click)="cancelDelete()">Cancelar</button>
+              </div>
+            </div>
+          }
+
+        </div>
+      }
+    </div>
+  }
+
+</div>
+
+<!-- ── Drawer ─────────────────────────────────────────────── -->
+@if (drawerOpen()) {
+  <div class="drawer-overlay" (click)="closeDrawer()"></div>
+  <div class="drawer">
+
+    <div class="drawer-header">
+      <h2>{{ drawerMode() === 'add' ? 'Nuevo Producto' : 'Editar Producto' }}</h2>
+      <button class="drawer-close" (click)="closeDrawer()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="saveProduct()" class="drawer-form">
+
+      <!-- Name -->
+      <div class="form-section">
+        <label class="form-label">Nombre *</label>
+        <input class="form-input" formControlName="name" placeholder="ej. Enchiladas Verdes"
+          [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"/>
+      </div>
+
+      <!-- Description -->
+      <div class="form-section">
+        <label class="form-label">Descripción</label>
+        <textarea class="form-input form-textarea" formControlName="description" placeholder="Descripción breve..."></textarea>
+      </div>
+
+      <!-- Price / Stock -->
+      <div class="form-row">
+        <div class="form-section">
+          <label class="form-label">Precio *</label>
+          <div class="input-prefix">
+            <span>$</span>
+            <input class="form-input" type="number" formControlName="price" step="0.01" min="0.01"/>
+          </div>
+        </div>
+        <div class="form-section">
+          <label class="form-label">Stock inicial</label>
+          <input class="form-input" type="number" formControlName="inventory_count" min="0"/>
+        </div>
+        <div class="form-section">
+          <label class="form-label">Alerta mínima</label>
+          <input class="form-input" type="number" formControlName="low_stock_threshold" min="1"/>
+        </div>
+      </div>
+
+      <!-- ── Images section ──────────────────────────────── -->
+      <div class="form-divider"><span>Imágenes</span></div>
+
+      @if (drawerMode() === 'add') {
+        <!-- CREATE MODE: one optional image staged -->
+        <div class="form-section">
+          <label class="form-label">Imagen principal (opcional)</label>
+          <div class="img-stage">
+            @if (stagedImageUrl) {
+              <div class="img-stage-thumb">
+                <img [src]="stagedImageUrl" alt="preview"/>
+              </div>
+            } @else {
+              <div class="img-stage-thumb img-stage-empty">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+            }
+            <div class="img-stage-inputs">
+              <input class="form-input" type="url" [(ngModel)]="stagedImageUrl" [ngModelOptions]="{standalone: true}" placeholder="https://... URL de la imagen"/>
+              <input class="form-input" [(ngModel)]="stagedImageAlt" [ngModelOptions]="{standalone: true}" placeholder="Descripción (alt text, opcional)"/>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <!-- EDIT MODE: full image manager -->
+        <div class="img-manager">
+
+          @if (drawerImages().length === 0) {
+            <p class="img-empty">Sin imágenes todavía.</p>
+          } @else {
+            <div class="img-list">
+              @for (img of drawerImages(); track img.image_id) {
+                <div class="img-row">
+                  <div class="img-row-thumb">
+                    <img [src]="img.url" [alt]="img.alt_text || ''" loading="lazy"/>
+                    @if (img.sort_order === 0) {
+                      <span class="img-primary-badge" title="Imagen principal">★</span>
+                    }
+                  </div>
+                  <div class="img-row-info">
+                    <span class="img-row-url" [title]="img.url">{{ img.url }}</span>
+                    @if (img.alt_text) {
+                      <span class="img-row-alt">{{ img.alt_text }}</span>
+                    }
+                  </div>
+                  <div class="img-row-actions">
+                    @if (img.sort_order !== 0) {
+                      <button type="button" class="img-btn img-btn-primary" title="Marcar como principal" (click)="setPrimary(img)">★</button>
+                    }
+                    <button type="button" class="img-btn img-btn-delete" title="Eliminar imagen" (click)="removeImage(img)">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Add image row -->
+          <div class="img-add-row">
+            <div class="img-add-thumb">
+              @if (newImageUrl) {
+                <img [src]="newImageUrl" alt="preview"/>
+              } @else {
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              }
+            </div>
+            <div class="img-add-inputs">
+              <input class="form-input" type="url" [(ngModel)]="newImageUrl" [ngModelOptions]="{standalone: true}" placeholder="URL de nueva imagen..."/>
+              <input class="form-input" [(ngModel)]="newImageAlt" [ngModelOptions]="{standalone: true}" placeholder="Alt text (opcional)"/>
+            </div>
+            <button type="button" class="img-btn-add" (click)="addImage()" [disabled]="!newImageUrl.trim() || imgAdding()">
+              @if (imgAdding()) { ··· } @else { Agregar }
+            </button>
+          </div>
+
+        </div>
+      }
+
+      <!-- ── Business-type metadata ───────────────────── -->
+      @if (isRestaurant()) {
+        <div class="form-divider"><span>Detalles del platillo</span></div>
+        <div class="form-section">
+          <label class="form-label">Categoría</label>
+          <select class="form-input" formControlName="categoria">
+            @for (c of categorias; track c) { <option [value]="c">{{ c }}</option> }
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-section">
+            <label class="form-label">Preparación (min)</label>
+            <input class="form-input" type="number" formControlName="tiempo_preparacion_min" min="0"/>
+          </div>
+          <div class="form-section">
+            <label class="form-label">Picante</label>
+            <label class="toggle">
+              <input type="checkbox" formControlName="picante"/>
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            </label>
+          </div>
+        </div>
+        <div class="form-section">
+          <label class="form-label">Alérgenos</label>
+          <div class="chip-select">
+            @for (a of alergenos; track a) {
+              <button type="button" class="select-chip" [class.selected]="isAlergenSelected(a)" (click)="toggleAlergen(a)">{{ a }}</button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (isOptician()) {
+        <div class="form-divider"><span>Datos del lente</span></div>
+        <div class="form-row">
+          <div class="form-section">
+            <label class="form-label">Esfera</label>
+            <input class="form-input" formControlName="esfera" placeholder="-2.00"/>
+          </div>
+          <div class="form-section">
+            <label class="form-label">Cilindro</label>
+            <input class="form-input" formControlName="cilindro" placeholder="-0.50"/>
+          </div>
+          <div class="form-section">
+            <label class="form-label">Eje (0–180)</label>
+            <input class="form-input" type="number" formControlName="eje" min="0" max="180"/>
+          </div>
+        </div>
+        <div class="form-section">
+          <label class="form-label">Material</label>
+          <input class="form-input" formControlName="material" placeholder="CR-39, policarbonato..."/>
+        </div>
+      }
+
+      <div class="drawer-footer">
+        <button type="button" class="btn-ghost-drawer" (click)="closeDrawer()">Cancelar</button>
+        <button type="submit" class="btn-save" [disabled]="saving()">
+          @if (saving()) { Guardando... } @else { {{ drawerMode() === 'add' ? 'Crear Producto' : 'Guardar Cambios' }} }
+        </button>
+      </div>
+
+    </form>
+  </div>
+}

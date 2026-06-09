@@ -1,0 +1,85 @@
+.snackbar-container {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.snack {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  min-width: 280px;
+  max-width: 380px;
+  font-size: 13px;
+  font-weight: 500;
+  pointer-events: all;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.14);
+  animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    .snack-icon { color: #10b981; }
+  }
+
+  &-error {
+    background: #fff1f1;
+    color: #7f1d1d;
+    border: 1px solid #fca5a5;
+    .snack-icon { color: #e05252; }
+  }
+
+  &-warning {
+    background: #fffbeb;
+    color: #78350f;
+    border: 1px solid #fcd34d;
+    .snack-icon { color: #f59e0b; }
+  }
+
+  &-info {
+    background: #eff6ff;
+    color: #1e3a8a;
+    border: 1px solid #bfdbfe;
+    .snack-icon { color: #5b6ef5; }
+  }
+}
+
+.snack-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.snack-msg {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.snack-close {
+  display: flex;
+  align-items: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.45;
+  color: inherit;
+  padding: 2px;
+  border-radius: 4px;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+
+  &:hover { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}

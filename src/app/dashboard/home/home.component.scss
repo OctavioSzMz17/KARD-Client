@@ -1,0 +1,327 @@
+// ── Page ─────────────────────────────────────────────────
+.home-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+// ── Header ────────────────────────────────────────────────
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-ghost {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.8);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #5a5f7a;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-outline {
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.9);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1a1a2e;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ── Grid ──────────────────────────────────────────────────
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+// ── Cards ─────────────────────────────────────────────────
+.card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  border-radius: 18px;
+  padding: 24px;
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 4px 24px rgba(100,80,200,0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin: 0;
+  }
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.card-badge {
+  width: 32px;
+  height: 32px;
+  background: #5b6ef510;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5b6ef5;
+}
+
+// ── Summary card ──────────────────────────────────────────
+.card-summary { position: relative; overflow: hidden; }
+
+.summary-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+
+  .stat-number {
+    font-size: 42px;
+    font-weight: 700;
+    color: #1a1a2e;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 13px;
+    color: #8a8fa8;
+  }
+}
+
+.summary-row {
+  display: flex;
+  gap: 24px;
+}
+
+.mini-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .mini-number {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+
+  .mini-label {
+    font-size: 11px;
+    color: #8a8fa8;
+  }
+}
+
+// ── Charts ────────────────────────────────────────────────
+.chart, .sparkline {
+  width: 100%;
+  height: 80px;
+  border-radius: 6px;
+}
+
+.chart { height: 100px; }
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #b0b4c8;
+  margin-top: -8px;
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: #8a8fa8;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+}
+
+// ── Totals card ───────────────────────────────────────────
+.totals-grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.total-item {
+  flex: 1;
+  min-width: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: #f8f9fc;
+  border-radius: 10px;
+
+  .total-number {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+
+  .total-label {
+    font-size: 11px;
+    color: #8a8fa8;
+    line-height: 1.3;
+  }
+}
+
+// ── Activity ──────────────────────────────────────────────
+.activity-list { display: flex; flex-direction: column; gap: 12px; }
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.activity-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.activity-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  .activity-name { font-size: 13px; font-weight: 500; color: #1a1a2e; }
+  .activity-meta { font-size: 11px; color: #8a8fa8; }
+}
+
+.activity-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a2e;
+}
+
+// ── Alerts ────────────────────────────────────────────────
+.alert-list { display: flex; flex-direction: column; gap: 10px; }
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: #f8f9fc;
+  border-radius: 10px;
+}
+
+.alert-bar {
+  width: 4px;
+  height: 36px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.alert-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .alert-name { font-size: 13px; font-weight: 500; color: #1a1a2e; }
+  .alert-stock { font-size: 11px; color: #8a8fa8; }
+}
+
+.alert-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.no-alerts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  text-align: center;
+
+  p { font-size: 13px; color: #8a8fa8; }
+}
+
+.empty-state {
+  font-size: 13px;
+  color: #8a8fa8;
+  text-align: center;
+  padding: 16px 0;
+}
+
+// ── Helpers ───────────────────────────────────────────────
+.text-warning { color: #f59e0b; }
+.text-danger  { color: #e05252; }
+
+// ── Loading ───────────────────────────────────────────────
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px 0;
+  color: #8a8fa8;
+  font-size: 14px;
+}
+
+.spinner-lg {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(91,110,245,0.2);
+  border-top-color: #5b6ef5;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }

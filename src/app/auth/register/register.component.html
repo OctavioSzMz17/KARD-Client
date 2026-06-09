@@ -1,0 +1,134 @@
+<div class="auth-layout">
+  <!-- Left Panel -->
+  <div class="auth-left">
+    <div class="brand">
+      <div class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
+          <path d="M10 10H18L24 20L18 30H10L16 20L10 10Z" fill="white"/>
+          <path d="M20 10H28L22 20L28 30H20L14 20L20 10Z" fill="white" fill-opacity="0.6"/>
+        </svg>
+        <span class="logo-text">KARD</span>
+      </div>
+      <p class="tagline">Smart Inventory<br>for Small Business</p>
+    </div>
+    <div class="illustration">
+      <svg width="260" height="200" viewBox="0 0 260 200" fill="none">
+        <rect x="30" y="30" width="180" height="130" rx="12" fill="white" fill-opacity="0.25"/>
+        <rect x="55" y="55" width="90" height="8" rx="4" fill="white" fill-opacity="0.6"/>
+        <rect x="55" y="72" width="70" height="6" rx="3" fill="white" fill-opacity="0.4"/>
+        <rect x="55" y="86" width="80" height="6" rx="3" fill="white" fill-opacity="0.4"/>
+        <rect x="55" y="100" width="60" height="6" rx="3" fill="white" fill-opacity="0.3"/>
+        <circle cx="175" cy="75" r="20" fill="white" fill-opacity="0.3"/>
+        <circle cx="175" cy="70" r="10" fill="white" fill-opacity="0.5"/>
+        <path d="M155 95 Q175 85 195 95" stroke="white" stroke-width="2" fill="none" stroke-opacity="0.5"/>
+        <circle cx="60" cy="145" r="12" fill="white" fill-opacity="0.4"/>
+        <path d="M48 170 Q60 158 72 170" stroke="white" stroke-width="3" fill="none" stroke-opacity="0.4"/>
+        <circle cx="190" cy="140" r="12" fill="white" fill-opacity="0.4"/>
+        <path d="M178 165 Q190 153 202 165" stroke="white" stroke-width="3" fill="none" stroke-opacity="0.4"/>
+        <rect x="80" y="130" width="90" height="50" rx="8" fill="white" fill-opacity="0.15"/>
+        <rect x="92" y="142" width="50" height="5" rx="2.5" fill="white" fill-opacity="0.5"/>
+        <rect x="92" y="155" width="35" height="5" rx="2.5" fill="white" fill-opacity="0.4"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="auth-right">
+    <div class="form-card">
+      <h1>Create Your Account</h1>
+      <p class="subtitle">Start managing your business with KARD</p>
+
+      @if (error()) {
+        <div class="error-banner">{{ error() }}</div>
+      }
+      @if (success()) {
+        <div class="success-banner">{{ success() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="field">
+          <input
+            type="text"
+            formControlName="business_name"
+            placeholder="Business Name"
+            [class.invalid]="nameControl?.invalid && nameControl?.touched"
+          />
+          @if (nameControl?.invalid && nameControl?.touched) {
+            <span class="field-error">El nombre del negocio es requerido</span>
+          }
+        </div>
+
+        <div class="field">
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="Email"
+            [class.invalid]="emailControl?.invalid && emailControl?.touched"
+          />
+          @if (emailControl?.invalid && emailControl?.touched) {
+            <span class="field-error">
+              {{ emailControl?.errors?.['required'] ? 'El email es requerido' : 'Email inválido' }}
+            </span>
+          }
+        </div>
+
+        <div class="field">
+          <input
+            type="password"
+            formControlName="password"
+            placeholder="Password"
+            [class.invalid]="passwordControl?.invalid && passwordControl?.touched"
+          />
+          @if (passwordControl?.invalid && passwordControl?.touched) {
+            <span class="field-error">
+              @if (passwordControl?.errors?.['required']) { La contraseña es requerida }
+              @else if (passwordControl?.errors?.['minlength']) { Mínimo 8 caracteres }
+              @else if (passwordControl?.errors?.['pattern']) { Debe tener al menos 1 letra y 1 número }
+            </span>
+          }
+        </div>
+
+        <div class="field">
+          <input
+            type="password"
+            formControlName="confirmPassword"
+            placeholder="Confirm Password"
+            [class.invalid]="(confirmControl?.invalid || form.errors?.['passwordMismatch']) && confirmControl?.touched"
+          />
+          @if (confirmControl?.touched && form.errors?.['passwordMismatch']) {
+            <span class="field-error">Las contraseñas no coinciden</span>
+          }
+        </div>
+
+        <div class="business-type-group">
+          <label class="group-label">Business Type</label>
+          <div class="radio-group">
+            <label class="radio-option" [class.active]="typeControl?.value === 'restaurant'">
+              <input type="radio" formControlName="business_type" value="restaurant"/>
+              <span class="radio-dot"></span>
+              Restaurant
+            </label>
+            <label class="radio-option" [class.active]="typeControl?.value === 'optician'">
+              <input type="radio" formControlName="business_type" value="optician"/>
+              <span class="radio-dot"></span>
+              Optics
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="loading()">
+          @if (loading()) {
+            <span class="spinner"></span>
+          } @else {
+            Create Account
+          }
+        </button>
+      </form>
+
+      <p class="switch-auth">
+        Already have an account? <a routerLink="/login">Login</a>
+      </p>
+    </div>
+  </div>
+</div>
