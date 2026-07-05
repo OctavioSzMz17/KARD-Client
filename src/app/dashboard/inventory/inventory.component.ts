@@ -5,89 +5,96 @@ import { SnackbarService } from '../../core/services/snackbar.service';
 import { ImageService, ProductImage } from '../../core/services/image.service';
 import { ProductStore, Product } from '../../core/store/product.store';
 
-export type { Product };   // re-export so existing template references compile
-
-export interface RecipeItem {
-  insumo_id: string;
-  nombre:    string;
-  cantidad:  number;
-}
+type FilterKey = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
 
 @Component({
-  selector: 'app-products',
+  selector: 'app-inventory',
   imports: [ReactiveFormsModule, FormsModule],
-  templateUrl: './products.component.html',
-  styleUrl: './products.component.scss'
+  templateUrl: './inventory.component.html',
+  styleUrl:    './inventory.component.scss'
 })
-export class ProductsComponent implements OnInit {
-  private store   = inject(ProductStore);
-  private auth    = inject(AuthService);
-  private fb      = inject(FormBuilder);
-  private snack   = inject(SnackbarService);
-  private imgSvc  = inject(ImageService);
+export class InventoryComponent implements OnInit {
+  private store  = inject(ProductStore);
+  private auth   = inject(AuthService);
+  private fb     = inject(FormBuilder);
+  private snack  = inject(SnackbarService);
+  private imgSvc = inject(ImageService);
 
   session: UserSession | null = null;
 
-  // ── Products state (from store — survive navigation) ──
-  readonly products = this.store.products;
-  readonly loading  = this.store.loading;
+  // ── State from store ──────────────────────────────────
+  readonly loading = this.store.loading;
 
   // ── Local UI state ────────────────────────────────────
-  saving        = signal(false);
-  searchQuery   = signal('');
+  saving       = signal(false);
+  searchQuery  = signal('');
+  activeFilter = signal<FilterKey>('all');
 
   // ── Drawer state ──────────────────────────────────────
-  drawerOpen   = signal(false);
-  drawerMode   = signal<'add' | 'edit'>('add');
-  editingId    = signal<string | null>(null);
+  drawerOpen  = signal(false);
+  drawerMode  = signal<'add' | 'edit'>('add');
+  editingId   = signal<string | null>(null);
 
   // ── Image state ───────────────────────────────────────
-  drawerImages    = signal<ProductImage[]>([]);
-  imgAdding       = signal(false);
-  newImageUrl     = '';
-  newImageAlt     = '';
-  // staged image for create mode (product must exist before image can be POSTed)
-  stagedImageUrl  = '';
-  stagedImageAlt  = '';
+  drawerImages   = signal<ProductImage[]>([]);
+  imgAdding      = signal(false);
+  newImageUrl    = '';
+  newImageAlt    = '';
+  stagedImageUrl = '';
+  stagedImageAlt = '';
+
+  // ── Quick actions ─────────────────────────────────────
+  quickAction  = signal<{ id: string; type: 'sell' | 'restock'; qty: number } | null>(null);
+  quickLoading = signal(false);
 
   deleteConfirmId = signal<string | null>(null);
 
-  // ── Recipe (ingredientes/insumos) ─────────────────────
-  recipeItems       = signal<RecipeItem[]>([]);
-  selectedInsumoId  = '';
-  selectedInsumoQty = 1;
-
   // ── Form ──────────────────────────────────────────────
   form = this.fb.group({
-    name:                   ['', Validators.required],
-    description:            [''],
-    price:                  [0, [Validators.required, Validators.min(0.01)]],
+    name:                ['', Validators.required],
+    description:         [''],
+    price:               [0, [Validators.required, Validators.min(0)]],
+    inventory_count:     [0, [Validators.required, Validators.min(0)]],
+    low_stock_threshold: [5, [Validators.required, Validators.min(1)]],
     // restaurant
     categoria:              ['plato_fuerte'],
     tiempo_preparacion_min: [15],
     picante:                [false],
     // optician
-    esfera:                 ['0.00'],
-    cilindro:               ['0.00'],
-    eje:                    [0],
-    material:               ['CR-39'],
+    esfera:   ['0.00'],
+    cilindro: ['0.00'],
+    eje:      [0],
+    material: ['CR-39'],
   });
 
   // ── Computed ──────────────────────────────────────────
-  /** Base list: only finished goods (insumos go to Inventory page) */
-  private finalProducts = computed(() => this.products().filter(p => p.product_type === 'final'));
+  private insumos = computed(() =>
+    this.store.products().filter(p => p.product_type === 'insumo')
+  );
 
-  /** Insumos available to attach as ingredients/recipe items */
-  availableInsumos = computed(() => this.products().filter(p => p.product_type === 'insumo'));
-
-  filteredProducts = computed(() => {
+  filteredInsumos = computed(() => {
     const q = this.searchQuery().toLowerCase();
-    return this.finalProducts().filter(p =>
-      !q || p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
-    );
+    const f = this.activeFilter();
+    return this.insumos().filter(p => {
+      const matchSearch = !q || p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q);
+      const matchFilter =
+        f === 'all'          ? true :
+        f === 'out-of-stock' ? p.inventory_count === 0 :
+        f === 'low-stock'    ? p.inventory_count > 0 && p.inventory_count < p.low_stock_threshold :
+        p.inventory_count >= p.low_stock_threshold;
+      return matchSearch && matchFilter;
+    });
   });
 
-  counts = computed(() => ({ all: this.finalProducts().length }));
+  counts = computed(() => {
+    const all = this.insumos();
+    return {
+      all:        all.length,
+      inStock:    all.filter(p => p.inventory_count >= p.low_stock_threshold).length,
+      lowStock:   all.filter(p => p.inventory_count > 0 && p.inventory_count < p.low_stock_threshold).length,
+      outOfStock: all.filter(p => p.inventory_count === 0).length,
+    };
+  });
 
   isRestaurant = computed(() => this.session?.business_type === 'restaurant');
   isOptician   = computed(() => this.session?.business_type === 'optician');
@@ -102,10 +109,11 @@ export class ProductsComponent implements OnInit {
   // ── Lifecycle ─────────────────────────────────────────
   ngOnInit(): void {
     this.session = this.auth.getSession();
-    this.store.load();   // no-op if cache is fresh; fetches only when stale/empty
+    this.store.load();
   }
 
-  // ── Search ────────────────────────────────────────────
+  // ── Filters ───────────────────────────────────────────
+  setFilter(f: FilterKey): void { this.activeFilter.set(f); }
   onSearch(e: Event): void { this.searchQuery.set((e.target as HTMLInputElement).value); }
 
   // ── Drawer open/close ─────────────────────────────────
@@ -116,11 +124,8 @@ export class ProductsComponent implements OnInit {
     this.stagedImageUrl = '';
     this.stagedImageAlt = '';
     this.drawerImages.set([]);
-    this.recipeItems.set([]);
-    this.selectedInsumoId = '';
-    this.selectedInsumoQty = 1;
     this.form.reset({
-      price: 0,
+      price: 0, inventory_count: 0, low_stock_threshold: 5,
       categoria: 'plato_fuerte', tiempo_preparacion_min: 15, picante: false,
       esfera: '0.00', cilindro: '0.00', eje: 0, material: 'CR-39'
     });
@@ -134,13 +139,12 @@ export class ProductsComponent implements OnInit {
     this.newImageUrl = '';
     this.newImageAlt = '';
     this.drawerImages.set([...(p.images ?? [])].sort((a, b) => a.sort_order - b.sort_order));
-    this.recipeItems.set(p.metadata?.['ingredientes'] ?? []);
-    this.selectedInsumoId = '';
-    this.selectedInsumoQty = 1;
     this.form.patchValue({
       name:                   p.name,
       description:            p.description,
       price:                  parseFloat(p.price),
+      inventory_count:        p.inventory_count,
+      low_stock_threshold:    p.low_stock_threshold,
       categoria:              p.metadata?.['categoria']              ?? 'plato_fuerte',
       tiempo_preparacion_min: p.metadata?.['tiempo_preparacion_min'] ?? 15,
       picante:                p.metadata?.['picante']                ?? false,
@@ -162,66 +166,32 @@ export class ProductsComponent implements OnInit {
   }
   isAlergenSelected(a: string): boolean { return this.selectedAlergenos.includes(a); }
 
-  // ── Recipe (ingredientes) ──────────────────────────────
-  addIngredient(): void {
-    const insumoId = this.selectedInsumoId;
-    if (!insumoId) return;
-    const insumo = this.availableInsumos().find(i => i.product_id === insumoId);
-    if (!insumo) return;
-    const cantidad = this.selectedInsumoQty > 0 ? this.selectedInsumoQty : 1;
-
-    this.recipeItems.update(items => {
-      const existing = items.find(i => i.insumo_id === insumoId);
-      if (existing) {
-        return items.map(i => i.insumo_id === insumoId ? { ...i, cantidad } : i);
-      }
-      return [...items, { insumo_id: insumoId, nombre: insumo.name, cantidad }];
-    });
-
-    this.selectedInsumoId = '';
-    this.selectedInsumoQty = 1;
-  }
-
-  removeIngredient(insumoId: string): void {
-    this.recipeItems.update(items => items.filter(i => i.insumo_id !== insumoId));
-  }
-
-  // ── Save product ──────────────────────────────────────
-  saveProduct(): void {
+  // ── Save insumo ───────────────────────────────────────
+  saveInsumo(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.saving.set(true);
 
     const v = this.form.value;
     const metadata = this.isRestaurant()
       ? { categoria: v.categoria, tiempo_preparacion_min: v.tiempo_preparacion_min, picante: v.picante,
-          ...(this.selectedAlergenos.length ? { alergenos: this.selectedAlergenos } : {}),
-          ingredientes: this.recipeItems() }
-      : { esfera: v.esfera, cilindro: v.cilindro, eje: v.eje, material: v.material,
-          ingredientes: this.recipeItems() };
+          ...(this.selectedAlergenos.length ? { alergenos: this.selectedAlergenos } : {}) }
+      : { esfera: v.esfera, cilindro: v.cilindro, eje: v.eje, material: v.material };
 
-    // Finished goods don't track their own stock count — restaurants/opticians
-    // can't sensibly say "I have 3 lasagna plates left". Stock tracking applies
-    // to insumos only (see Inventory page). Send neutral defaults.
-    const body = { product_type: 'final', name: v.name, description: v.description || '',
-                   price: v.price, inventory_count: 0, low_stock_threshold: 1, metadata };
+    const body = {
+      product_type: 'insumo',
+      name: v.name, description: v.description || '',
+      price: v.price, inventory_count: v.inventory_count,
+      low_stock_threshold: v.low_stock_threshold, metadata
+    };
 
     const id = this.editingId();
 
     if (id) {
-      // ── Edit ──
       this.store.update(id, body).subscribe({
-        next: () => {
-          this.saving.set(false);
-          this.closeDrawer();
-          this.snack.success('Producto actualizado.');
-        },
-        error: (err: any) => {
-          this.saving.set(false);
-          this.snack.error(err.error?.error ?? 'Error al guardar.');
-        }
+        next: () => { this.saving.set(false); this.closeDrawer(); this.snack.success('Insumo actualizado.'); },
+        error: (err: any) => { this.saving.set(false); this.snack.error(err.error?.error ?? 'Error al guardar.'); }
       });
     } else {
-      // ── Create ──
       this.store.create(body).subscribe({
         next: (created) => {
           if (this.stagedImageUrl.trim()) {
@@ -229,16 +199,13 @@ export class ProductsComponent implements OnInit {
               url: this.stagedImageUrl.trim(),
               ...(this.stagedImageAlt.trim() ? { alt_text: this.stagedImageAlt.trim() } : {}),
               sort_order: 0
-            }).subscribe({ error: () => this.snack.warning('Producto creado, pero no se pudo guardar la imagen.') });
+            }).subscribe({ error: () => this.snack.warning('Insumo creado, pero no se pudo guardar la imagen.') });
           }
           this.saving.set(false);
           this.closeDrawer();
-          this.snack.success('Producto creado exitosamente.');
+          this.snack.success('Insumo creado exitosamente.');
         },
-        error: (err: any) => {
-          this.saving.set(false);
-          this.snack.error(err.error?.error ?? 'Error al crear el producto.');
-        }
+        error: (err: any) => { this.saving.set(false); this.snack.error(err.error?.error ?? 'Error al crear el insumo.'); }
       });
     }
   }
@@ -266,24 +233,20 @@ export class ProductsComponent implements OnInit {
         this.newImageAlt = '';
         this.imgAdding.set(false);
         this.snack.success('Imagen agregada.');
-        this.refreshProductImages(productId);
+        this.refreshImages(productId);
       },
-      error: (err: any) => {
-        this.imgAdding.set(false);
-        this.snack.error(err.error?.error ?? 'No se pudo agregar la imagen.');
-      }
+      error: (err: any) => { this.imgAdding.set(false); this.snack.error(err.error?.error ?? 'No se pudo agregar la imagen.'); }
     });
   }
 
   removeImage(img: ProductImage): void {
     const productId = this.editingId();
     if (!productId) return;
-
     this.imgSvc.remove(productId, img.image_id).subscribe({
       next: () => {
         this.drawerImages.update(imgs => imgs.filter(i => i.image_id !== img.image_id));
         this.snack.success('Imagen eliminada.');
-        this.refreshProductImages(productId);
+        this.refreshImages(productId);
       },
       error: () => this.snack.error('No se pudo eliminar la imagen.')
     });
@@ -292,7 +255,6 @@ export class ProductsComponent implements OnInit {
   setPrimary(img: ProductImage): void {
     const productId = this.editingId();
     if (!productId || img.sort_order === 0) return;
-
     this.imgSvc.update(productId, img.image_id, { sort_order: 0 }).subscribe({
       next: (updated) => {
         this.drawerImages.update(imgs =>
@@ -300,40 +262,65 @@ export class ProductsComponent implements OnInit {
               .sort((a, b) => a.sort_order - b.sort_order)
         );
         this.snack.success('Imagen principal actualizada.');
-        this.refreshProductImages(productId);
+        this.refreshImages(productId);
       },
       error: () => this.snack.error('No se pudo actualizar la imagen.')
     });
   }
 
-  private refreshProductImages(productId: string): void {
+  private refreshImages(productId: string): void {
     this.imgSvc.list(productId).subscribe({
       next: (imgs) =>
         this.store.updateImages(productId, imgs.sort((a, b) => a.sort_order - b.sort_order))
     });
   }
 
-  // ── Delete product ────────────────────────────────────
+  // ── Delete ────────────────────────────────────────────
   confirmDelete(id: string): void { this.deleteConfirmId.set(id); }
   cancelDelete(): void            { this.deleteConfirmId.set(null); }
 
-  deleteProduct(id: string): void {
+  deleteInsumo(id: string): void {
     this.store.remove(id).subscribe({
-      next: () => {
-        this.deleteConfirmId.set(null);
-        this.snack.success('Producto eliminado.');
-      },
-      error: () => {
-        this.deleteConfirmId.set(null);
-        this.snack.error('No se pudo eliminar el producto.');
-      }
+      next: () => { this.deleteConfirmId.set(null); this.snack.success('Insumo eliminado.'); },
+      error: () => { this.deleteConfirmId.set(null); this.snack.error('No se pudo eliminar el insumo.'); }
+    });
+  }
+
+  // ── Quick sell / restock ──────────────────────────────
+  startQuick(id: string, type: 'sell' | 'restock'): void { this.quickAction.set({ id, type, qty: 1 }); }
+  cancelQuick(): void { this.quickAction.set(null); }
+
+  adjustQty(delta: number): void {
+    const q = this.quickAction();
+    if (!q) return;
+    this.quickAction.set({ ...q, qty: Math.max(1, q.qty + delta) });
+  }
+
+  confirmQuick(): void {
+    const q = this.quickAction();
+    if (!q) return;
+    this.quickLoading.set(true);
+    const label = q.type === 'sell' ? 'Consumo' : 'Reabastecimiento';
+
+    const op$ = q.type === 'sell'
+      ? this.store.sell(q.id, q.qty)
+      : this.store.restock(q.id, q.qty);
+
+    op$.subscribe({
+      next: () => { this.quickAction.set(null); this.quickLoading.set(false); this.snack.success(`${label} registrado.`); },
+      error: (err: any) => { this.quickAction.set(null); this.quickLoading.set(false); this.snack.error(err.error?.error ?? `Error al registrar ${label.toLowerCase()}.`); }
     });
   }
 
   // ── Helpers ───────────────────────────────────────────
-  metaLabel(p: Product): string {
-    if (this.isRestaurant()) return p.metadata?.['categoria'] ?? '';
-    if (this.isOptician())   return `${p.metadata?.['esfera']} / ${p.metadata?.['cilindro']}`;
-    return '';
+  stockStatus(p: Product): 'ok' | 'low' | 'out' {
+    if (p.inventory_count === 0) return 'out';
+    if (p.inventory_count < p.low_stock_threshold) return 'low';
+    return 'ok';
+  }
+
+  stockPercent(p: Product): number {
+    if (p.low_stock_threshold === 0) return 100;
+    return Math.min(100, (p.inventory_count / (p.low_stock_threshold * 3)) * 100);
   }
 }

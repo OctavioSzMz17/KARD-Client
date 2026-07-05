@@ -12,6 +12,12 @@ export interface LoginResponse {
   business_type: string;
 }
 
+export interface ConsumerLoginResponse {
+  access_token: string;
+  token_type: string;
+  consumer_id: string;
+}
+
 export interface RegisterRequest {
   business_name: string;
   business_type: 'restaurant' | 'optician';

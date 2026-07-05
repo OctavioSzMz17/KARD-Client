@@ -24,22 +24,6 @@
     </div>
   </div>
 
-  <!-- ── Filter chips ──────────────────────────────────── -->
-  <div class="filter-row">
-    <button class="chip" [class.active]="activeFilter()==='all'" (click)="setFilter('all')">
-      Todos <span>{{ counts().all }}</span>
-    </button>
-    <button class="chip" [class.active]="activeFilter()==='in-stock'" (click)="setFilter('in-stock')">
-      En Stock <span>{{ counts().inStock }}</span>
-    </button>
-    <button class="chip chip-warn" [class.active]="activeFilter()==='low-stock'" (click)="setFilter('low-stock')">
-      Stock Bajo <span>{{ counts().lowStock }}</span>
-    </button>
-    <button class="chip chip-danger" [class.active]="activeFilter()==='out-of-stock'" (click)="setFilter('out-of-stock')">
-      Sin Stock <span>{{ counts().outOfStock }}</span>
-    </button>
-  </div>
-
   <!-- ── Loading skeletons ─────────────────────────────── -->
   @if (loading()) {
     <div class="loading-grid">
@@ -69,7 +53,7 @@
   @else {
     <div class="product-grid">
       @for (p of filteredProducts(); track p.product_id) {
-        <div class="product-card" [class.status-low]="stockStatus(p)==='low'" [class.status-out]="stockStatus(p)==='out'">
+        <div class="product-card">
 
           <!-- Image -->
           <div class="card-image">
@@ -90,7 +74,6 @@
 
           <!-- Status + meta + actions -->
           <div class="card-top">
-            <div class="status-dot" [class.dot-ok]="stockStatus(p)==='ok'" [class.dot-low]="stockStatus(p)==='low'" [class.dot-out]="stockStatus(p)==='out'"></div>
             @if (metaLabel(p)) {
               <span class="meta-chip">{{ metaLabel(p) }}</span>
             }
@@ -120,53 +103,6 @@
 
           <!-- Price -->
           <div class="product-price">${{ p.price }}</div>
-
-          <!-- Stock bar -->
-          <div class="stock-section">
-            <div class="stock-bar-track">
-              <div class="stock-bar-fill"
-                [class.fill-ok]="stockStatus(p)==='ok'"
-                [class.fill-low]="stockStatus(p)==='low'"
-                [class.fill-out]="stockStatus(p)==='out'"
-                [style.width.%]="stockPercent(p)">
-              </div>
-            </div>
-            <div class="stock-numbers">
-              <span class="stock-count" [class.text-low]="stockStatus(p)==='low'" [class.text-out]="stockStatus(p)==='out'">
-                {{ p.inventory_count }} uds
-              </span>
-              <span class="stock-threshold">mín {{ p.low_stock_threshold }}</span>
-            </div>
-          </div>
-
-          <!-- Quick action OR normal buttons -->
-          @if (quickAction()?.id === p.product_id) {
-            <div class="quick-action">
-              <span class="quick-label">{{ quickAction()!.type === 'sell' ? 'Vender' : 'Abastecer' }}</span>
-              <div class="qty-control">
-                <button (click)="adjustQty(-1)" [disabled]="quickAction()!.qty <= 1">−</button>
-                <span>{{ quickAction()!.qty }}</span>
-                <button (click)="adjustQty(1)">+</button>
-              </div>
-              <div class="quick-btns">
-                <button class="btn-confirm" (click)="confirmQuick()" [disabled]="quickLoading()">
-                  @if (quickLoading()) { ··· } @else { ✓ }
-                </button>
-                <button class="btn-cancel-quick" (click)="cancelQuick()">✕</button>
-              </div>
-            </div>
-          } @else {
-            <div class="card-actions">
-              <button class="action-btn action-sell" (click)="startQuick(p.product_id, 'sell')" [disabled]="p.inventory_count === 0">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Vender
-              </button>
-              <button class="action-btn action-restock" (click)="startQuick(p.product_id, 'restock')">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Abastecer
-              </button>
-            </div>
-          }
 
           <!-- Delete confirm overlay -->
           @if (deleteConfirmId() === p.product_id) {
@@ -215,22 +151,12 @@
         <textarea class="form-input form-textarea" formControlName="description" placeholder="Descripción breve..."></textarea>
       </div>
 
-      <!-- Price / Stock -->
-      <div class="form-row">
-        <div class="form-section">
-          <label class="form-label">Precio *</label>
-          <div class="input-prefix">
-            <span>$</span>
-            <input class="form-input" type="number" formControlName="price" step="0.01" min="0.01"/>
-          </div>
-        </div>
-        <div class="form-section">
-          <label class="form-label">Stock inicial</label>
-          <input class="form-input" type="number" formControlName="inventory_count" min="0"/>
-        </div>
-        <div class="form-section">
-          <label class="form-label">Alerta mínima</label>
-          <input class="form-input" type="number" formControlName="low_stock_threshold" min="1"/>
+      <!-- Price -->
+      <div class="form-section">
+        <label class="form-label">Precio *</label>
+        <div class="input-prefix">
+          <span>$</span>
+          <input class="form-input" type="number" formControlName="price" step="0.01" min="0.01"/>
         </div>
       </div>
 
@@ -319,6 +245,52 @@
 
         </div>
       }
+
+      <!-- ── Ingredientes / Insumos (receta) ─────────────── -->
+      <div class="form-divider"><span>Ingredientes</span></div>
+      <p class="form-hint">
+        Relacioná los insumos que se usan para preparar este platillo. Es solo informativo
+        por ahora; en el futuro se descontará del stock de insumos al vender.
+      </p>
+
+      <div class="recipe-manager">
+        @if (recipeItems().length === 0) {
+          <p class="img-empty">Sin ingredientes asignados todavía.</p>
+        } @else {
+          <div class="recipe-list">
+            @for (item of recipeItems(); track item.insumo_id) {
+              <div class="recipe-row">
+                <span class="recipe-name">{{ item.nombre }}</span>
+                <span class="recipe-qty">x{{ item.cantidad }}</span>
+                <button type="button" class="img-btn img-btn-delete" title="Quitar ingrediente" (click)="removeIngredient(item.insumo_id)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  </svg>
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Add ingredient row -->
+        <div class="recipe-add-row">
+          <select class="form-input" [(ngModel)]="selectedInsumoId" [ngModelOptions]="{standalone: true}">
+            <option value="" disabled>Seleccionar insumo...</option>
+            @for (insumo of availableInsumos(); track insumo.product_id) {
+              <option [value]="insumo.product_id">{{ insumo.name }}</option>
+            }
+          </select>
+          <input class="form-input recipe-qty-input" type="number" min="1" step="1"
+            [(ngModel)]="selectedInsumoQty" [ngModelOptions]="{standalone: true}" placeholder="Cant."/>
+          <button type="button" class="img-btn-add" (click)="addIngredient()" [disabled]="!selectedInsumoId">
+            Agregar
+          </button>
+        </div>
+
+        @if (availableInsumos().length === 0) {
+          <p class="img-empty">No hay insumos cargados todavía. Agregalos desde la página de Inventario.</p>
+        }
+      </div>
 
       <!-- ── Business-type metadata ───────────────────── -->
       @if (isRestaurant()) {
