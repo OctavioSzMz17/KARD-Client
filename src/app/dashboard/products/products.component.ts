@@ -1,17 +1,14 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AuthService, UserSession } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { ImageService, ProductImage } from '../../core/services/image.service';
+import { RecipeService, RecipeItem } from '../../core/services/recipe.service';
 import { ProductStore, Product } from '../../core/store/product.store';
 
 export type { Product };   // re-export so existing template references compile
-
-export interface RecipeItem {
-  insumo_id: string;
-  nombre:    string;
-  cantidad:  number;
-}
 
 @Component({
   selector: 'app-products',
@@ -20,11 +17,12 @@ export interface RecipeItem {
   styleUrl: './products.component.scss'
 })
 export class ProductsComponent implements OnInit {
-  private store   = inject(ProductStore);
-  private auth    = inject(AuthService);
-  private fb      = inject(FormBuilder);
-  private snack   = inject(SnackbarService);
-  private imgSvc  = inject(ImageService);
+  private store     = inject(ProductStore);
+  private auth      = inject(AuthService);
+  private fb        = inject(FormBuilder);
+  private snack     = inject(SnackbarService);
+  private imgSvc    = inject(ImageService);
+  private recipeSvc = inject(RecipeService);
 
   session: UserSession | null = null;
 
@@ -53,7 +51,11 @@ export class ProductsComponent implements OnInit {
   deleteConfirmId = signal<string | null>(null);
 
   // ── Recipe (ingredientes/insumos) ─────────────────────
+  // Edit: se persiste al vuelo contra la API (/products/{id}/recipe).
+  // Add:  se stagea local y se hace POST tras crear el producto.
   recipeItems       = signal<RecipeItem[]>([]);
+  recipeLoading     = signal(false);   // GET inicial en modo edición
+  recipeBusy        = signal(false);   // add/remove en vuelo (modo edición)
   selectedInsumoId  = '';
   selectedInsumoQty = 1;
 
@@ -117,6 +119,7 @@ export class ProductsComponent implements OnInit {
     this.stagedImageAlt = '';
     this.drawerImages.set([]);
     this.recipeItems.set([]);
+    this.recipeLoading.set(false);
     this.selectedInsumoId = '';
     this.selectedInsumoQty = 1;
     this.form.reset({
@@ -134,9 +137,15 @@ export class ProductsComponent implements OnInit {
     this.newImageUrl = '';
     this.newImageAlt = '';
     this.drawerImages.set([...(p.images ?? [])].sort((a, b) => a.sort_order - b.sort_order));
-    this.recipeItems.set(p.metadata?.['ingredientes'] ?? []);
+    this.recipeItems.set([]);
     this.selectedInsumoId = '';
     this.selectedInsumoQty = 1;
+    // La receta vive en el backend; se carga bajo demanda al abrir el drawer.
+    this.recipeLoading.set(true);
+    this.recipeSvc.get(p.product_id).subscribe({
+      next: (recipe) => { this.recipeItems.set(recipe.items); this.recipeLoading.set(false); },
+      error: () => { this.recipeItems.set([]); this.recipeLoading.set(false); }
+    });
     this.form.patchValue({
       name:                   p.name,
       description:            p.description,
@@ -165,25 +174,57 @@ export class ProductsComponent implements OnInit {
   // ── Recipe (ingredientes) ──────────────────────────────
   addIngredient(): void {
     const insumoId = this.selectedInsumoId;
-    if (!insumoId) return;
+    if (!insumoId || this.recipeBusy()) return;
     const insumo = this.availableInsumos().find(i => i.product_id === insumoId);
     if (!insumo) return;
-    const cantidad = this.selectedInsumoQty > 0 ? this.selectedInsumoQty : 1;
+    // La receta usa cantidades enteras (unidades de stock del insumo por unidad vendida).
+    const quantity = Math.max(1, Math.floor(this.selectedInsumoQty || 1));
 
-    this.recipeItems.update(items => {
-      const existing = items.find(i => i.insumo_id === insumoId);
-      if (existing) {
-        return items.map(i => i.insumo_id === insumoId ? { ...i, cantidad } : i);
-      }
-      return [...items, { insumo_id: insumoId, nombre: insumo.name, cantidad }];
-    });
-
-    this.selectedInsumoId = '';
-    this.selectedInsumoQty = 1;
+    const editingId = this.editingId();
+    if (editingId) {
+      // ── Edit: upsert contra la API, la receta persiste al vuelo ──
+      this.recipeBusy.set(true);
+      this.recipeSvc.addItem(editingId, insumoId, quantity).subscribe({
+        next: (recipe) => {
+          this.recipeItems.set(recipe.items);
+          this.recipeBusy.set(false);
+          this.selectedInsumoId = '';
+          this.selectedInsumoQty = 1;
+        },
+        error: (err: any) => {
+          this.recipeBusy.set(false);
+          this.snack.error(err.error?.error ?? 'No se pudo agregar el ingrediente.');
+        }
+      });
+    } else {
+      // ── Add: staging local (el producto aún no existe) ──
+      this.recipeItems.update(items => {
+        const existing = items.find(i => i.insumo_id === insumoId);
+        if (existing) {
+          return items.map(i => i.insumo_id === insumoId ? { ...i, quantity } : i);
+        }
+        return [...items, { insumo_id: insumoId, insumo_name: insumo.name, quantity, unit: '' }];
+      });
+      this.selectedInsumoId = '';
+      this.selectedInsumoQty = 1;
+    }
   }
 
   removeIngredient(insumoId: string): void {
-    this.recipeItems.update(items => items.filter(i => i.insumo_id !== insumoId));
+    if (this.recipeBusy()) return;
+    const editingId = this.editingId();
+    if (editingId) {
+      this.recipeBusy.set(true);
+      this.recipeSvc.removeItem(editingId, insumoId).subscribe({
+        next: (recipe) => { this.recipeItems.set(recipe.items); this.recipeBusy.set(false); },
+        error: (err: any) => {
+          this.recipeBusy.set(false);
+          this.snack.error(err.error?.error ?? 'No se pudo quitar el ingrediente.');
+        }
+      });
+    } else {
+      this.recipeItems.update(items => items.filter(i => i.insumo_id !== insumoId));
+    }
   }
 
   // ── Save product ──────────────────────────────────────
@@ -192,12 +233,11 @@ export class ProductsComponent implements OnInit {
     this.saving.set(true);
 
     const v = this.form.value;
+    // La receta ya NO vive en metadata — se gestiona con la API de recetas.
     const metadata = this.isRestaurant()
       ? { categoria: v.categoria, tiempo_preparacion_min: v.tiempo_preparacion_min, picante: v.picante,
-          ...(this.selectedAlergenos.length ? { alergenos: this.selectedAlergenos } : {}),
-          ingredientes: this.recipeItems() }
-      : { esfera: v.esfera, cilindro: v.cilindro, eje: v.eje, material: v.material,
-          ingredientes: this.recipeItems() };
+          ...(this.selectedAlergenos.length ? { alergenos: this.selectedAlergenos } : {}) }
+      : { esfera: v.esfera, cilindro: v.cilindro, eje: v.eje, material: v.material };
 
     // Finished goods don't track their own stock count — restaurants/opticians
     // can't sensibly say "I have 3 lasagna plates left". Stock tracking applies
@@ -223,24 +263,47 @@ export class ProductsComponent implements OnInit {
     } else {
       // ── Create ──
       this.store.create(body).subscribe({
-        next: (created) => {
-          if (this.stagedImageUrl.trim()) {
-            this.imgSvc.add(created.product_id, {
-              url: this.stagedImageUrl.trim(),
-              ...(this.stagedImageAlt.trim() ? { alt_text: this.stagedImageAlt.trim() } : {}),
-              sort_order: 0
-            }).subscribe({ error: () => this.snack.warning('Producto creado, pero no se pudo guardar la imagen.') });
-          }
-          this.saving.set(false);
-          this.closeDrawer();
-          this.snack.success('Producto creado exitosamente.');
-        },
+        next: (created) => this.persistStagedThenClose(created.product_id),
         error: (err: any) => {
           this.saving.set(false);
           this.snack.error(err.error?.error ?? 'Error al crear el producto.');
         }
       });
     }
+  }
+
+  /**
+   * Tras crear un producto: sube la imagen staged y los ingredientes staged.
+   * La receta requiere que el producto exista, por eso se hace aquí y no antes.
+   */
+  private persistStagedThenClose(productId: string): void {
+    const tasks = [];
+
+    if (this.stagedImageUrl.trim()) {
+      tasks.push(
+        this.imgSvc.add(productId, {
+          url: this.stagedImageUrl.trim(),
+          ...(this.stagedImageAlt.trim() ? { alt_text: this.stagedImageAlt.trim() } : {}),
+          sort_order: 0
+        }).pipe(catchError(() => { this.snack.warning('Producto creado, pero no se pudo guardar la imagen.'); return of(null); }))
+      );
+    }
+
+    for (const item of this.recipeItems()) {
+      tasks.push(
+        this.recipeSvc.addItem(productId, item.insumo_id, item.quantity)
+          .pipe(catchError(() => { this.snack.warning(`No se pudo agregar el ingrediente "${item.insumo_name}".`); return of(null); }))
+      );
+    }
+
+    const finish = () => {
+      this.saving.set(false);
+      this.closeDrawer();
+      this.snack.success('Producto creado exitosamente.');
+    };
+
+    if (tasks.length === 0) { finish(); return; }
+    forkJoin(tasks).subscribe({ next: finish, error: finish });
   }
 
   // ── Image management (edit drawer) ────────────────────

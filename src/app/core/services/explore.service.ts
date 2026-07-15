@@ -17,9 +17,8 @@ export interface ExploreStore {
   slug: string;
   business_name: string;
   business_type: string;
-  // aún no los envía el backend — se pintan automáticamente cuando existan
-  description?: string;
-  image_url?: string;
+  logo_url?: string | null;   // logo del negocio (branding)
+  tagline?: string | null;    // eslogan corto — subtítulo de la card
 }
 
 export interface ExploreResponse {

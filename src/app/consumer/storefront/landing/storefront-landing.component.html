@@ -1,0 +1,47 @@
+<!-- ── Hero a pantalla completa ─────────────────────────── -->
+<section class="hero" [class.has-banner]="hasBanner()">
+  @if (hasBanner()) {
+    <img class="hero-bg" [src]="sf.store()!.banner_url" alt="" aria-hidden="true"/>
+    <div class="hero-scrim"></div>
+  }
+
+  <div class="hero-inner">
+    <div class="hero-logo">
+      @if (sf.store()?.logo_url) {
+        <img [src]="sf.store()!.logo_url" [alt]="sf.store()!.business_name"/>
+      } @else {
+        <span class="hero-logo-initial">{{ storeInitial() }}</span>
+      }
+    </div>
+
+    <h1 class="hero-title">{{ sf.store()?.business_name || '' }}</h1>
+    <p class="hero-tagline">{{ tagline() }}</p>
+
+    <a class="hero-cta" [routerLink]="['/s', sf.slug, 'productos']">
+      Ver productos
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="m9 18 6-6-6-6"/>
+      </svg>
+    </a>
+  </div>
+
+  <div class="scroll-hint" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="m6 9 6 6 6-6"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ── Sobre el negocio ─────────────────────────────────── -->
+<section class="about">
+  <div class="about-inner">
+    <span class="about-eyebrow">Sobre nosotros</span>
+    <p class="about-text">{{ description() }}</p>
+    <a class="about-link" [routerLink]="['/s', sf.slug, 'productos']">
+      Explorar el catálogo
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <path d="m9 18 6-6-6-6"/>
+      </svg>
+    </a>
+  </div>
+</section>

@@ -249,20 +249,23 @@
       <!-- ── Ingredientes / Insumos (receta) ─────────────── -->
       <div class="form-divider"><span>Ingredientes</span></div>
       <p class="form-hint">
-        Relacioná los insumos que se usan para preparar este platillo. Es solo informativo
-        por ahora; en el futuro se descontará del stock de insumos al vender.
+        Relacioná los insumos que consume este platillo. Al vender, se descontará
+        del stock de cada insumo (cantidad × unidades vendidas).
       </p>
 
       <div class="recipe-manager">
-        @if (recipeItems().length === 0) {
+        @if (recipeLoading()) {
+          <p class="img-empty">Cargando receta...</p>
+        } @else if (recipeItems().length === 0) {
           <p class="img-empty">Sin ingredientes asignados todavía.</p>
         } @else {
           <div class="recipe-list">
             @for (item of recipeItems(); track item.insumo_id) {
               <div class="recipe-row">
-                <span class="recipe-name">{{ item.nombre }}</span>
-                <span class="recipe-qty">x{{ item.cantidad }}</span>
-                <button type="button" class="img-btn img-btn-delete" title="Quitar ingrediente" (click)="removeIngredient(item.insumo_id)">
+                <span class="recipe-name">{{ item.insumo_name }}</span>
+                <span class="recipe-qty">x{{ item.quantity }}{{ item.unit ? ' ' + item.unit : '' }}</span>
+                <button type="button" class="img-btn img-btn-delete" title="Quitar ingrediente"
+                  (click)="removeIngredient(item.insumo_id)" [disabled]="recipeBusy()">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                   </svg>
@@ -274,16 +277,16 @@
 
         <!-- Add ingredient row -->
         <div class="recipe-add-row">
-          <select class="form-input" [(ngModel)]="selectedInsumoId" [ngModelOptions]="{standalone: true}">
+          <select class="form-input" [(ngModel)]="selectedInsumoId" [ngModelOptions]="{standalone: true}" [disabled]="recipeBusy()">
             <option value="" disabled>Seleccionar insumo...</option>
             @for (insumo of availableInsumos(); track insumo.product_id) {
               <option [value]="insumo.product_id">{{ insumo.name }}</option>
             }
           </select>
           <input class="form-input recipe-qty-input" type="number" min="1" step="1"
-            [(ngModel)]="selectedInsumoQty" [ngModelOptions]="{standalone: true}" placeholder="Cant."/>
-          <button type="button" class="img-btn-add" (click)="addIngredient()" [disabled]="!selectedInsumoId">
-            Agregar
+            [(ngModel)]="selectedInsumoQty" [ngModelOptions]="{standalone: true}" placeholder="Cant." [disabled]="recipeBusy()"/>
+          <button type="button" class="img-btn-add" (click)="addIngredient()" [disabled]="!selectedInsumoId || recipeBusy()">
+            {{ recipeBusy() ? '···' : 'Agregar' }}
           </button>
         </div>
 

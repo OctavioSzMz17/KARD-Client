@@ -1,0 +1,278 @@
+<div class="sf-shell" [style]="sf.themeVars()">
+
+  <!-- ── Tienda no encontrada ──────────────────────────── -->
+  @if (sf.notFound()) {
+    <div class="sf-notfound">
+      <p class="nf-title">Tienda no encontrada</p>
+      <p class="nf-sub">Este negocio no existe o ya no está disponible.</p>
+      <button class="btn-primary" (click)="backToExplore()">Volver a explorar</button>
+    </div>
+  }
+
+  @else {
+
+    <!-- ── Navbar ──────────────────────────────────────── -->
+    <nav class="sf-nav">
+      <a class="nav-brand" [routerLink]="['/s', sf.slug]">
+        <span class="nav-logo">
+          @if (sf.store()?.logo_url) {
+            <img [src]="sf.store()!.logo_url" [alt]="sf.store()!.business_name"/>
+          } @else {
+            <span class="nav-logo-initial">{{ storeInitial() }}</span>
+          }
+        </span>
+        <span class="nav-name">{{ sf.store()?.business_name || '...' }}</span>
+      </a>
+
+      <div class="nav-links">
+        <a [routerLink]="['/s', sf.slug]" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
+        <a [routerLink]="['/s', sf.slug, 'productos']" routerLinkActive="active">Productos</a>
+      </div>
+
+      <div class="nav-actions">
+        <button class="nav-cart" (click)="sf.openCart()" title="Carrito">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+          </svg>
+          @if (sf.cart() && sf.cart()!.item_count > 0) {
+            <span class="cart-badge">{{ sf.cart()!.item_count }}</span>
+          }
+        </button>
+        <button class="nav-exit" (click)="backToExplore()" title="Explorar otras tiendas">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ── Página (landing / catálogo) ─────────────────── -->
+    <main class="sf-main">
+      <router-outlet />
+    </main>
+
+    <!-- ── Footer ──────────────────────────────────────── -->
+    <footer class="sf-footer">
+      <div class="footer-inner">
+
+        <div class="footer-brand">
+          <span class="footer-logo">
+            @if (sf.store()?.logo_url) {
+              <img [src]="sf.store()!.logo_url" alt=""/>
+            } @else {
+              <span class="nav-logo-initial">{{ storeInitial() }}</span>
+            }
+          </span>
+          <div>
+            <p class="footer-name">{{ sf.store()?.business_name }}</p>
+            <p class="footer-type">{{ typeLabel() }}</p>
+          </div>
+        </div>
+
+        @if (hasAnyContact()) {
+          <div class="footer-cols">
+
+            <!-- Ubicación / contacto -->
+            <div class="footer-col">
+              <h4>Contacto</h4>
+              @if (contact()?.address) {
+                <p class="fc-line">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {{ contact()!.address }}
+                </p>
+              }
+              @if (contact()?.phone) {
+                <a class="fc-line" [href]="'tel:' + contact()!.phone">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  {{ contact()!.phone }}
+                </a>
+              }
+              @if (contact()?.email) {
+                <a class="fc-line" [href]="'mailto:' + contact()!.email">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+                  {{ contact()!.email }}
+                </a>
+              }
+              @if (whatsappHref()) {
+                <a class="fc-line" [href]="whatsappHref()" target="_blank" rel="noopener noreferrer">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  WhatsApp
+                </a>
+              }
+              @if (contact()?.maps_url) {
+                <a class="fc-line" [href]="contact()!.maps_url" target="_blank" rel="noopener noreferrer">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                  Ver en el mapa
+                </a>
+              }
+            </div>
+
+            <!-- Horario -->
+            @if (contact()?.hours?.length) {
+              <div class="footer-col">
+                <h4>Horario</h4>
+                @for (h of contact()!.hours!; track h.days) {
+                  <p class="fc-hours"><span>{{ h.days }}</span><span>{{ h.hours }}</span></p>
+                }
+              </div>
+            }
+
+            <!-- Redes -->
+            @if (socialLinks().length) {
+              <div class="footer-col">
+                <h4>Síguenos</h4>
+                <div class="footer-social">
+                  @for (s of socialLinks(); track s.key) {
+                    <a [href]="s.url" target="_blank" rel="noopener noreferrer" [title]="s.key">{{ s.key }}</a>
+                  }
+                </div>
+              </div>
+            }
+
+          </div>
+        }
+
+        <p class="footer-legal">© {{ year }} {{ sf.store()?.business_name }} · Powered by KARD</p>
+      </div>
+    </footer>
+
+    <!-- ── Drawer del carrito ──────────────────────────── -->
+    @if (sf.cartOpen()) {
+      <div class="cart-overlay" (click)="sf.closeCart()"></div>
+      <aside class="cart-drawer">
+
+        <div class="cart-header">
+          <h2>Tu carrito</h2>
+          <button class="cart-close" (click)="sf.closeCart()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Conflicto de stock (409) -->
+        @if (sf.stockConflict(); as conflict) {
+          <div class="cart-conflict">
+            <div class="conflict-head">
+              <div class="conflict-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <p class="conflict-title">Algunos productos no tienen stock</p>
+              <p class="conflict-sub">
+                {{ conflict.details.all_unavailable
+                    ? 'Ningún producto de tu carrito se puede vender ahora mismo.'
+                    : 'Podemos continuar sin ellos o puedes cancelar y ajustar tu pedido.' }}
+              </p>
+            </div>
+
+            <div class="conflict-list">
+              @for (u of conflict.details.unavailable; track u.product_id) {
+                <div class="conflict-row">
+                  <div class="conflict-row-top">
+                    <span class="conflict-name">{{ u.product_name }}</span>
+                    <span class="conflict-reason">{{ sf.reasonLabel(u.reason) }}</span>
+                  </div>
+                  @if (u.available !== undefined) {
+                    <span class="conflict-detail">Pediste {{ u.requested }} · disponibles {{ u.available }}</span>
+                  }
+                  @if (u.missing_ingredients?.length) {
+                    <div class="conflict-ingredients">
+                      @for (ing of u.missing_ingredients!; track ing.insumo_id) {
+                        <span class="ingredient-chip">{{ ing.insumo_name }}: {{ ing.available }}/{{ ing.required }} {{ ing.unit }}</span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="conflict-actions">
+              @if (!conflict.details.all_unavailable) {
+                <button class="btn-primary" (click)="sf.continueWithoutMissing()" [disabled]="sf.cartBusy()">
+                  {{ sf.cartBusy() ? 'Procesando...' : 'Continuar sin esos' }}
+                </button>
+              }
+              <button class="btn-clear-cart" (click)="sf.dismissConflict()" [disabled]="sf.cartBusy()">Cancelar</button>
+            </div>
+          </div>
+        }
+
+        <!-- Pedido confirmado -->
+        @else if (sf.placedOrder(); as order) {
+          <div class="cart-success">
+            <div class="success-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5"/>
+              </svg>
+            </div>
+            <p class="success-title">¡Pedido confirmado!</p>
+            <p class="success-sub">Pedido <strong>{{ order.order_id }}</strong> por <strong>${{ order.total }}</strong>.</p>
+            <p class="success-status">Estado: {{ order.status === 'pending' ? 'pendiente de pago' : order.status }}</p>
+
+            @if (order.skipped.length > 0) {
+              <div class="success-skipped">
+                <p class="skipped-title">No se incluyeron:</p>
+                @for (s of order.skipped; track s.product_id) {
+                  <span class="skipped-chip">{{ s.product_name }} — {{ sf.reasonLabel(s.reason) }}</span>
+                }
+              </div>
+            }
+
+            <button class="btn-primary" (click)="sf.closeCart()">Seguir comprando</button>
+          </div>
+        }
+
+        <!-- Carrito vacío -->
+        @else if (!sf.cart() || sf.cart()!.items.length === 0) {
+          <div class="cart-empty">
+            <p class="empty-title">Tu carrito está vacío</p>
+            <p class="empty-sub">Agrega productos del catálogo para empezar tu pedido.</p>
+            <a class="btn-primary" [routerLink]="['/s', sf.slug, 'productos']" (click)="sf.closeCart()">Ver productos</a>
+          </div>
+        }
+
+        <!-- Items -->
+        @else {
+          <div class="cart-items">
+            @for (item of sf.cart()!.items; track item.product_id) {
+              <div class="cart-row">
+                <div class="cart-row-info">
+                  <span class="cart-row-name">{{ item.name }}</span>
+                  <span class="cart-row-price">${{ item.price_snapshot }} c/u</span>
+                </div>
+                <div class="qty-stepper">
+                  <button (click)="sf.changeQty(item.product_id, -1)" [disabled]="sf.cartBusy()">−</button>
+                  <span>{{ item.quantity }}</span>
+                  <button (click)="sf.changeQty(item.product_id, 1)" [disabled]="sf.cartBusy()">+</button>
+                </div>
+                <span class="cart-row-subtotal">${{ item.subtotal }}</span>
+                <button class="cart-row-remove" title="Quitar" (click)="sf.removeFromCart(item.product_id)" [disabled]="sf.cartBusy()">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  </svg>
+                </button>
+              </div>
+            }
+          </div>
+
+          <div class="cart-footer">
+            <div class="cart-total-row">
+              <span>Total</span>
+              <span class="cart-total">${{ sf.cart()!.total }}</span>
+            </div>
+            <button class="btn-primary btn-confirm-order" (click)="sf.confirmOrder()" [disabled]="sf.cartBusy()">
+              {{ sf.cartBusy() ? 'Procesando...' : 'Confirmar pedido' }}
+            </button>
+            <button class="btn-clear-cart" (click)="sf.clearCart()" [disabled]="sf.cartBusy()">Vaciar carrito</button>
+          </div>
+        }
+
+      </aside>
+    }
+  }
+
+</div>

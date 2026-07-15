@@ -99,10 +99,10 @@
         @for (s of stores(); track s.slug) {
           <div class="store-card" (click)="openStore(s)">
 
-            <!-- Imagen del negocio (placeholder por tipo mientras no haya image_url) -->
+            <!-- Logo del negocio (placeholder por tipo si aún no tiene) -->
             <div class="store-image" [class.img-restaurant]="s.business_type === 'restaurant'" [class.img-optician]="s.business_type === 'optician'">
-              @if (s.image_url) {
-                <img [src]="s.image_url" [alt]="s.business_name" loading="lazy"/>
+              @if (s.logo_url) {
+                <img [src]="s.logo_url" [alt]="s.business_name" loading="lazy"/>
               } @else {
                 @switch (s.business_type) {
                   @case ('restaurant') {

@@ -5,20 +5,47 @@ import { ProductImage } from './image.service';
 
 const BASE = 'http://localhost:8000';
 
-/** Tema visual del negocio — el backend aún no lo envía; defaults en el componente. */
+/** Tema visual del negocio (branding). */
 export interface StorefrontTheme {
-  primary?: string;
-  accent?: string;
+  primary?: string | null;
+  accent?: string | null;
+}
+
+export interface HourEntry {
+  days:  string;
+  hours: string;
+}
+
+export interface Social {
+  facebook?:  string | null;
+  instagram?: string | null;
+  tiktok?:    string | null;
+  x?:         string | null;
+  youtube?:   string | null;
+}
+
+export interface Contact {
+  address?:  string | null;
+  phone?:    string | null;
+  email?:    string | null;
+  whatsapp?: string | null;
+  maps_url?: string | null;
+  hours?:    HourEntry[];
+  social?:   Social;
 }
 
 export interface StorefrontInfo {
   slug: string;
   business_name: string;
   business_type: 'restaurant' | 'optician';
-  // preparados para la config del negocio (logos, imágenes, colores)
-  logo_url?: string;
-  banner_url?: string;
-  theme?: StorefrontTheme;
+  // branding (ya implementado en el backend)
+  logo_url?:   string | null;
+  banner_url?: string | null;
+  theme?:      StorefrontTheme | null;
+  // contenido editorial — aún no lo envía el backend; el front usa fallbacks
+  tagline?:     string | null;
+  description?: string | null;
+  contact?:     Contact | null;
 }
 
 export interface StorefrontProduct {

@@ -87,7 +87,7 @@ export class ExploreComponent implements OnInit {
   }
 
   storeDescription(s: ExploreStore): string {
-    return s.description || TYPE_TAGLINES[s.business_type] || 'Tienda en KARD.';
+    return s.tagline || TYPE_TAGLINES[s.business_type] || 'Tienda en KARD.';
   }
 
   openStore(s: ExploreStore): void {
