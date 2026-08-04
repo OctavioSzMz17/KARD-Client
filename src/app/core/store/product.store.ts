@@ -36,11 +36,19 @@ export class ProductStore {
   readonly products  = signal<Product[]>([]);
   readonly loading   = signal(false);
   readonly error     = signal<string | null>(null);
-  private lastFetch  = 0;
+  private lastFetch    = 0;
+  private lastTenantId = '';
 
   // ── Derived ──────────────────────────────────────────
-  readonly isEmpty   = computed(() => !this.loading() && this.products().length === 0);
-  readonly isFresh   = () => !!this.lastFetch && (Date.now() - this.lastFetch) < CACHE_TTL;
+  readonly isEmpty = computed(() => !this.loading() && this.products().length === 0);
+
+  /** Cache is valid only when within TTL AND the same tenant is active. */
+  readonly isFresh = () => {
+    const currentTenant = this.auth.getSession()?.tenant_id ?? '';
+    return !!this.lastFetch
+      && (Date.now() - this.lastFetch) < CACHE_TTL
+      && this.lastTenantId === currentTenant;
+  };
 
   private get headers(): HttpHeaders {
     const token = this.auth.getToken();
@@ -64,6 +72,14 @@ export class ProductStore {
     this.lastFetch = 0;
   }
 
+  // ── Full reset — call on logout / account switch ──────
+  clear(): void {
+    this.products.set([]);
+    this.lastFetch    = 0;
+    this.lastTenantId = '';
+    this.error.set(null);
+  }
+
   // ── Internal fetch ───────────────────────────────────
   private fetch(): void {
     if (this.loading()) return;   // already in flight
@@ -75,7 +91,8 @@ export class ProductStore {
       .subscribe({
         next: (res) => {
           this.products.set(res.items);
-          this.lastFetch = Date.now();
+          this.lastFetch    = Date.now();
+          this.lastTenantId = this.auth.getSession()?.tenant_id ?? '';
           this.loading.set(false);
         },
         error: () => {

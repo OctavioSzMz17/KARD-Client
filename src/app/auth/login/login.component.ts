@@ -33,12 +33,30 @@ export class LoginComponent {
     this.error.set('');
 
     const { email, password } = this.form.value;
+    const credentials = { email: email!, password: password! };
 
-    this.auth.login({ email: email!, password: password! }).subscribe({
+    // Dos identidades separadas en la plataforma: primero intenta como
+    // usuario B2B (negocio); si las credenciales no existen ahí, intenta
+    // como consumer (cliente). Cada una redirige a su vista.
+    this.auth.login(credentials).subscribe({
       next: () => this.router.navigate(['/dashboard']),
       error: (err) => {
+        if (err.status >= 400 && err.status < 500) {
+          this.tryConsumerLogin(credentials);
+        } else {
+          this.loading.set(false);
+          this.error.set(err.error?.error ?? 'Error al iniciar sesión. Intenta de nuevo.');
+        }
+      }
+    });
+  }
+
+  private tryConsumerLogin(credentials: { email: string; password: string }): void {
+    this.auth.loginConsumer(credentials).subscribe({
+      next: () => this.router.navigate(['/explore']),
+      error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.error ?? 'Error al iniciar sesión. Intenta de nuevo.');
+        this.error.set(err.error?.error ?? 'Correo o contraseña incorrectos.');
       }
     });
   }

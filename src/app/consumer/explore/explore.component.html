@@ -1,0 +1,145 @@
+<div class="explore-page">
+
+  <!-- ── Header ────────────────────────────────────────── -->
+  <header class="explore-header">
+    <span class="brand">KARD</span>
+    <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+  </header>
+
+  <!-- ── Hero / landscape ──────────────────────────────── -->
+  <section class="hero">
+    <!-- Paisaje decorativo -->
+    <div class="landscape" aria-hidden="true">
+      <div class="sun"></div>
+      <div class="hill hill-back"></div>
+      <div class="hill hill-front"></div>
+    </div>
+
+    <div class="hero-content">
+      <h1>¿Qué tienes en mente?😀</h1>
+      <p class="hero-sub">Descubre los negocios de la plataforma y ordena lo que necesites.</p>
+
+      <!-- Búsqueda central -->
+      <div class="search-bar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" placeholder="Buscar negocios..." (input)="onSearch($event)"/>
+      </div>
+
+      <!-- Etiquetas de categorías -->
+      @if (categories().length > 0) {
+        <div class="category-row">
+          @for (c of categories(); track c.business_type) {
+            <button class="category-tag"
+              [class.active]="activeCategory() === c.business_type"
+              (click)="selectCategory(c.business_type)">
+              <span class="category-icon">
+                @switch (c.business_type) {
+                  @case ('restaurant') {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                      <path d="M7 2v20"/>
+                      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
+                    </svg>
+                  }
+                  @case ('optician') {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/>
+                      <path d="M10 15h4"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/>
+                    </svg>
+                  }
+                  @default {
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="m2 7 4.4-4.4A2 2 0 0 1 7.8 2h8.4a2 2 0 0 1 1.4.6L22 7"/>
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                      <path d="M2 7h20v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-2-1 2.7 2.7 0 0 1-4 0 2.7 2.7 0 0 1-4 0 2.7 2.7 0 0 1-4 0 2.7 2.7 0 0 1-2 1 2 2 0 0 1-2-2Z"/>
+                    </svg>
+                  }
+                }
+              </span>
+              <span class="category-name">{{ categoryLabel(c.business_type) }}</span>
+              <span class="category-count">{{ c.store_count }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ── Resultados ────────────────────────────────────── -->
+  <section class="stores-section">
+
+    @if (loadingStores()) {
+      <div class="stores-grid">
+        @for (i of [1,2,3]; track i) {
+          <div class="store-skeleton"></div>
+        }
+      </div>
+    }
+
+    @else if (loadError()) {
+      <div class="stores-empty">
+        <p class="empty-title">No pudimos cargar las tiendas</p>
+        <p class="empty-sub">Revisa tu conexión e intenta de nuevo.</p>
+      </div>
+    }
+
+    @else if (stores().length === 0) {
+      <div class="stores-empty">
+        <p class="empty-title">Sin resultados</p>
+        <p class="empty-sub">
+          {{ searchQuery() ? 'No encontramos negocios para "' + searchQuery() + '"' : 'Aún no hay tiendas disponibles en esta categoría.' }}
+        </p>
+      </div>
+    }
+
+    @else {
+      <div class="stores-grid">
+        @for (s of stores(); track s.slug) {
+          <div class="store-card" (click)="openStore(s)">
+
+            <!-- Logo del negocio (placeholder por tipo si aún no tiene) -->
+            <div class="store-image" [class.img-restaurant]="s.business_type === 'restaurant'" [class.img-optician]="s.business_type === 'optician'">
+              @if (s.logo_url) {
+                <img [src]="s.logo_url" [alt]="s.business_name" loading="lazy"/>
+              } @else {
+                @switch (s.business_type) {
+                  @case ('restaurant') {
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+                      <path d="M7 2v20"/>
+                      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
+                    </svg>
+                  }
+                  @case ('optician') {
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                      <circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/>
+                      <path d="M10 15h4"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/>
+                    </svg>
+                  }
+                  @default {
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                      <path d="m2 7 4.4-4.4A2 2 0 0 1 7.8 2h8.4a2 2 0 0 1 1.4.6L22 7"/>
+                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                    </svg>
+                  }
+                }
+              }
+              <span class="store-type-badge">{{ categoryLabel(s.business_type) }}</span>
+            </div>
+
+            <!-- Nombre + descripción -->
+            <div class="store-info">
+              <h3 class="store-name">{{ s.business_name }}</h3>
+              <p class="store-desc">{{ storeDescription(s) }}</p>
+            </div>
+
+          </div>
+        }
+      </div>
+    }
+
+  </section>
+
+</div>

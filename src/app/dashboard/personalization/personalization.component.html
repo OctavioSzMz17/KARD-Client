@@ -1,0 +1,211 @@
+<div class="perso-page">
+
+  <!-- ── Toolbar ────────────────────────────────────────── -->
+  <header class="perso-toolbar">
+    <div class="toolbar-left">
+      <h1>Personalización</h1>
+      @if (dirty()) { <span class="unsaved-badge">Cambios sin guardar</span> }
+    </div>
+    <div class="toolbar-right">
+      <div class="device-toggle">
+        <button [class.active]="device()==='desktop'" (click)="device.set('desktop')" title="Escritorio">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </button>
+        <button [class.active]="device()==='mobile'" (click)="device.set('mobile')" title="Móvil">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+        </button>
+      </div>
+      @if (dirty()) {
+        <button class="btn-ghost" (click)="discard()" [disabled]="saving()">Descartar</button>
+      }
+      <button class="btn-save" (click)="save()" [disabled]="saving() || !dirty()">
+        {{ saving() ? 'Guardando...' : 'Guardar' }}
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="perso-loading"><div class="spinner"></div><p>Cargando personalización...</p></div>
+  } @else {
+
+  <div class="perso-body">
+
+    <!-- ── Preview (storefront del cliente) ──────────────── -->
+    <div class="preview-wrap">
+      <div class="preview-stage" [class.mobile]="device()==='mobile'" [style]="previewVars()">
+
+        <!-- Hero -->
+        <div class="pv-hero">
+
+          <!-- Banner (hotspot) -->
+          <div class="pv-banner" [class.pv-banner-empty]="!bannerUrl()">
+            @if (bannerUrl()) {
+              <img [src]="bannerUrl()" alt="banner"/>
+            } @else {
+              <span class="pv-banner-hint">Sin banner</span>
+            }
+            <button type="button" class="hotspot hotspot-banner" (click)="openSpot('banner')" title="Editar banner">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </button>
+
+            @if (editingSpot()==='banner') {
+              <div class="spot-popover spot-popover-banner">
+                <label>URL del banner</label>
+                <input type="url" [value]="bannerUrl()" (input)="setBanner($any($event.target).value)" placeholder="https://..." autofocus/>
+                <div class="spot-actions">
+                  <button type="button" class="spot-clear" (click)="clearBanner()">Quitar</button>
+                  <button type="button" class="spot-done" (click)="closeSpot()">Listo</button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="pv-hero-row">
+            <!-- Logo (hotspot) -->
+            <div class="pv-logo">
+              @if (logoUrl()) {
+                <img [src]="logoUrl()" alt="logo"/>
+              } @else {
+                <span class="pv-logo-initial">{{ logoInitial() }}</span>
+              }
+              <button type="button" class="hotspot hotspot-logo" (click)="openSpot('logo')" title="Editar logo">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </button>
+
+              @if (editingSpot()==='logo') {
+                <div class="spot-popover spot-popover-logo">
+                  <label>URL del logo</label>
+                  <input type="url" [value]="logoUrl()" (input)="setLogo($any($event.target).value)" placeholder="https://..." autofocus/>
+                  <div class="spot-actions">
+                    <button type="button" class="spot-clear" (click)="clearLogo()">Quitar</button>
+                    <button type="button" class="spot-done" (click)="closeSpot()">Listo</button>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div class="pv-title">
+              <h2>{{ storeName() }}</h2>
+              <span class="pv-type-badge">{{ typeLabel() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Búsqueda -->
+        <div class="pv-search" [class.pulse]="focusedColor()==='primary'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span>Buscar en el menú...</span>
+        </div>
+
+        <!-- Productos de muestra -->
+        <div class="pv-grid">
+          @for (p of sampleProducts(); track p.name) {
+            <div class="pv-card">
+              <div class="pv-card-img">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+              <div class="pv-card-body">
+                <h3>{{ p.name }}</h3>
+                <p>{{ p.desc }}</p>
+                <span class="pv-chip" [class.pulse]="focusedColor()==='primary'">{{ p.chip }}</span>
+                <div class="pv-card-foot">
+                  <span class="pv-price" [class.pulse]="focusedColor()==='accent'">${{ p.price }}</span>
+                  <button class="pv-add" [class.pulse]="focusedColor()==='primary'">Agregar</button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- FAB carrito (usa accent) -->
+        <div class="pv-fab" [class.pulse]="focusedColor()==='accent'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+          <span>2</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Barra de tema ─────────────────────────────────── -->
+    <aside class="theme-rail">
+
+      <div class="rail-section">
+        <h3 class="rail-title">Marca</h3>
+        <p class="rail-hint">Pasa el cursor sobre el logo o el banner en el preview para editarlos.</p>
+
+        <button type="button" class="rail-image-row" (click)="openSpot('logo')">
+          <span class="rail-thumb" [class.rail-thumb-empty]="!logoUrl()">
+            @if (logoUrl()) { <img [src]="logoUrl()" alt=""/> } @else { {{ logoInitial() }} }
+          </span>
+          <span class="rail-image-label">Logo<small>{{ logoUrl() ? 'Configurado' : 'Sin definir' }}</small></span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+
+        <button type="button" class="rail-image-row" (click)="openSpot('banner')">
+          <span class="rail-thumb rail-thumb-wide" [class.rail-thumb-empty]="!bannerUrl()">
+            @if (bannerUrl()) { <img [src]="bannerUrl()" alt=""/> } @else { <span class="dash">▭</span> }
+          </span>
+          <span class="rail-image-label">Banner<small>{{ bannerUrl() ? 'Configurado' : 'Sin definir' }}</small></span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+      </div>
+
+      <div class="rail-section">
+        <h3 class="rail-title">Colores</h3>
+
+        <!-- Presets -->
+        <div class="preset-row">
+          @for (p of presets; track p.label) {
+            <button type="button" class="preset" [title]="p.label" (click)="applyPreset(p)"
+              [class.active]="primary()===p.primary && accent()===p.accent">
+              <span [style.background]="p.primary"></span>
+              <span [style.background]="p.accent"></span>
+            </button>
+          }
+        </div>
+
+        <!-- Primario -->
+        <div class="color-field">
+          <label>Color primario <small>botones, chips, acentos</small></label>
+          <div class="color-inputs">
+            <input type="color" [value]="primary() || DEFAULT_PRIMARY"
+              (input)="setPrimary($any($event.target).value)"
+              (focus)="focusedColor.set('primary')" (blur)="focusedColor.set(null)"/>
+            <input type="text" class="hex-input" [value]="primary()"
+              (input)="setPrimary($any($event.target).value)" placeholder="{{ DEFAULT_PRIMARY }}"
+              (focus)="focusedColor.set('primary')" (blur)="focusedColor.set(null)"/>
+          </div>
+          @if (primary()) {
+            <span class="contrast" [class]="'c-' + contrastLabel(primary()).level">{{ contrastLabel(primary()).text }}</span>
+          } @else {
+            <span class="contrast c-default">Usando el default de KARD</span>
+          }
+        </div>
+
+        <!-- Acento -->
+        <div class="color-field">
+          <label>Color de acento <small>precios, títulos, CTA</small></label>
+          <div class="color-inputs">
+            <input type="color" [value]="accent() || DEFAULT_ACCENT"
+              (input)="setAccent($any($event.target).value)"
+              (focus)="focusedColor.set('accent')" (blur)="focusedColor.set(null)"/>
+            <input type="text" class="hex-input" [value]="accent()"
+              (input)="setAccent($any($event.target).value)" placeholder="{{ DEFAULT_ACCENT }}"
+              (focus)="focusedColor.set('accent')" (blur)="focusedColor.set(null)"/>
+          </div>
+          @if (accent()) {
+            <span class="contrast" [class]="'c-' + contrastLabel(accent()).level">{{ contrastLabel(accent()).text }}</span>
+          } @else {
+            <span class="contrast c-default">Usando el default de KARD</span>
+          }
+        </div>
+
+        <button type="button" class="btn-reset" (click)="resetColors()">Restablecer colores de KARD</button>
+      </div>
+
+    </aside>
+
+  </div>
+  }
+
+</div>
