@@ -48,17 +48,22 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             </button>
 
-            @if (editingSpot()==='banner') {
-              <div class="spot-popover spot-popover-banner">
-                <label>URL del banner</label>
-                <input type="url" [value]="bannerUrl()" (input)="setBanner($any($event.target).value)" placeholder="https://..." autofocus/>
-                <div class="spot-actions">
-                  <button type="button" class="spot-clear" (click)="clearBanner()">Quitar</button>
-                  <button type="button" class="spot-done" (click)="closeSpot()">Listo</button>
-                </div>
-              </div>
-            }
           </div>
+
+          <!-- El popover vive FUERA de .pv-banner: ese contenedor recorta su
+               contenido (overflow:hidden, 120px de alto) y cortaba los botones
+               por debajo. Aquí cuelga de .pv-hero, que no recorta, y como el
+               banner ocupa la esquina superior el popover cae en el mismo sitio. -->
+          @if (editingSpot()==='banner') {
+            <div class="spot-popover spot-popover-banner">
+              <label>URL del banner</label>
+              <input type="url" [value]="bannerUrl()" (input)="setBanner($any($event.target).value)" placeholder="https://..." autofocus/>
+              <div class="spot-actions">
+                <button type="button" class="spot-clear" (click)="clearBanner()">Quitar</button>
+                <button type="button" class="spot-done" (click)="closeSpot()">Listo</button>
+              </div>
+            </div>
+          }
 
           <div class="pv-hero-row">
             <!-- Logo (hotspot) -->

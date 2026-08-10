@@ -183,11 +183,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  // Sin overflow:hidden a propósito: esta caja mide 60px pero contiene dos
+  // hijos que deben sobresalir — el botón de cámara (offsets negativos) y el
+  // popover de edición (260px de ancho). Recortarlos dejaba el input de la
+  // URL encerrado dentro del logo, invisible e ineditable.
+  // La imagen se redondea con su propio border-radius.
   flex-shrink: 0;
   margin-top: -34px;
 
-  img { width: 100%; height: 100%; object-fit: cover; }
+  img { width: 100%; height: 100%; object-fit: cover; border-radius: 14.5px; }
 }
 
 .pv-logo-initial { font-size: 26px; font-weight: 800; color: var(--sf-primary); }
