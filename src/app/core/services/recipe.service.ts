@@ -2,8 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment';
 
-const API = 'http://localhost:8000/api/v1';
+const API = environment.apiUrl;
 
 /** Un ingrediente de la receta de un platillo (final). */
 export interface RecipeItem {

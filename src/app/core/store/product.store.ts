@@ -3,8 +3,9 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ProductImage } from '../services/image.service';
+import { environment } from '../../../environments/environment';
 
-const API        = 'http://localhost:8000/api/v1';
+const API        = environment.apiUrl;
 const CACHE_TTL  = 5 * 60 * 1000; // 5 minutes
 
 export interface Product {

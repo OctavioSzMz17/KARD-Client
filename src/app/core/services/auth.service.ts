@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { ConsumerLoginResponse, LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from '../models/auth.models';
+import { environment } from '../../../environments/environment';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = environment.apiUrl;
 const TOKEN_KEY = 'kard_token';
 const USER_KEY = 'kard_user';
 
