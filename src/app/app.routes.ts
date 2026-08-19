@@ -37,6 +37,7 @@ export const routes: Routes = [
       { path: '', loadComponent: () => import('./dashboard/home/home.component').then(m => m.HomeComponent) },
       { path: 'products',  loadComponent: () => import('./dashboard/products/products.component').then(m => m.ProductsComponent) },
       { path: 'inventory', loadComponent: () => import('./dashboard/inventory/inventory.component').then(m => m.InventoryComponent) },
+      { path: 'sales',     loadComponent: () => import('./dashboard/sales/sales.component').then(m => m.SalesComponent) },
       { path: 'branding',  loadComponent: () => import('./dashboard/personalization/personalization.component').then(m => m.PersonalizationComponent) }
     ]
   },

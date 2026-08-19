@@ -1,0 +1,153 @@
+<div class="sales-page">
+
+  <!-- Encabezado -->
+  <header class="page-head">
+    <div>
+      <h1>Ventas</h1>
+      <p class="subtitle">Consulta, filtra y descarga el historial de ventas del negocio.</p>
+    </div>
+
+    <div class="export-actions">
+      <button class="btn btn-ghost" (click)="downloadCsv()" [disabled]="exporting() || loading()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        CSV
+      </button>
+      <button class="btn btn-primary" (click)="downloadPdf()" [disabled]="exporting() || loading()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+        </svg>
+        {{ exporting() ? 'Generando…' : 'Reporte PDF' }}
+      </button>
+    </div>
+  </header>
+
+  <!-- Filtros -->
+  <section class="filters">
+    <div class="field">
+      <label for="f-month">Mes</label>
+      <input id="f-month" type="month" [(ngModel)]="month" (ngModelChange)="onMonthChange()">
+    </div>
+
+    <div class="field">
+      <label for="f-from">Desde</label>
+      <input id="f-from" type="date" [(ngModel)]="dateFrom" (ngModelChange)="onDateRangeChange()">
+    </div>
+
+    <div class="field">
+      <label for="f-to">Hasta</label>
+      <input id="f-to" type="date" [(ngModel)]="dateTo" (ngModelChange)="onDateRangeChange()">
+    </div>
+
+    <div class="field">
+      <label for="f-status">Estado</label>
+      <select id="f-status" [(ngModel)]="status" (ngModelChange)="applyFilters()">
+        @for (opt of statusOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field field-search">
+      <label for="f-search">Buscar</label>
+      <input
+        id="f-search"
+        type="search"
+        placeholder="Folio, cliente o correo…"
+        [(ngModel)]="search"
+        (keyup.enter)="applyFilters()">
+    </div>
+
+    <div class="field field-actions">
+      <button class="btn btn-primary" (click)="applyFilters()">Aplicar</button>
+      @if (hasActiveFilters()) {
+        <button class="btn btn-ghost" (click)="clearFilters()">Limpiar</button>
+      }
+    </div>
+  </section>
+
+  @if (hasActiveFilters()) {
+    <p class="criteria-line">Mostrando: {{ criteriaText() }}</p>
+  }
+
+  <!-- Resumen -->
+  @if (summary(); as s) {
+    <section class="kpis">
+      <div class="kpi">
+        <span class="kpi-label">Ingreso total</span>
+        <span class="kpi-value accent">${{ s.revenue | number:'1.2-2' }}</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">Pedidos</span>
+        <span class="kpi-value">{{ s.order_count }}</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">Artículos vendidos</span>
+        <span class="kpi-value">{{ s.units }}</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">Ticket promedio</span>
+        <span class="kpi-value">${{ averageTicket() | number:'1.2-2' }}</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi-label">Cancelados</span>
+        <span class="kpi-value muted">{{ s.canceled_count }}</span>
+      </div>
+    </section>
+  }
+
+  @if (error(); as e) {
+    <div class="alert">{{ e }}</div>
+  }
+
+  <!-- Tabla -->
+  <section class="table-card">
+    @if (loading()) {
+      <div class="state">Cargando ventas…</div>
+    } @else if (sales().length === 0) {
+      <div class="state">
+        <strong>Sin ventas para mostrar.</strong>
+        <span>{{ hasActiveFilters() ? 'Prueba ajustando los filtros.' : 'Aquí aparecerán las ventas cuando tus clientes hagan pedidos.' }}</span>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Folio</th>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th>Estado</th>
+              <th class="num">Artículos</th>
+              <th class="num">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sale of sales(); track sale.order_id) {
+              <tr>
+                <td class="mono">{{ sale.order_id }}</td>
+                <td class="nowrap">{{ formatDateTime(sale.created_at) }}</td>
+                <td>
+                  <div class="customer">{{ sale.customer_name }}</div>
+                  <div class="customer-mail">{{ sale.customer_email }}</div>
+                </td>
+                <td><span class="badge" [class]="'badge-' + sale.status">{{ statusLabel(sale.status) }}</span></td>
+                <td class="num">{{ sale.item_count }}</td>
+                <td class="num strong">${{ sale.total | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="pagination">
+          <button class="btn btn-ghost" (click)="goToPage(page() - 1)" [disabled]="page() === 1">Anterior</button>
+          <span class="page-info">Página {{ page() }} de {{ totalPages() }} · {{ totalRows() }} registros</span>
+          <button class="btn btn-ghost" (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()">Siguiente</button>
+        </div>
+      }
+    }
+  </section>
+</div>
