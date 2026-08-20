@@ -38,8 +38,12 @@ const STATUS_HUES: Record<string, string> = {
   canceled: '#d03b3b',   // critical
 };
 
-/** Máximo de productos con color propio; el resto se pliega en "Otros". */
-const TOP_PRODUCTS = 6;
+/**
+ * Máximo de productos con color propio; el resto se pliega en "Otros".
+ * Cinco más "Otros" son seis porciones: suficiente para ver el reparto sin
+ * que la dona se vuelva un abanico de rebanadas indistinguibles.
+ */
+const TOP_PRODUCTS = 5;
 
 /** Pasado este número de días, el eje temporal se agrupa por mes. */
 const MAX_DAY_BUCKETS = 45;
@@ -162,7 +166,7 @@ function columnChart(buckets: Bucket[]): string {
   if (buckets.length === 0) return emptyChart('Sin datos en el periodo');
 
   const W = 700;
-  const H = 225;
+  const H = 196;
   const padL = 46;
   const padR = 6;
   const padT = 18;
@@ -217,42 +221,82 @@ function columnChart(buckets: Bucket[]): string {
 }
 
 /**
- * Barra apilada horizontal de la composición del ingreso.
+ * Dona de la composición del ingreso.
  *
- * Es part-to-whole, así que va apilada y no en pastel: comparar ángulos es
- * mucho menos preciso que comparar longitudes sobre una línea común, y con
- * seis categorías la diferencia se nota.
+ * Se deja hueco el centro para alojar el total: refuerza que lo que se está
+ * repartiendo es esa cifra. Las porciones se separan con un hueco angular en
+ * vez de contornos, y cada una lleva su porcentaje encima cuando cabe; la
+ * leyenda de al lado repite nombre e importe, así que la identidad nunca
+ * depende del color solo.
  */
-function compositionBar(rows: ProductRow[], total: number): string {
+function donutChart(rows: ProductRow[], total: number): string {
   if (rows.length === 0 || total <= 0) return emptyChart('Sin ventas en el periodo');
 
-  const W = 700;
-  const barH = 34;
+  const SIZE = 260;
+  const cx = SIZE / 2;
+  const cy = SIZE / 2;
+  const R = 112;
+  const r = 68;
 
-  let x = 0;
-  const segments = rows
-    .map((r, i) => {
-      const w = (r.revenue / total) * W;
-      // 3px de superficie entre franjas: el corte se lee solo, sin
-      // necesidad de contornos.
-      const seg = `<rect x="${x.toFixed(2)}" y="0" width="${Math.max(0, w - 3).toFixed(2)}"
-                     height="${barH}" fill="${hueFor(i, rows.length)}"/>`;
-      // Etiqueta dentro del segmento solo si cabe sin recortarse.
-      const pct = (r.revenue / total) * 100;
-      const inline =
-        w > 46
-          ? `<text x="${(x + (w - 3) / 2).toFixed(2)}" y="${barH / 2 + 3.5}" text-anchor="middle"
-               font-size="10" font-weight="600" fill="#fff">${pct.toFixed(0)}%</text>`
+  // Hueco angular equivalente a ~2px de superficie sobre el radio exterior.
+  const GAP = 2 / R;
+  const TAU = Math.PI * 2;
+
+  let angle = -Math.PI / 2; // arranca arriba
+
+  const slices = rows
+    .map((row, i) => {
+      const share = row.revenue / total;
+      const sweep = share * TAU;
+      const a0 = angle + GAP / 2;
+      const a1 = angle + sweep - GAP / 2;
+      angle += sweep;
+
+      // Una porción más chica que el hueco no se puede dibujar sin invertirse.
+      if (a1 <= a0) return '';
+
+      const path = `<path d="${donutSlicePath(cx, cy, R, r, a0, a1)}"
+                      fill="${hueFor(i, rows.length)}"/>`;
+
+      // El porcentaje va dentro solo si la porción da para leerlo.
+      const mid = (a0 + a1) / 2;
+      const lr = (R + r) / 2;
+      const label =
+        share >= 0.07
+          ? `<text x="${(cx + lr * Math.cos(mid)).toFixed(1)}"
+                   y="${(cy + lr * Math.sin(mid) + 3.5).toFixed(1)}"
+                   text-anchor="middle" font-size="11" font-weight="600"
+                   fill="#fff">${Math.round(share * 100)}%</text>`
           : '';
-      x += w;
-      return seg + inline;
+
+      return path + label;
     })
     .join('');
 
-  return `<svg viewBox="0 0 ${W} ${barH}" role="img" width="100%">
-    <clipPath id="compClip"><rect x="0" y="0" width="${W}" height="${barH}" rx="3"/></clipPath>
-    <g clip-path="url(#compClip)">${segments}</g>
+  return `<svg viewBox="0 0 ${SIZE} ${SIZE}" role="img" width="100%">
+    ${slices}
+    <text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="21" font-weight="600"
+      letter-spacing="-.02em" fill="${INK}">${compactMoney(total)}</text>
+    <text x="${cx}" y="${cy + 15}" text-anchor="middle" font-size="8.5"
+      letter-spacing=".1em" fill="${INK_MUTED}">INGRESO</text>
   </svg>`;
+}
+
+/** Porción de dona: arco exterior, corte al interior, arco interior de vuelta. */
+function donutSlicePath(
+  cx: number, cy: number, R: number, r: number, a0: number, a1: number
+): string {
+  const large = a1 - a0 > Math.PI ? 1 : 0;
+  const p = (rad: number, a: number) =>
+    `${(cx + rad * Math.cos(a)).toFixed(2)},${(cy + rad * Math.sin(a)).toFixed(2)}`;
+
+  return [
+    `M${p(R, a0)}`,
+    `A${R},${R} 0 ${large} 1 ${p(R, a1)}`,
+    `L${p(r, a1)}`,
+    `A${r},${r} 0 ${large} 0 ${p(r, a0)}`,
+    'Z',
+  ].join(' ');
 }
 
 /** Leyenda de la composición: color, nombre y monto — nunca color a secas. */
@@ -394,34 +438,6 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
     ? `<img class="logo" src="${esc(opts.logoUrl)}" alt="">`
     : `<div class="logo-fallback">${esc((data.business_name || 'K').charAt(0).toUpperCase())}</div>`;
 
-  const productRows = products
-    .slice(0, 12)
-    .map(
-      p => `<tr>
-        <td>${esc(p.name)}</td>
-        <td class="num">${p.units}</td>
-        <td class="num">${money(p.revenue)}</td>
-        <td class="num">${revenueTotal > 0 ? ((p.revenue / revenueTotal) * 100).toFixed(1) : '0.0'}%</td>
-      </tr>`
-    )
-    .join('');
-
-  const saleRows = data.items
-    .map(
-      sale => `<tr>
-        <td class="mono">${esc(sale.order_id)}</td>
-        <td class="nowrap">${esc(opts.formatDateTime(sale.created_at))}</td>
-        <td>
-          <div>${esc(sale.customer_name)}</div>
-          <div class="muted">${esc(sale.customer_email)}</div>
-        </td>
-        <td><span class="badge badge-${esc(sale.status)}">${esc(opts.statusLabel(sale.status))}</span></td>
-        <td class="num">${sale.item_count}</td>
-        <td class="num">${money(sale.total)}</td>
-      </tr>`
-    )
-    .join('');
-
   const truncated = data.total > data.items.length;
 
   return `<!doctype html>
@@ -430,13 +446,24 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
 <meta charset="utf-8">
 <title>Reporte de ventas — ${esc(data.business_name)}</title>
 <style>
-  @page { size: A4; margin: 16mm 14mm 15mm; }
+  @page { size: A4; margin: 16mm 15mm; }
   * { box-sizing: border-box; }
   body {
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     color: ${INK}; margin: 0; font-size: 10px; line-height: 1.55;
-    background: #fff;
+    background: #f0f0ee;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* La hoja. En pantalla se comporta como una hoja sobre la mesa; al
+     imprimir se desarma, porque ahí los márgenes los pone @page. */
+  .sheet {
+    max-width: 860px; margin: 32px auto; background: #fff;
+    padding: 48px 54px 40px; box-shadow: 0 1px 3px rgba(0,0,0,.07);
+  }
+  @media print {
+    body { background: #fff; }
+    .sheet { max-width: none; margin: 0; padding: 0; box-shadow: none; }
   }
 
   /* Encabezado — una hairline, no una franja de color */
@@ -472,15 +499,20 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
   .metric-value { display: block; font-size: 19px; font-weight: 600;
                   letter-spacing: -.02em; margin-top: 7px; }
 
-  /* Bloques de gráfica — el aire entre secciones es lo que ordena la hoja */
-  .block { margin-top: 34px; page-break-inside: avoid; }
+  /* Bloques de gráfica — el aire entre secciones es lo que ordena la hoja.
+     Ajustado para que el resumen entre completo en una sola A4. */
+  .block { margin-top: 28px; page-break-inside: avoid; }
   .block-title { font-size: 8.5px; font-weight: 600; text-transform: uppercase;
                  letter-spacing: .12em; color: ${INK_SECONDARY}; }
   .block-note { font-size: 9px; color: ${INK_MUTED}; margin-top: 3px; margin-bottom: 18px; }
   .chart-empty { padding: 34px; text-align: center; color: ${INK_MUTED}; font-size: 9.5px;
                  border-top: 1px solid ${GRIDLINE}; border-bottom: 1px solid ${GRIDLINE}; }
 
+  /* Composición: dona a la izquierda, leyenda en columna al costado */
+  .composition { display: flex; align-items: center; gap: 44px; }
+  .composition-chart { flex: 0 0 204px; }
   .legend { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px 40px; margin-top: 20px; }
+  .legend-stack { grid-template-columns: 1fr; gap: 13px; margin-top: 0; flex: 1; }
   .legend-inline { grid-template-columns: repeat(4, 1fr); gap: 9px 24px; }
   /* En la leyenda de estados el valor va pegado a su etiqueta: son pocos
      y separarlos al ancho de la columna los desvincula visualmente. */
@@ -493,37 +525,8 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
   .legend-value { color: ${INK}; font-variant-numeric: tabular-nums; white-space: nowrap;
                   font-weight: 500; }
 
-  /* Tablas — filas aireadas, solo hairlines */
-  table { width: 100%; border-collapse: collapse; }
-  thead { display: table-header-group; }
-  th { text-align: left; font-size: 8px; text-transform: uppercase; letter-spacing: .1em;
-       font-weight: 500; color: ${INK_MUTED};
-       border-bottom: 1px solid ${BASELINE}; padding: 0 6px 9px; }
-  td { padding: 10px 6px; border-bottom: 1px solid #f2f2ef; vertical-align: top; }
-  tr { page-break-inside: avoid; }
-  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .nowrap { white-space: nowrap; }
-  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 8.5px;
-          color: ${INK_MUTED}; letter-spacing: -.01em; }
-  .muted { color: ${INK_MUTED}; font-size: 8.5px; margin-top: 2px; }
-
-  /* Estado: punto de color + texto, sin pastilla rellena */
-  .badge { display: inline-flex; align-items: baseline; gap: 6px;
-           font-size: 9px; color: ${INK_SECONDARY}; white-space: nowrap; }
-  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%;
-                   background: currentColor; flex: 0 0 auto; }
-  .badge-paid::before { background: ${STATUS_HUES['paid']}; }
-  .badge-fulfilled::before { background: ${STATUS_HUES['fulfilled']}; }
-  .badge-pending::before { background: ${STATUS_HUES['pending']}; }
-  .badge-canceled::before { background: ${STATUS_HUES['canceled']}; }
-
-  /* El margen no afecta a la impresión (ahí el salto ya separa las hojas);
-     está para que la vista en pantalla no pegue el pie con la sección. */
-  .page-break { page-break-before: always; margin-top: 42px; }
-  .section-head { font-size: 8.5px; font-weight: 600; text-transform: uppercase;
-                  letter-spacing: .12em; color: ${INK_SECONDARY}; margin: 0; }
   .warn { font-size: 9px; color: #7f1d1d; border-left: 2px solid #d03b3b;
-          padding: 3px 0 3px 10px; margin-bottom: 16px; }
+          padding: 3px 0 3px 10px; margin-top: 26px; }
 
   footer { margin-top: 30px; border-top: 1px solid ${GRIDLINE}; padding-top: 10px;
            font-size: 8px; color: ${INK_MUTED}; display: flex;
@@ -533,6 +536,7 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
 </style>
 </head>
 <body>
+<div class="sheet">
 
   <header>
     ${logo}
@@ -564,16 +568,18 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
   </div>
 
   <div class="block">
-    <div class="block-title">Ingreso por ${grouping}</div>
-    <div class="block-note">Evolución del ingreso en el periodo filtrado. Los cancelados no suman.</div>
-    ${columnChart(buckets)}
+    <div class="block-title">Composición del ingreso</div>
+    <div class="block-note">Peso de cada producto sobre el ingreso total del periodo.</div>
+    <div class="composition">
+      <div class="composition-chart">${donutChart(composition, revenueTotal)}</div>
+      <div class="legend legend-stack">${compositionLegend(composition, revenueTotal)}</div>
+    </div>
   </div>
 
   <div class="block">
-    <div class="block-title">Composición del ingreso</div>
-    <div class="block-note">Peso de cada producto sobre el ingreso total del periodo.</div>
-    ${compositionBar(composition, revenueTotal)}
-    <div class="legend">${compositionLegend(composition, revenueTotal)}</div>
+    <div class="block-title">Ingreso por ${grouping}</div>
+    <div class="block-note">Evolución del ingreso en el periodo. Los cancelados no suman.</div>
+    ${columnChart(buckets)}
   </div>
 
   ${
@@ -586,54 +592,19 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
       : ''
   }
 
-  <div class="block">
-    <div class="block-title">Productos más vendidos</div>
-    <div class="block-note">Ordenados por ingreso. Máximo doce.</div>
-    <table>
-      <thead>
-        <tr><th>Producto</th><th class="num">Unidades</th><th class="num">Ingreso</th><th class="num">% del total</th></tr>
-      </thead>
-      <tbody>${productRows || `<tr><td colspan="4" class="muted">Sin productos vendidos en el periodo.</td></tr>`}</tbody>
-    </table>
-  </div>
-
-  <footer>
-    <span>Generado por KARD · Documento interno</span>
-    <span>${esc(data.business_name || '')}</span>
-  </footer>
-
-  <div class="page-break"></div>
-
-  <h2 class="section-head">Detalle de ventas</h2>
-  <div class="block-note">${esc(opts.criteria)}</div>
   ${
     truncated
-      ? `<div class="warn">El reporte incluye ${data.items.length} de ${data.total} ventas
-         (tope de ${opts.maxRows} filas). Acota el rango de fechas para incluir todo el periodo.</div>`
+      ? `<div class="warn">Las gráficas cubren ${data.items.length} de ${data.total} ventas
+         (tope de ${opts.maxRows}). Los totales de arriba sí abarcan el periodo completo.</div>`
       : ''
   }
-  <table>
-    <thead>
-      <tr>
-        <th>Folio</th><th>Fecha</th><th>Cliente</th>
-        <th>Estado</th><th class="num">Artículos</th><th class="num">Total</th>
-      </tr>
-    </thead>
-    <tbody>${saleRows || `<tr><td colspan="6" class="muted">Sin ventas para los filtros seleccionados.</td></tr>`}</tbody>
-    <tfoot>
-      <tr>
-        <th colspan="4" style="text-align:left">Total del periodo (excluye cancelados)</th>
-        <th class="num">${s.units}</th>
-        <th class="num">${money(s.revenue)}</th>
-      </tr>
-    </tfoot>
-  </table>
 
   <footer>
-    <span>Generado por KARD · Documento interno</span>
+    <span>Generado por KARD · Documento interno · El desglose venta por venta está en la descarga CSV</span>
     <span>${esc(data.business_name || '')}</span>
   </footer>
 
+</div>
 </body>
 </html>`;
 }
