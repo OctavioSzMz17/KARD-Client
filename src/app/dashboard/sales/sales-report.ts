@@ -162,11 +162,11 @@ function columnChart(buckets: Bucket[]): string {
   if (buckets.length === 0) return emptyChart('Sin datos en el periodo');
 
   const W = 700;
-  const H = 190;
-  const padL = 52;
-  const padR = 8;
-  const padT = 12;
-  const padB = 26;
+  const H = 225;
+  const padL = 46;
+  const padR = 6;
+  const padT = 18;
+  const padB = 34;
 
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
@@ -174,22 +174,26 @@ function columnChart(buckets: Bucket[]): string {
   const niceMax = niceCeil(max);
 
   const slot = plotW / buckets.length;
-  const barW = Math.max(2, Math.min(slot - 2, 34)); // 2px de aire entre columnas
+  // Columnas finas con aire generoso: la barra gruesa pega el bloque y
+  // convierte la serie en una mancha.
+  const barW = Math.max(2, Math.min(slot - 7, 17));
 
-  // Tres líneas de retícula, discretas: la referencia sin robar atención.
+  // Retícula discreta: referencia sin robar atención. Solo la base lleva
+  // un tono algo más firme, porque es el cero.
   const grid = [0, 0.5, 1]
     .map(t => {
       const y = padT + plotH - t * plotH;
       return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}"
-                stroke="${t === 0 ? BASELINE : GRIDLINE}" stroke-width="1"/>
-              <text x="${padL - 7}" y="${(y + 3).toFixed(1)}" text-anchor="end"
-                font-size="8.5" fill="${INK_MUTED}">${compactMoney(t * niceMax)}</text>`;
+                stroke="${t === 0 ? BASELINE : GRIDLINE}" stroke-width="${t === 0 ? 1 : 0.75}"/>
+              <text x="${padL - 10}" y="${(y + 3).toFixed(1)}" text-anchor="end"
+                font-size="8" fill="${INK_MUTED}"
+                letter-spacing=".02em">${compactMoney(t * niceMax)}</text>`;
     })
     .join('');
 
-  // Con muchas columnas se rota la etiqueta y se muestra una de cada N,
-  // para que el eje no se convierta en una mancha ilegible.
-  const step = Math.ceil(buckets.length / 16);
+  // Con muchas columnas se muestra una etiqueta de cada N, para que el eje
+  // no se convierta en una mancha ilegible.
+  const step = Math.ceil(buckets.length / 13);
 
   const bars = buckets
     .map((b, i) => {
@@ -198,12 +202,12 @@ function columnChart(buckets: Bucket[]): string {
       const y = padT + plotH - h;
       const label =
         i % step === 0
-          ? `<text x="${(x + barW / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle"
+          ? `<text x="${(x + barW / 2).toFixed(1)}" y="${H - 12}" text-anchor="middle"
                font-size="8" fill="${INK_MUTED}">${esc(b.label)}</text>`
           : '';
       const bar =
         h > 0.5
-          ? `<path d="${columnPath(x, y, barW, h, 4)}" fill="${SERIES_BLUE}"/>`
+          ? `<path d="${columnPath(x, y, barW, h, 3)}" fill="${SERIES_BLUE}"/>`
           : '';
       return bar + label;
     })
@@ -223,29 +227,30 @@ function compositionBar(rows: ProductRow[], total: number): string {
   if (rows.length === 0 || total <= 0) return emptyChart('Sin ventas en el periodo');
 
   const W = 700;
-  const H = 46;
-  const barH = 26;
+  const barH = 34;
 
   let x = 0;
   const segments = rows
     .map((r, i) => {
       const w = (r.revenue / total) * W;
-      const seg = `<rect x="${x.toFixed(2)}" y="0" width="${Math.max(0, w - 2).toFixed(2)}"
+      // 3px de superficie entre franjas: el corte se lee solo, sin
+      // necesidad de contornos.
+      const seg = `<rect x="${x.toFixed(2)}" y="0" width="${Math.max(0, w - 3).toFixed(2)}"
                      height="${barH}" fill="${hueFor(i, rows.length)}"/>`;
       // Etiqueta dentro del segmento solo si cabe sin recortarse.
       const pct = (r.revenue / total) * 100;
       const inline =
-        w > 42
-          ? `<text x="${(x + w / 2 - 1).toFixed(2)}" y="${barH / 2 + 3.5}" text-anchor="middle"
-               font-size="9.5" font-weight="700" fill="#fff">${pct.toFixed(0)}%</text>`
+        w > 46
+          ? `<text x="${(x + (w - 3) / 2).toFixed(2)}" y="${barH / 2 + 3.5}" text-anchor="middle"
+               font-size="10" font-weight="600" fill="#fff">${pct.toFixed(0)}%</text>`
           : '';
       x += w;
       return seg + inline;
     })
     .join('');
 
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" width="100%">
-    <clipPath id="compClip"><rect x="0" y="0" width="${W}" height="${barH}" rx="4"/></clipPath>
+  return `<svg viewBox="0 0 ${W} ${barH}" role="img" width="100%">
+    <clipPath id="compClip"><rect x="0" y="0" width="${W}" height="${barH}" rx="3"/></clipPath>
     <g clip-path="url(#compClip)">${segments}</g>
   </svg>`;
 }
@@ -270,13 +275,13 @@ function statusBar(buckets: Bucket[], statusLabel: (s: string) => string): strin
   if (total === 0) return '';
 
   const W = 700;
-  const barH = 18;
+  const barH = 24;
   let x = 0;
 
   const segments = buckets
     .map(b => {
       const w = (b.value / total) * W;
-      const seg = `<rect x="${x.toFixed(2)}" y="0" width="${Math.max(0, w - 2).toFixed(2)}"
+      const seg = `<rect x="${x.toFixed(2)}" y="0" width="${Math.max(0, w - 3).toFixed(2)}"
                      height="${barH}" fill="${STATUS_HUES[b.label] ?? OTHER_HUE}"/>`;
       x += w;
       return seg;
@@ -425,82 +430,104 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
 <meta charset="utf-8">
 <title>Reporte de ventas — ${esc(data.business_name)}</title>
 <style>
-  @page { size: A4; margin: 13mm 11mm 14mm; }
+  @page { size: A4; margin: 16mm 14mm 15mm; }
   * { box-sizing: border-box; }
   body {
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    color: ${INK}; margin: 0; font-size: 10.5px; line-height: 1.45;
+    color: ${INK}; margin: 0; font-size: 10px; line-height: 1.55;
     background: #fff;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Encabezado */
-  header { display: flex; align-items: center; gap: 13px;
-           border-bottom: 2px solid ${SERIES_BLUE}; padding-bottom: 11px; }
-  .logo { width: 50px; height: 50px; object-fit: contain; border-radius: 8px; }
-  .logo-fallback { width: 50px; height: 50px; border-radius: 8px; background: ${SERIES_BLUE};
-                   color: #fff; font-size: 25px; font-weight: 700;
+  /* Encabezado — una hairline, no una franja de color */
+  header { display: flex; align-items: center; gap: 16px;
+           border-bottom: 1px solid ${BASELINE}; padding-bottom: 18px; }
+  .logo { width: 44px; height: 44px; object-fit: contain; border-radius: 7px; }
+  .logo-fallback { width: 44px; height: 44px; border-radius: 7px; background: ${SERIES_BLUE};
+                   color: #fff; font-size: 21px; font-weight: 600;
                    display: flex; align-items: center; justify-content: center; }
   .head-main { flex: 1; }
-  .biz { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
-  .doc-title { font-size: 11px; color: ${INK_SECONDARY}; font-weight: 600;
-               letter-spacing: .05em; text-transform: uppercase; margin-top: 1px; }
-  .head-meta { text-align: right; font-size: 9px; color: ${INK_MUTED}; line-height: 1.6; }
-  .head-meta strong { color: ${INK_SECONDARY}; }
+  .biz { font-size: 19px; font-weight: 600; letter-spacing: -.015em; line-height: 1.2; }
+  .doc-title { font-size: 9px; color: ${INK_MUTED}; font-weight: 500;
+               letter-spacing: .14em; text-transform: uppercase; margin-top: 5px; }
+  .head-meta { text-align: right; font-size: 8.5px; color: ${INK_MUTED}; line-height: 1.75; }
+  .head-meta strong { color: ${INK_SECONDARY}; font-weight: 500; }
 
-  .criteria { font-size: 9.5px; color: ${INK_SECONDARY}; padding: 7px 0 0; }
-  .criteria b { color: ${INK}; }
+  .criteria { font-size: 9px; color: ${INK_MUTED}; padding: 12px 0 0; letter-spacing: .01em; }
+  .criteria b { color: ${INK_SECONDARY}; font-weight: 500; }
 
-  /* Cifra principal + KPIs */
-  .hero-row { display: flex; gap: 14px; align-items: stretch; margin: 14px 0 4px; }
-  .hero { flex: 0 0 34%; border: 1px solid ${GRIDLINE}; border-radius: 8px; padding: 12px 14px; }
-  .hero-label { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: ${INK_MUTED}; }
-  .hero-value { font-size: 30px; font-weight: 700; letter-spacing: -.02em; margin-top: 3px; }
-  .hero-sub { font-size: 9.5px; color: ${INK_SECONDARY}; margin-top: 3px; }
-  .kpis { flex: 1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .kpi { border: 1px solid ${GRIDLINE}; border-radius: 8px; padding: 8px 11px; }
-  .kpi-label { font-size: 8.5px; text-transform: uppercase; letter-spacing: .05em; color: ${INK_MUTED}; }
-  .kpi-value { font-size: 15px; font-weight: 700; margin-top: 2px; }
+  /* Cifra principal + métricas — sin cajas, separadas por hairlines */
+  .summary { display: flex; align-items: flex-start; gap: 30px; margin: 30px 0 6px; }
+  .hero { flex: 0 0 30%; }
+  .hero-label { font-size: 8.5px; text-transform: uppercase; letter-spacing: .12em;
+                color: ${INK_MUTED}; }
+  .hero-value { font-size: 34px; font-weight: 600; letter-spacing: -.03em;
+                line-height: 1.1; margin-top: 8px; }
+  .hero-sub { font-size: 9px; color: ${INK_MUTED}; margin-top: 8px; }
+  .metrics { flex: 1; display: flex; }
+  .metric { flex: 1; padding: 2px 0 2px 20px; border-left: 1px solid ${GRIDLINE}; }
+  .metric:first-child { border-left: none; padding-left: 0; }
+  .metric-label { display: block; font-size: 8.5px; text-transform: uppercase;
+                  letter-spacing: .1em; color: ${INK_MUTED}; }
+  .metric-value { display: block; font-size: 19px; font-weight: 600;
+                  letter-spacing: -.02em; margin-top: 7px; }
 
-  /* Bloques de gráfica */
-  .block { margin-top: 15px; page-break-inside: avoid; }
-  .block-title { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
-  .block-note { font-size: 9px; color: ${INK_MUTED}; margin-bottom: 7px; }
-  .chart-empty { border: 1px dashed ${GRIDLINE}; border-radius: 8px; padding: 26px;
-                 text-align: center; color: ${INK_MUTED}; font-size: 10px; }
+  /* Bloques de gráfica — el aire entre secciones es lo que ordena la hoja */
+  .block { margin-top: 34px; page-break-inside: avoid; }
+  .block-title { font-size: 8.5px; font-weight: 600; text-transform: uppercase;
+                 letter-spacing: .12em; color: ${INK_SECONDARY}; }
+  .block-note { font-size: 9px; color: ${INK_MUTED}; margin-top: 3px; margin-bottom: 18px; }
+  .chart-empty { padding: 34px; text-align: center; color: ${INK_MUTED}; font-size: 9.5px;
+                 border-top: 1px solid ${GRIDLINE}; border-bottom: 1px solid ${GRIDLINE}; }
 
-  .legend { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px 18px; margin-top: 9px; }
-  .legend-inline { grid-template-columns: repeat(4, 1fr); }
-  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 9.5px; }
-  .swatch { width: 9px; height: 9px; border-radius: 2px; flex: 0 0 auto; }
-  .legend-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .legend-value { color: ${INK_SECONDARY}; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .legend { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px 40px; margin-top: 20px; }
+  .legend-inline { grid-template-columns: repeat(4, 1fr); gap: 9px 24px; }
+  /* En la leyenda de estados el valor va pegado a su etiqueta: son pocos
+     y separarlos al ancho de la columna los desvincula visualmente. */
+  .legend-inline .legend-name { flex: 0 1 auto; }
+  .legend-item { display: flex; align-items: baseline; gap: 8px; font-size: 9px; }
+  .swatch { width: 7px; height: 7px; border-radius: 2px; flex: 0 0 auto;
+            position: relative; top: -1px; }
+  .legend-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                 color: ${INK_SECONDARY}; }
+  .legend-value { color: ${INK}; font-variant-numeric: tabular-nums; white-space: nowrap;
+                  font-weight: 500; }
 
-  /* Tablas */
+  /* Tablas — filas aireadas, solo hairlines */
   table { width: 100%; border-collapse: collapse; }
   thead { display: table-header-group; }
-  th { text-align: left; font-size: 8.5px; text-transform: uppercase; letter-spacing: .05em;
-       color: ${INK_MUTED}; border-bottom: 1.5px solid ${BASELINE}; padding: 6px 5px; }
-  td { padding: 6px 5px; border-bottom: 1px solid #f0f0ec; vertical-align: top; }
+  th { text-align: left; font-size: 8px; text-transform: uppercase; letter-spacing: .1em;
+       font-weight: 500; color: ${INK_MUTED};
+       border-bottom: 1px solid ${BASELINE}; padding: 0 6px 9px; }
+  td { padding: 10px 6px; border-bottom: 1px solid #f2f2ef; vertical-align: top; }
   tr { page-break-inside: avoid; }
   .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .nowrap { white-space: nowrap; }
-  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 9px; color: ${INK_SECONDARY}; }
-  .muted { color: ${INK_MUTED}; font-size: 9px; }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 8.5px;
+          color: ${INK_MUTED}; letter-spacing: -.01em; }
+  .muted { color: ${INK_MUTED}; font-size: 8.5px; margin-top: 2px; }
 
-  .badge { display: inline-block; padding: 2px 6px; border-radius: 20px;
-           font-size: 8.5px; font-weight: 600; }
-  .badge-paid { background: #dcfce7; color: #14532d; }
-  .badge-fulfilled { background: #dbeafe; color: #14306b; }
-  .badge-pending { background: #fef3c7; color: #713f12; }
-  .badge-canceled { background: #fee2e2; color: #7f1d1d; }
+  /* Estado: punto de color + texto, sin pastilla rellena */
+  .badge { display: inline-flex; align-items: baseline; gap: 6px;
+           font-size: 9px; color: ${INK_SECONDARY}; white-space: nowrap; }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%;
+                   background: currentColor; flex: 0 0 auto; }
+  .badge-paid::before { background: ${STATUS_HUES['paid']}; }
+  .badge-fulfilled::before { background: ${STATUS_HUES['fulfilled']}; }
+  .badge-pending::before { background: ${STATUS_HUES['pending']}; }
+  .badge-canceled::before { background: ${STATUS_HUES['canceled']}; }
 
-  .page-break { page-break-before: always; }
-  .section-head { font-size: 12px; font-weight: 700; margin: 0 0 3px; }
-  .warn { font-size: 9px; color: #7f1d1d; background: #fee2e2;
-          border-radius: 5px; padding: 5px 8px; margin-bottom: 8px; }
+  /* El margen no afecta a la impresión (ahí el salto ya separa las hojas);
+     está para que la vista en pantalla no pegue el pie con la sección. */
+  .page-break { page-break-before: always; margin-top: 42px; }
+  .section-head { font-size: 8.5px; font-weight: 600; text-transform: uppercase;
+                  letter-spacing: .12em; color: ${INK_SECONDARY}; margin: 0; }
+  .warn { font-size: 9px; color: #7f1d1d; border-left: 2px solid #d03b3b;
+          padding: 3px 0 3px 10px; margin-bottom: 16px; }
 
-  footer { margin-top: 14px; border-top: 1px solid ${GRIDLINE}; padding-top: 7px;
-           font-size: 8.5px; color: ${INK_MUTED}; display: flex; justify-content: space-between; }
+  footer { margin-top: 30px; border-top: 1px solid ${GRIDLINE}; padding-top: 10px;
+           font-size: 8px; color: ${INK_MUTED}; display: flex;
+           justify-content: space-between; letter-spacing: .03em; }
 
   @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
 </style>
@@ -522,17 +549,17 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
 
   <div class="criteria"><b>Criterios:</b> ${esc(opts.criteria)}</div>
 
-  <div class="hero-row">
+  <div class="summary">
     <div class="hero">
       <div class="hero-label">Ingreso del periodo</div>
       <div class="hero-value">${money(s.revenue)}</div>
       <div class="hero-sub">Excluye ${s.canceled_count} pedido(s) cancelado(s)</div>
     </div>
-    <div class="kpis">
-      <div class="kpi"><div class="kpi-label">Pedidos</div><div class="kpi-value">${s.order_count}</div></div>
-      <div class="kpi"><div class="kpi-label">Artículos vendidos</div><div class="kpi-value">${s.units}</div></div>
-      <div class="kpi"><div class="kpi-label">Ticket promedio</div><div class="kpi-value">${money(avg)}</div></div>
-      <div class="kpi"><div class="kpi-label">Productos distintos</div><div class="kpi-value">${products.length}</div></div>
+    <div class="metrics">
+      <div class="metric"><span class="metric-label">Pedidos</span><span class="metric-value">${s.order_count}</span></div>
+      <div class="metric"><span class="metric-label">Artículos</span><span class="metric-value">${s.units}</span></div>
+      <div class="metric"><span class="metric-label">Ticket prom.</span><span class="metric-value">${money(avg)}</span></div>
+      <div class="metric"><span class="metric-label">Productos</span><span class="metric-value">${products.length}</span></div>
     </div>
   </div>
 
