@@ -86,6 +86,15 @@ export class SalesService {
     });
   }
 
+  /** Cambia el estado de una venta. Devuelve la venta ya actualizada. */
+  updateStatus(orderId: string, status: OrderStatus): Observable<Sale> {
+    return this.http.patch<Sale>(
+      `${API}/orders/business/sales/${orderId}/status`,
+      { status },
+      { headers: this.headers }
+    );
+  }
+
   /** 'YYYY-MM-DD' → el día siguiente, en la misma forma. */
   private nextDay(isoDate: string): string {
     const [y, m, d] = isoDate.split('-').map(Number);

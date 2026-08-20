@@ -132,7 +132,19 @@
                   <div class="customer">{{ sale.customer_name }}</div>
                   <div class="customer-mail">{{ sale.customer_email }}</div>
                 </td>
-                <td><span class="badge" [class]="'badge-' + sale.status">{{ statusLabel(sale.status) }}</span></td>
+                <td>
+                  <select
+                    class="status-select"
+                    [class]="'badge-' + sale.status"
+                    [value]="sale.status"
+                    [disabled]="savingStatusFor() === sale.order_id"
+                    (change)="changeStatus(sale, $event)"
+                    [attr.aria-label]="'Estado del pedido ' + sale.order_id">
+                    @for (opt of assignableStatuses(); track opt.value) {
+                      <option [value]="opt.value">{{ opt.label }}</option>
+                    }
+                  </select>
+                </td>
                 <td class="num">{{ sale.item_count }}</td>
                 <td class="num strong">${{ sale.total | number:'1.2-2' }}</td>
               </tr>

@@ -138,6 +138,37 @@ export class SalesComponent implements OnInit {
     this.applyFilters();
   }
 
+  /** Estados que el negocio puede asignar (sin la opción "todos"). */
+  assignableStatuses = computed(() =>
+    this.statusOptions.filter(o => o.value !== '') as { value: OrderStatus; label: string }[]
+  );
+
+  /** Folio cuyo estado se está guardando, para bloquear solo esa fila. */
+  savingStatusFor = signal<string | null>(null);
+
+  changeStatus(sale: Sale, event: Event): void {
+    const next = (event.target as HTMLSelectElement).value as OrderStatus;
+    if (!next || next === sale.status) return;
+
+    this.savingStatusFor.set(sale.order_id);
+    this.error.set(null);
+
+    this.salesService.updateStatus(sale.order_id, next).subscribe({
+      next: () => {
+        this.savingStatusFor.set(null);
+        // Recargamos en vez de parchear la fila: el cambio mueve los totales
+        // (un cancelado sale del ingreso) y el resumen viene del servidor.
+        this.load();
+      },
+      error: err => {
+        this.savingStatusFor.set(null);
+        this.error.set(err?.error?.error ?? 'No se pudo cambiar el estado del pedido.');
+        // Devolvemos el select a lo que dice el servidor.
+        (event.target as HTMLSelectElement).value = sale.status;
+      },
+    });
+  }
+
   goToPage(p: number): void {
     if (p < 1 || p > this.totalPages() || p === this.page()) return;
     this.page.set(p);
