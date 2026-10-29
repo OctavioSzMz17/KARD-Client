@@ -35,6 +35,17 @@ export interface Contact {
   social?:   Social;
 }
 
+/** Cómo puede recibir su pedido el cliente en esta tienda. */
+export interface StorefrontFulfillment {
+  dine_in:  boolean;
+  takeaway: boolean;
+  pickup:   boolean;
+  delivery: boolean;
+  shipping_flat_fee: string;
+  free_shipping_above: string | null;
+  delivery_notes: string | null;
+}
+
 export interface StorefrontInfo {
   slug: string;
   business_name: string;
@@ -47,6 +58,8 @@ export interface StorefrontInfo {
   tagline?:     string | null;
   description?: string | null;
   contact?:     Contact | null;
+  /** Modos de entrega habilitados por el negocio. */
+  fulfillment?: StorefrontFulfillment | null;
 }
 
 export interface StorefrontProduct {

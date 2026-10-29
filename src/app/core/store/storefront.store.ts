@@ -1,7 +1,14 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { StorefrontInfo, StorefrontService } from '../services/storefront.service';
 import { Cart, CartService } from '../services/cart.service';
-import { Order, OrderService, StockConflict } from '../services/order.service';
+import {
+  FulfillmentChoice,
+  FulfillmentType,
+  Order,
+  OrderService,
+  ShippingAddress,
+  StockConflict,
+} from '../services/order.service';
 import { SnackbarService } from '../services/snackbar.service';
 
 // Defaults de KARD cuando el negocio no definió tema
@@ -40,6 +47,60 @@ export class StorefrontStore {
     '--sf-primary': this.store()?.theme?.primary ?? DEFAULT_PRIMARY,
     '--sf-accent':  this.store()?.theme?.accent  ?? DEFAULT_ACCENT,
   }));
+
+  // ── Entrega ───────────────────────────────────────────
+  // Qué eligió el cliente y los datos que ese modo exige.
+  fulfillmentType = signal<FulfillmentType | null>(null);
+  tableNumber     = signal('');
+  address         = signal<ShippingAddress>({ street: '', city: '' });
+
+  /**
+   * Solo los modos que el negocio habilitó. Si el backend no los manda
+   * (tienda vieja en caché), se asume el mínimo universal: recoger.
+   */
+  readonly modosDisponibles = computed<FulfillmentType[]>(() => {
+    const f = this.store()?.fulfillment;
+    if (!f) return ['pickup'];
+    const todos: FulfillmentType[] = ['dine_in', 'takeaway', 'pickup', 'delivery'];
+    return todos.filter(m => f[m]);
+  });
+
+  /** Costo de envío a mostrar antes de confirmar, según lo que cobra el negocio. */
+  readonly shippingCost = computed(() => {
+    if (this.fulfillmentType() !== 'delivery') return 0;
+    const f = this.store()?.fulfillment;
+    if (!f) return 0;
+    const libre = f.free_shipping_above !== null ? Number(f.free_shipping_above) : null;
+    const sub = Number(this.cart()?.total ?? 0);
+    if (libre !== null && sub >= libre) return 0;
+    return Number(f.shipping_flat_fee ?? 0);
+  });
+
+  readonly orderTotal = computed(() => Number(this.cart()?.total ?? 0) + this.shippingCost());
+
+  /**
+   * Por qué todavía no se puede confirmar, o null si ya se puede.
+   *
+   * Se valida aquí y no solo en el backend para que el cliente vea el motivo
+   * en el momento, en vez de recibir un 422 al pulsar «Confirmar».
+   */
+  readonly fulfillmentError = computed<string | null>(() => {
+    const tipo = this.fulfillmentType();
+    if (!tipo) return 'Elige cómo quieres recibir tu pedido';
+    if (tipo === 'dine_in' && !this.tableNumber().trim()) return 'Indica tu número de mesa';
+    if (tipo === 'delivery') {
+      const a = this.address();
+      if (!a.street.trim()) return 'Falta la calle y el número';
+      if (!a.city.trim())   return 'Falta la ciudad';
+    }
+    return null;
+  });
+
+  setFulfillment(tipo: FulfillmentType): void { this.fulfillmentType.set(tipo); }
+  setTable(value: string): void { this.tableNumber.set(value); }
+  setAddressField(field: keyof ShippingAddress, value: string): void {
+    this.address.update(a => ({ ...a, [field]: value }));
+  }
 
   // ── Carga ─────────────────────────────────────────────
   init(slug: string): void {
@@ -118,8 +179,17 @@ export class StorefrontStore {
 
   private placeOrder(mode: 'reject' | 'skip'): void {
     if (this.cartBusy()) return;
+    if (this.fulfillmentError()) return;   // el botón ya está bloqueado; esto es el cinturón
+
+    const tipo = this.fulfillmentType()!;
+    const choice: FulfillmentChoice = { fulfillment_type: tipo };
+    // Cada modo manda solo lo suyo: el backend rechaza una dirección en un
+    // pedido para llevar, igual que una mesa sin número.
+    if (tipo === 'dine_in')  choice.table_number = this.tableNumber().trim();
+    if (tipo === 'delivery') choice.shipping_address = this.cleanAddress();
+
     this.cartBusy.set(true);
-    this.orderSvc.create(this.slug, mode).subscribe({
+    this.orderSvc.create(this.slug, choice, mode).subscribe({
       next: (order) => {
         this.cartBusy.set(false);
         this.placedOrder.set(order);
@@ -137,6 +207,21 @@ export class StorefrontStore {
         this.loadCart();   // el stock pudo cambiar del lado del server
       }
     });
+  }
+
+  /** Los campos opcionales vacíos viajan como null, no como cadena vacía. */
+  private cleanAddress(): ShippingAddress {
+    const a = this.address();
+    const opt = (v?: string | null) => (v ?? '').trim() || null;
+    return {
+      street: a.street.trim(),
+      city: a.city.trim(),
+      neighborhood: opt(a.neighborhood),
+      state: opt(a.state),
+      postal_code: opt(a.postal_code),
+      phone: opt(a.phone),
+      notes: opt(a.notes),
+    };
   }
 
   private emptyCartLocally(): void {

@@ -25,6 +25,17 @@ export class StorefrontLayoutComponent implements OnInit {
     this.sf.init(slug);
   }
 
+  /** Nombre del modo de entrega tal como lo lee el cliente, no como lo guarda la API. */
+  modoLabel(modo: string): string {
+    switch (modo) {
+      case 'dine_in':  return 'Comer aquí';
+      case 'takeaway': return 'Para llevar';
+      case 'pickup':   return 'Recoger después';
+      case 'delivery': return 'A domicilio';
+      default:         return modo;
+    }
+  }
+
   typeLabel = computed(() => {
     const t = this.sf.store()?.business_type;
     return t ? (TYPE_LABELS[t] ?? t) : '';

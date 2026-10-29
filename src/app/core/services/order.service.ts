@@ -11,6 +11,27 @@ export type OrderStatus = 'pending' | 'paid' | 'fulfilled' | 'canceled';
 /** Qué hacer si falta stock al confirmar el pedido. */
 export type OnInsufficientStock = 'reject' | 'skip';
 
+/** Cómo recibe el cliente su pedido. */
+export type FulfillmentType = 'dine_in' | 'takeaway' | 'pickup' | 'delivery';
+
+/** Dirección de entrega. Se copia dentro del pedido, no se referencia. */
+export interface ShippingAddress {
+  street: string;
+  neighborhood?: string | null;
+  city: string;
+  state?: string | null;
+  postal_code?: string | null;
+  phone?: string | null;
+  notes?: string | null;
+}
+
+/** Elección de entrega del cliente, con los datos que exige cada modo. */
+export interface FulfillmentChoice {
+  fulfillment_type: FulfillmentType;
+  table_number?: string | null;
+  shipping_address?: ShippingAddress | null;
+}
+
 export interface OrderItem {
   product_id: string;
   product_name: string;
@@ -95,13 +116,25 @@ export class OrderService {
    * - 'reject' (default): si falta stock → 409 INSUFFICIENT_STOCK, no crea nada, carrito intacto.
    * - 'skip': omite los productos sin stock, crea el pedido con el resto (llegan en `skipped`)
    *   y vacía el carrito.
+   *
+   * `fulfillment` dice cómo recibe el pedido el cliente. Cada modo exige sus
+   * datos — mesa para consumo en el local, dirección para envío — y el
+   * backend rechaza la combinación incoherente con un 422.
    */
-  create(slug: string, onInsufficientStock: OnInsufficientStock = 'reject'): Observable<Order> {
-    return this.http.post<Order>(
-      `${API}/orders`,
-      { slug, on_insufficient_stock: onInsufficientStock },
-      { headers: this.headers }
-    );
+  create(
+    slug: string,
+    fulfillment: FulfillmentChoice,
+    onInsufficientStock: OnInsufficientStock = 'reject',
+  ): Observable<Order> {
+    const body: Record<string, unknown> = {
+      slug,
+      on_insufficient_stock: onInsufficientStock,
+      fulfillment_type: fulfillment.fulfillment_type,
+    };
+    if (fulfillment.table_number)    body['table_number']    = fulfillment.table_number;
+    if (fulfillment.shipping_address) body['shipping_address'] = fulfillment.shipping_address;
+
+    return this.http.post<Order>(`${API}/orders`, body, { headers: this.headers });
   }
 
   list(page = 1, pageSize = 20): Observable<OrderListResponse> {

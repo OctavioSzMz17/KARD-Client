@@ -259,12 +259,93 @@
             }
           </div>
 
+          <!-- ── Cómo recibe su pedido ──────────────────── -->
+          <div class="ful-block">
+            <span class="ful-title">¿Cómo lo quieres?</span>
+
+            <div class="ful-options">
+              @for (m of sf.modosDisponibles(); track m) {
+                <button type="button" class="ful-opt"
+                  [class.ful-opt-on]="sf.fulfillmentType() === m"
+                  (click)="sf.setFulfillment(m)" [disabled]="sf.cartBusy()">
+                  {{ modoLabel(m) }}
+                </button>
+              }
+            </div>
+
+            @if (sf.fulfillmentType() === 'dine_in') {
+              <label class="ful-field">
+                <span>Número de mesa</span>
+                <input type="text" maxlength="20" placeholder="ej. 7" [value]="sf.tableNumber()"
+                  (input)="sf.setTable($any($event.target).value)" [disabled]="sf.cartBusy()"/>
+              </label>
+            }
+
+            @if (sf.fulfillmentType() === 'delivery') {
+              <div class="ful-address">
+                <label class="ful-field">
+                  <span>Calle y número *</span>
+                  <input type="text" placeholder="Av. Constitución 1450" [value]="sf.address().street"
+                    (input)="sf.setAddressField('street', $any($event.target).value)" [disabled]="sf.cartBusy()"/>
+                </label>
+                <div class="ful-row">
+                  <label class="ful-field">
+                    <span>Colonia</span>
+                    <input type="text" [value]="sf.address().neighborhood ?? ''"
+                      (input)="sf.setAddressField('neighborhood', $any($event.target).value)" [disabled]="sf.cartBusy()"/>
+                  </label>
+                  <label class="ful-field">
+                    <span>Ciudad *</span>
+                    <input type="text" placeholder="Monterrey" [value]="sf.address().city"
+                      (input)="sf.setAddressField('city', $any($event.target).value)" [disabled]="sf.cartBusy()"/>
+                  </label>
+                </div>
+                <div class="ful-row">
+                  <label class="ful-field">
+                    <span>Código postal</span>
+                    <input type="text" maxlength="12" [value]="sf.address().postal_code ?? ''"
+                      (input)="sf.setAddressField('postal_code', $any($event.target).value)" [disabled]="sf.cartBusy()"/>
+                  </label>
+                  <label class="ful-field">
+                    <span>Teléfono</span>
+                    <input type="tel" [value]="sf.address().phone ?? ''"
+                      (input)="sf.setAddressField('phone', $any($event.target).value)" [disabled]="sf.cartBusy()"/>
+                  </label>
+                </div>
+                <label class="ful-field">
+                  <span>Referencias</span>
+                  <input type="text" placeholder="Portón negro, entre 5 y 7" [value]="sf.address().notes ?? ''"
+                    (input)="sf.setAddressField('notes', $any($event.target).value)" [disabled]="sf.cartBusy()"/>
+                </label>
+                @if (sf.store()?.fulfillment?.delivery_notes; as nota) {
+                  <p class="ful-note">{{ nota }}</p>
+                }
+              </div>
+            }
+          </div>
+
           <div class="cart-footer">
+            @if (sf.shippingCost() > 0 || sf.fulfillmentType() === 'delivery') {
+              <div class="cart-sub-row">
+                <span>Productos</span>
+                <span>${{ sf.cart()!.total }}</span>
+              </div>
+              <div class="cart-sub-row">
+                <span>Envío</span>
+                <span>{{ sf.shippingCost() > 0 ? '$' + sf.shippingCost().toFixed(2) : 'Gratis' }}</span>
+              </div>
+            }
             <div class="cart-total-row">
               <span>Total</span>
-              <span class="cart-total">${{ sf.cart()!.total }}</span>
+              <span class="cart-total">${{ sf.orderTotal().toFixed(2) }}</span>
             </div>
-            <button class="btn-primary btn-confirm-order" (click)="sf.confirmOrder()" [disabled]="sf.cartBusy()">
+
+            @if (sf.fulfillmentError(); as motivo) {
+              <p class="ful-error">{{ motivo }}</p>
+            }
+
+            <button class="btn-primary btn-confirm-order" (click)="sf.confirmOrder()"
+              [disabled]="sf.cartBusy() || sf.fulfillmentError() !== null">
               {{ sf.cartBusy() ? 'Procesando...' : 'Confirmar pedido' }}
             </button>
             <button class="btn-clear-cart" (click)="sf.clearCart()" [disabled]="sf.cartBusy()">Vaciar carrito</button>
