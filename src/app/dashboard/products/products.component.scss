@@ -830,3 +830,197 @@
   &:hover:not(:disabled) { background: #1e3799; }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
+
+// ── Edición masiva básica ─────────────────────────────────
+.btn-bulk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: white;
+  color: #1e3a8a;
+  border: 1.5px solid #d9def0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover:not(:disabled) { border-color: #1e3a8a; background: #f5f7ff; }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+.bulk-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1040px, calc(100vw - 48px));
+  max-height: calc(100vh - 80px);
+  background: #ffffff;
+  border-radius: 16px;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(30, 20, 80, 0.22);
+  animation: bulkIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+@keyframes bulkIn {
+  from { opacity: 0; transform: translate(-50%, -48%); }
+  to   { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.bulk-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 22px 26px 18px;
+  border-bottom: 1px solid #f0f1f5;
+
+  h2 { font-size: 18px; font-weight: 700; color: #1a1a2e; margin: 0; }
+}
+
+.bulk-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #8a8fa8;
+}
+
+.bulk-body {
+  overflow-y: auto;
+  padding: 0 26px;
+  flex: 1;
+}
+
+.bulk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead th {
+    position: sticky;
+    top: 0;
+    background: white;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #8a8fa8;
+    padding: 14px 10px 10px;
+    border-bottom: 1px solid #eef0f5;
+    z-index: 1;
+  }
+
+  tbody td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f5f6fa;
+    vertical-align: middle;
+  }
+
+  .col-img   { width: 54px; }
+  .col-price { width: 132px; }
+  .col-state { width: 38px; text-align: center; }
+}
+
+.row-dirty td { background: #fbfaf2; }
+.row-error td { background: #fdf3f3; }
+
+.bulk-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f0f1f5;
+  display: block;
+}
+
+.bulk-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #b0b4c8;
+  background: #f0f1f5;
+}
+
+.bulk-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid #e8eaf0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #1a1a2e;
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+
+  &:focus    { border-color: #5b6ef5; }
+  &:disabled { background: #f7f8fb; color: #8a8fa8; }
+}
+
+.bulk-price {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  span { font-size: 13px; color: #8a8fa8; }
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: default;
+}
+
+.pill-ok    { background: #dcfce7; color: #15803d; }
+.pill-bad   { background: #fee2e2; color: #b91c1c; }
+.pill-warn  { background: #fef3c7; color: #b45309; }
+.pill-dirty { background: #e8eaf6; color: #5b6ef5; }
+
+.bulk-msg-row td { border-bottom: 1px solid #f5f6fa; padding-top: 0; }
+
+.bulk-msg {
+  font-size: 12px;
+  color: #b45309;
+  padding-top: 0 !important;
+}
+
+.bulk-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 26px;
+  border-top: 1px solid #f0f1f5;
+  background: white;
+}
+
+.bulk-count {
+  font-size: 13px;
+  color: #5a5f7a;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 10px;
+
+  .btn-ghost-drawer { flex: 0 0 auto; padding: 11px 20px; }
+  .btn-save         { flex: 0 0 auto; padding: 11px 24px; }
+}
+
+@media (max-width: 900px) {
+  .bulk-modal { width: calc(100vw - 24px); }
+  .bulk-table .col-price { width: 108px; }
+}

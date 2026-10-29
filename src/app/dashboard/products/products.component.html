@@ -15,6 +15,15 @@
         </svg>
         <input type="text" placeholder="Buscar productos..." (input)="onSearch($event)"/>
       </div>
+      <button class="btn-bulk" (click)="openBulk()" [disabled]="filteredProducts().length === 0"
+        title="Editar nombre, precio e imagen de varios productos a la vez">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+          <line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/>
+          <line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+        Edición masiva
+      </button>
       <button class="btn-add" (click)="openAdd()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -121,6 +130,101 @@
   }
 
 </div>
+
+<!-- ── Edición masiva básica ──────────────────────────────── -->
+@if (bulkOpen()) {
+  <div class="drawer-overlay" (click)="closeBulk()"></div>
+  <div class="bulk-modal">
+
+    <div class="bulk-header">
+      <div>
+        <h2>Edición masiva</h2>
+        <p class="bulk-sub">Nombre, precio e imagen de {{ bulkRows().length }} producto(s)</p>
+      </div>
+      <button class="drawer-close" (click)="closeBulk()" [disabled]="bulkSaving()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="bulk-body">
+      <table class="bulk-table">
+        <thead>
+          <tr>
+            <th class="col-img"></th>
+            <th>Nombre</th>
+            <th class="col-price">Precio</th>
+            <th>URL de la imagen</th>
+            <th class="col-state"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of bulkRows(); track trackRow($index, r)) {
+            <tr [class.row-dirty]="isRowDirty(r)" [class.row-error]="r.status === 'error'">
+              <td class="col-img">
+                @if (r.url.trim()) {
+                  <img [src]="r.url" [alt]="r.name" class="bulk-thumb"/>
+                } @else {
+                  <div class="bulk-thumb bulk-thumb-empty">{{ r.name.charAt(0) }}</div>
+                }
+              </td>
+              <td>
+                <input class="bulk-input" [value]="r.name" (input)="onBulkField(r, 'name', $event)"
+                  [disabled]="bulkSaving()" placeholder="Nombre del producto"/>
+              </td>
+              <td class="col-price">
+                <div class="bulk-price">
+                  <span>$</span>
+                  <input class="bulk-input" type="number" step="0.01" min="0.01" [value]="r.price"
+                    (input)="onBulkPrice(r, $event)" [disabled]="bulkSaving()"/>
+                </div>
+              </td>
+              <td>
+                <input class="bulk-input" [value]="r.url" (input)="onBulkField(r, 'url', $event)"
+                  [disabled]="bulkSaving()" placeholder="https://..."/>
+              </td>
+              <td class="col-state">
+                @if (r.status === 'saved') {
+                  <span class="pill pill-ok" title="Guardado">✓</span>
+                } @else if (r.status === 'error') {
+                  <span class="pill pill-bad" [title]="r.error ?? 'Error'">!</span>
+                } @else if (rowError(r) && isRowDirty(r)) {
+                  <span class="pill pill-warn" [title]="rowError(r) ?? ''">!</span>
+                } @else if (isRowDirty(r)) {
+                  <span class="pill pill-dirty" title="Sin guardar">•</span>
+                }
+              </td>
+            </tr>
+            @if (isRowDirty(r) && rowError(r); as msg) {
+              <tr class="bulk-msg-row"><td></td><td colspan="4" class="bulk-msg">{{ msg }}</td></tr>
+            }
+            @if (r.status === 'error' && r.error) {
+              <tr class="bulk-msg-row"><td></td><td colspan="4" class="bulk-msg">{{ r.error }}</td></tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bulk-footer">
+      <span class="bulk-count">
+        @if (bulkDirty().length) {
+          {{ bulkDirty().length }} cambio(s) sin guardar
+        } @else {
+          Sin cambios
+        }
+      </span>
+      <div class="bulk-actions">
+        <button class="btn-ghost-drawer" (click)="closeBulk()" [disabled]="bulkSaving()">Cerrar</button>
+        <button class="btn-save" (click)="saveBulk()"
+          [disabled]="bulkSaving() || bulkDirty().length === 0 || bulkBroken().length > 0">
+          {{ bulkSaving() ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- ── Drawer ─────────────────────────────────────────────── -->
 @if (drawerOpen()) {

@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, concatMap, map } from 'rxjs/operators';
 import { AuthService, UserSession } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { ImageService, ProductImage } from '../../core/services/image.service';
@@ -9,6 +9,28 @@ import { RecipeService, RecipeItem } from '../../core/services/recipe.service';
 import { ProductStore, Product } from '../../core/store/product.store';
 
 export type { Product };   // re-export so existing template references compile
+
+/**
+ * Una fila de la edición masiva.
+ *
+ * Guarda el valor original junto al editable para poder detectar qué cambió
+ * de verdad: así se envía una petición por campo tocado en vez de reescribir
+ * los 25 productos cada vez que el negocio corrige un precio.
+ */
+interface BulkRow {
+  product_id: string;
+  originalName: string;
+  originalPrice: number;
+  originalUrl: string;
+  imageId: string | null;
+
+  name: string;
+  price: number;
+  url: string;
+
+  status: 'idle' | 'saved' | 'error';
+  error?: string;
+}
 
 @Component({
   selector: 'app-products',
@@ -49,6 +71,13 @@ export class ProductsComponent implements OnInit {
   stagedImageAlt  = '';
 
   deleteConfirmId = signal<string | null>(null);
+
+  // ── Edición masiva básica ─────────────────────────────
+  // Nombre, precio e imagen de todos los productos a la vez. Pensado para
+  // cargar un menú o corregir precios en bloque sin abrir 25 veces el drawer.
+  bulkOpen   = signal(false);
+  bulkRows   = signal<BulkRow[]>([]);
+  bulkSaving = signal(false);
 
   // ── Recipe (ingredientes/insumos) ─────────────────────
   // Edit: se persiste al vuelo contra la API (/products/{id}/recipe).
@@ -377,6 +406,139 @@ export class ProductsComponent implements OnInit {
   }
 
   // ── Delete product ────────────────────────────────────
+  // ── Edición masiva ────────────────────────────────────
+
+  openBulk(): void {
+    // Se parte de la lista visible: si el negocio filtró por "postre", edita
+    // solo esos. Evita abrir una tabla de 80 filas para tocar tres.
+    this.bulkRows.set(this.filteredProducts().map(p => {
+      const img = this.primaryImage(p.images);
+      return {
+        product_id:    p.product_id,
+        originalName:  p.name,
+        originalPrice: Number(p.price),
+        originalUrl:   img?.url ?? '',
+        imageId:       img?.image_id ?? null,
+        name:          p.name,
+        price:         Number(p.price),
+        url:           img?.url ?? '',
+        status:        'idle' as const,
+      };
+    }));
+    this.bulkOpen.set(true);
+  }
+
+  closeBulk(): void {
+    if (this.bulkSaving()) return;   // no cerrar a media escritura
+    this.bulkOpen.set(false);
+  }
+
+  /** Una fila está sucia si alguno de sus tres campos difiere del original. */
+  isRowDirty(r: BulkRow): boolean {
+    return r.name.trim() !== r.originalName
+        || Number(r.price) !== r.originalPrice
+        || r.url.trim() !== r.originalUrl;
+  }
+
+  /** Motivo por el que una fila no se puede guardar, o null si está bien. */
+  rowError(r: BulkRow): string | null {
+    if (!r.name.trim())        return 'El nombre no puede quedar vacío';
+    if (!(Number(r.price) > 0)) return 'El precio debe ser mayor a cero';
+    const u = r.url.trim();
+    if (u && !/^https?:\/\//i.test(u)) return 'La URL debe empezar con http:// o https://';
+    return null;
+  }
+
+  bulkDirty  = computed(() => this.bulkRows().filter(r => this.isRowDirty(r)));
+  bulkBroken = computed(() => this.bulkDirty().filter(r => this.rowError(r) !== null));
+
+  trackRow = (_: number, r: BulkRow) => r.product_id;
+
+  onBulkField(row: BulkRow, field: 'name' | 'url', e: Event): void {
+    const value = (e.target as HTMLInputElement).value;
+    this.bulkRows.update(rows =>
+      rows.map(r => r.product_id === row.product_id ? { ...r, [field]: value, status: 'idle' } : r)
+    );
+  }
+
+  onBulkPrice(row: BulkRow, e: Event): void {
+    const value = Number((e.target as HTMLInputElement).value);
+    this.bulkRows.update(rows =>
+      rows.map(r => r.product_id === row.product_id ? { ...r, price: value, status: 'idle' } : r)
+    );
+  }
+
+  /**
+   * Guarda una fila: primero los datos del producto, después la imagen.
+   *
+   * Van encadenados y no en paralelo porque son recursos distintos de la API
+   * (`/products/{id}` y `/products/{id}/images`), y si el nombre falla no
+   * tiene sentido tocar la imagen.
+   */
+  private saveRow(row: BulkRow): Observable<BulkRow> {
+    const body: Record<string, unknown> = {};
+    if (row.name.trim() !== row.originalName)   body['name']  = row.name.trim();
+    if (Number(row.price) !== row.originalPrice) body['price'] = Number(row.price);
+
+    let chain: Observable<unknown> = Object.keys(body).length
+      ? this.store.update(row.product_id, body)
+      : of(null);
+
+    const url = row.url.trim();
+    if (url !== row.originalUrl) {
+      chain = chain.pipe(concatMap(() => {
+        if (url && row.imageId)  return this.imgSvc.update(row.product_id, row.imageId, { url });
+        if (url)                 return this.imgSvc.add(row.product_id, { url, sort_order: 0 });
+        if (row.imageId)         return this.imgSvc.remove(row.product_id, row.imageId);  // URL borrada = quitar imagen
+        return of(null);
+      }));
+    }
+
+    return chain.pipe(
+      map(() => ({ ...row, status: 'saved' as const, error: undefined })),
+      catchError(err => of({
+        ...row,
+        status: 'error' as const,
+        error: err?.error?.error ?? 'No se pudo guardar',
+      })),
+    );
+  }
+
+  saveBulk(): void {
+    const dirty = this.bulkDirty();
+    if (!dirty.length || this.bulkBroken().length) return;
+
+    this.bulkSaving.set(true);
+    forkJoin(dirty.map(r => this.saveRow(r))).subscribe({
+      next: results => {
+        const ok    = results.filter(r => r.status === 'saved');
+        const fail  = results.filter(r => r.status === 'error');
+
+        // Las filas guardadas pasan a ser el nuevo "original": así dejan de
+        // contar como pendientes sin tener que cerrar y reabrir el panel.
+        this.bulkRows.update(rows => rows.map(r => {
+          const res = results.find(x => x.product_id === r.product_id);
+          if (!res) return r;
+          return res.status === 'saved'
+            ? { ...res, originalName: res.name.trim(), originalPrice: Number(res.price), originalUrl: res.url.trim() }
+            : res;
+        }));
+
+        this.bulkSaving.set(false);
+        // La lista se recarga para traer los image_id nuevos: sin eso, una
+        // segunda edición de la misma imagen intentaría crearla otra vez.
+        this.store.reload();
+
+        if (fail.length) this.snack.error(`${ok.length} guardados · ${fail.length} con error`);
+        else             this.snack.success(`${ok.length} producto(s) actualizados`);
+      },
+      error: () => {
+        this.bulkSaving.set(false);
+        this.snack.error('No se pudieron guardar los cambios');
+      },
+    });
+  }
+
   confirmDelete(id: string): void { this.deleteConfirmId.set(id); }
   cancelDelete(): void            { this.deleteConfirmId.set(null); }
 
