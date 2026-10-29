@@ -3,7 +3,7 @@
   <div class="page-header">
     <h1>Dashboard</h1>
     <div class="header-actions">
-      <button class="btn-ghost" disabled>
+      <button class="btn-ghost" (click)="openSettings()" title="Configurar cómo entrega el negocio">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
         </svg>
@@ -172,3 +172,95 @@
     </div>
   }
 </div>
+
+<!-- ── Configuración de la tienda ─────────────────────────── -->
+@if (settingsOpen()) {
+  <div class="set-overlay" (click)="closeSettings()"></div>
+  <div class="set-modal">
+
+    <div class="set-header">
+      <div>
+        <h2>Configuración de la tienda</h2>
+        <p class="set-sub">Cómo puede recibir su pedido el cliente</p>
+      </div>
+      <button class="set-close" (click)="closeSettings()" [disabled]="settingsSaving()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="set-body">
+      @if (settingsLoading()) {
+        <div class="set-loading"><div class="spinner-lg"></div><p>Cargando…</p></div>
+      } @else if (fulfillment(); as f) {
+
+        <p class="set-hint">
+          La tienda solo le ofrece al cliente los modos que actives aquí. Si desactivas uno,
+          los pedidos de ese tipo dejan de aceptarse.
+        </p>
+
+        <div class="modo-list">
+          @for (m of modosVisibles(); track m.key) {
+            <button type="button" class="modo" [class.modo-on]="f[m.key]"
+              (click)="toggleModo(m.key)" [disabled]="settingsSaving()">
+              <span class="modo-check" [class.on]="f[m.key]">
+                @if (f[m.key]) {
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                }
+              </span>
+              <span class="modo-texto">
+                <span class="modo-titulo">{{ m.titulo }}</span>
+                <span class="modo-detalle">{{ m.detalle }}</span>
+              </span>
+            </button>
+          }
+        </div>
+
+        @if (!algunModoActivo()) {
+          <p class="set-warn">Activa al menos un modo: sin ninguno, el negocio no podría vender.</p>
+        }
+
+        @if (f.delivery) {
+          <div class="envio-box">
+            <h3>Cobro del envío</h3>
+            <div class="envio-fields">
+              <label>
+                <span>Costo de envío</span>
+                <div class="money">
+                  <span>$</span>
+                  <input type="number" min="0" step="0.01" [value]="f.shipping_flat_fee"
+                    (input)="onFee($event)" [disabled]="settingsSaving()"/>
+                </div>
+              </label>
+              <label>
+                <span>Gratis a partir de</span>
+                <div class="money">
+                  <span>$</span>
+                  <input type="number" min="0" step="0.01" placeholder="sin mínimo"
+                    [value]="f.free_shipping_above ?? ''" (input)="onFreeAbove($event)"
+                    [disabled]="settingsSaving()"/>
+                </div>
+              </label>
+            </div>
+            <label class="envio-notas">
+              <span>Nota para el cliente</span>
+              <input type="text" maxlength="300" placeholder="ej. Repartimos solo en el centro, de 1 a 8 pm"
+                [value]="f.delivery_notes ?? ''" (input)="onNotes($event)" [disabled]="settingsSaving()"/>
+            </label>
+          </div>
+        }
+      }
+    </div>
+
+    <div class="set-footer">
+      <button class="btn-outline" (click)="closeSettings()" [disabled]="settingsSaving()">Cancelar</button>
+      <button class="btn-primary-set" (click)="saveSettings()"
+        [disabled]="settingsSaving() || settingsLoading() || !algunModoActivo()">
+        {{ settingsSaving() ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </div>
+  </div>
+}
