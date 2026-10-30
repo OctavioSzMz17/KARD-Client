@@ -75,9 +75,13 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
       this.observer?.disconnect();
       if (!el) { this.hubFuera.set(false); return; }
 
+      // El 35 % superior de la pantalla no cuenta: al elegir una categoría la
+      // página se detiene con una franja del hub todavía asomando bajo la
+      // barra, y con `rootMargin: 0` eso bastaba para tenerlo por "visible" y
+      // el botón no salía hasta bajar casi al footer.
       this.observer = new IntersectionObserver(
         ([entry]) => this.hubFuera.set(!entry.isIntersecting),
-        { threshold: 0 },
+        { threshold: 0, rootMargin: '-35% 0px 0px 0px' },
       );
       this.observer.observe(el);
     });
