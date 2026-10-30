@@ -44,9 +44,14 @@ export class StorefrontLayoutComponent implements OnInit {
    * blanca encima. Solo mientras detrás haya algo oscuro: el catálogo
    * siempre lo tiene, la portada solo si el negocio subió su banner.
    */
+  private enCatalogo = computed(() => this.url().includes('/productos'));
+
   readonly navSobreImagen = computed(() =>
-    !this.desplazo() && (this.url().includes('/productos') || !!this.sf.store()?.banner_url)
+    this.enCatalogo() || (!this.desplazo() && !!this.sf.store()?.banner_url)
   );
+
+  /** En el catálogo el fondo es oscuro siempre: al bajar la barra se vuelve cristal, no blanca. */
+  readonly navCristal = computed(() => this.enCatalogo() && this.desplazo());
 
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('slug') ?? '';

@@ -51,6 +51,7 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
   // botón flotante de bebidas.
   private hubRef = viewChild<ElementRef<HTMLElement>>('hub');
   private observer?: IntersectionObserver;
+  private scrollFrame = 0;
   hubFuera = signal(false);
 
   /**
@@ -146,6 +147,7 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.observer?.disconnect();
+    cancelAnimationFrame(this.scrollFrame);
   }
 
   onSearch(e: Event): void {
@@ -161,11 +163,42 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
 
   volverAlHub(): void { this.desplazarA('portada'); }
 
+  /**
+   * Baja (o sube) animando el scroll.
+   *
+   * Se anima a mano y no con `scrollIntoView({ behavior: 'smooth' })`: ese
+   * modo se apaga solo si el sistema tiene las animaciones reducidas, y deja
+   * el salto seco que se quiere evitar. El destino se recalcula en cada
+   * cuadro porque la categoría recién elegida cambia la altura de la página
+   * mientras se desplaza.
+   */
   private desplazarA(id: string): void {
     const destino = document.getElementById(id);
     if (!destino) return;
-    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    destino.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' });
+
+    cancelAnimationFrame(this.scrollFrame);
+    const inicio = window.scrollY;
+    const duracion = 800;
+    const margen = parseFloat(getComputedStyle(destino).scrollMarginTop) || 0;
+    const t0 = performance.now();
+
+    const detener = () => cancelAnimationFrame(this.scrollFrame);
+    // Si la persona toma el control con la rueda o el dedo, se le cede.
+    window.addEventListener('wheel', detener, { once: true, passive: true });
+    window.addEventListener('touchstart', detener, { once: true, passive: true });
+
+    const paso = (ahora: number) => {
+      const t = Math.min(1, (ahora - t0) / duracion);
+      const suave = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;  // easeInOutCubic
+      const fin = destino.getBoundingClientRect().top + window.scrollY - margen;
+      window.scrollTo(0, inicio + (fin - inicio) * suave);
+      if (t < 1) this.scrollFrame = requestAnimationFrame(paso);
+      else {
+        window.removeEventListener('wheel', detener);
+        window.removeEventListener('touchstart', detener);
+      }
+    };
+    this.scrollFrame = requestAnimationFrame(paso);
   }
 
   loadMore(): void {

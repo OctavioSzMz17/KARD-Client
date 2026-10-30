@@ -50,6 +50,15 @@
 
   > * { position: relative; }
 
+  // Con contenido pasando por debajo, un cristal oscuro en lugar de la sombra.
+  &.sf-nav-cristal {
+    background: rgba(8, 6, 24, 0.55);
+    backdrop-filter: blur(14px);
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+
+    &::before { display: none; }
+  }
+
   .nav-name { color: white; text-shadow: 0 1px 10px rgba(0,0,0,0.4); }
 
   .nav-logo { background: rgba(255,255,255,0.92); }
@@ -199,6 +208,9 @@
 
 // ── Footer ────────────────────────────────────────────────
 .sf-footer {
+  // Por encima del fondo fijo del catálogo, que si no lo taparía.
+  position: relative;
+  z-index: 2;
   background: var(--sf-accent);
   color: rgba(255,255,255,0.85);
   padding: 44px 32px 28px;

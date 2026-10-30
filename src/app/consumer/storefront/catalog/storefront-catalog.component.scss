@@ -1,9 +1,39 @@
 .catalog {
+  position: relative;
   padding-bottom: 64px;
+  color: white;
+}
+
+// ── Fondo fijo ────────────────────────────────────────────
+// La imagen no se mueve: portada y productos se desplazan por encima
+// de ella, de modo que todo comparte el mismo fondo y la misma paleta.
+.cat-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+
+  // Un solo velo negro al 60 % sobre toda la foto: da contraste al texto
+  // sin teñirla ni quitarle el fondo.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+  }
+}
+
+// Sin banner propio, un degradado con el color del negocio.
+.cat-fondo-plano {
+  background: linear-gradient(135deg, var(--sf-primary) 0%, var(--sf-accent) 100%);
 }
 
 // Lo que va bajo la portada: solo la categoría elegida.
 .catalog-body {
+  position: relative;
+  z-index: 1;
   max-width: 1080px;
   margin: 0 auto;
   padding: 36px 24px 0;
@@ -47,21 +77,31 @@
   gap: 18px;
 }
 
+// Las cards entran una tras otra: --i es su posición en la lista.
 .product-card {
   display: flex;
   flex-direction: column;
-  background: white;
-  border: 1.5px solid #eef0f5;
+  // Cristal sobre la foto: misma familia que el hub y la barra.
+  background: rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(100,80,200,0.05);
-  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  animation: cardEntra 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  animation-delay: calc(0.15s + var(--i, 0) * 0.07s);
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 
   &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 32px rgba(100,80,200,0.12);
-    border-color: color-mix(in srgb, var(--sf-primary) 30%, transparent);
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.45);
   }
+}
+
+@keyframes cardEntra {
+  from { opacity: 0; transform: translateY(26px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .product-image {
@@ -69,8 +109,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f2f4fc 0%, #f5f2fc 100%);
-  color: #c5cef8;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.4);
   flex-shrink: 0;
 
   img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -87,14 +127,14 @@
 .product-name {
   font-size: 15px;
   font-weight: 600;
-  color: #1a1a2e;
+  color: white;
   margin: 0;
   line-height: 1.3;
 }
 
 .product-desc {
   font-size: 12px;
-  color: #8a8fa8;
+  color: rgba(255, 255, 255, 0.7);
   margin: 0;
   line-height: 1.45;
   display: -webkit-box;
@@ -112,8 +152,8 @@
 .meta-chip {
   font-size: 10px;
   font-weight: 600;
-  color: var(--sf-primary);
-  background: color-mix(in srgb, var(--sf-primary) 9%, transparent);
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.14);
   padding: 2px 8px;
   border-radius: 10px;
   text-transform: capitalize;
@@ -131,11 +171,12 @@
 .product-price {
   font-size: 18px;
   font-weight: 700;
-  color: var(--sf-accent);
+  color: white;
   letter-spacing: -0.4px;
 }
 
 // ── Agregar / stepper ─────────────────────────────────────
+// Blanco sobre cristal oscuro: el mismo lenguaje que el buscador.
 .btn-add-cart {
   display: flex;
   align-items: center;
@@ -143,8 +184,8 @@
   padding: 8px 14px;
   border-radius: 10px;
   border: none;
-  background: var(--sf-primary);
-  color: white;
+  background: rgba(255, 255, 255, 0.96);
+  color: #12122a;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -160,8 +201,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: color-mix(in srgb, var(--sf-primary) 8%, white);
-  border: 1.5px solid color-mix(in srgb, var(--sf-primary) 30%, transparent);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 10px;
   padding: 3px 6px;
 
@@ -170,8 +211,8 @@
     height: 24px;
     border-radius: 7px;
     border: none;
-    background: white;
-    color: var(--sf-primary);
+    background: rgba(255, 255, 255, 0.96);
+    color: #12122a;
     font-size: 15px;
     font-weight: 700;
     line-height: 1;
@@ -189,7 +230,7 @@
   span {
     font-size: 13px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: white;
     min-width: 18px;
     text-align: center;
   }
@@ -206,8 +247,8 @@
   padding: 11px 24px;
   border-radius: 12px;
   border: none;
-  background: var(--sf-accent);
-  color: white;
+  background: rgba(255, 255, 255, 0.96);
+  color: #12122a;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -222,7 +263,7 @@
 .product-skeleton {
   height: 280px;
   border-radius: 16px;
-  background: linear-gradient(90deg, #f4f5fa 25%, #fafbff 50%, #f4f5fa 75%);
+  background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.13) 50%, rgba(255,255,255,0.06) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -233,8 +274,8 @@
   text-align: center;
   padding: 64px 20px;
 
-  .empty-title { font-size: 16px; font-weight: 600; color: #1a1a2e; }
-  .empty-sub   { font-size: 13px; color: #8a8fa8; margin-top: 4px; }
+  .empty-title { font-size: 16px; font-weight: 600; color: white; }
+  .empty-sub   { font-size: 13px; color: rgba(255, 255, 255, 0.7); margin-top: 4px; }
 }
 
 @media (max-width: 640px) {
@@ -244,17 +285,14 @@
 // ── Portada a sangre, con la navbar encima ────────────────
 .cat-hero {
   position: relative;
+  z-index: 1;
   // La barra va fija sobre la imagen: este hueco evita que la tape.
   padding: 96px 24px 56px;
   min-height: 300px;
-  background-size: cover;
-  background-position: center;
-  background-attachment: scroll;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
 // Con hub, la portada es la pantalla entera y las cuatro secciones
@@ -273,20 +311,6 @@
   }
 
   .cat-hero-texto { flex-shrink: 0; padding: 0 24px; }
-}
-
-// Sin banner propio, un degradado con el color del negocio.
-.cat-hero-plano {
-  background: linear-gradient(135deg, var(--sf-primary) 0%, var(--sf-accent) 100%);
-}
-
-// Vela la foto para que el texto se lea sin depender de qué imagen suban.
-.cat-hero-velo {
-  position: absolute;
-  inset: 0;
-  // Un solo velo negro al 60 % sobre toda la foto: da contraste al texto
-  // sin teñirla ni quitarle el fondo.
-  background: rgba(0, 0, 0, 0.6);
 }
 
 .cat-hero-inner {
@@ -456,21 +480,21 @@
   gap: 10px;
   margin-bottom: 14px;
   padding-bottom: 9px;
-  border-bottom: 2px solid var(--sf-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
 
   h2 {
     margin: 0;
     font-size: 19px;
     font-weight: 700;
-    color: #1a1a2e;
+    color: white;
   }
 }
 
 .seccion-cuenta {
   padding: 2px 9px;
   border-radius: 999px;
-  background: var(--sf-primary);
-  color: white;
+  background: rgba(255, 255, 255, 0.96);
+  color: #12122a;
   font-size: 11.5px;
   font-weight: 700;
 }
@@ -479,17 +503,17 @@
 .seccion-volver {
   margin-left: auto;
   padding: 7px 14px;
-  border: 1.5px solid #e4e6ef;
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 999px;
-  background: white;
-  color: #5a5f7a;
+  background: transparent;
+  color: white;
   font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition: background 0.15s;
 
-  &:hover { border-color: var(--sf-primary); color: #1a1a2e; }
+  &:hover { background: rgba(255, 255, 255, 0.14); }
 }
 
 .cat-hint {
@@ -497,7 +521,7 @@
   padding: 30px 0 10px;
   text-align: center;
   font-size: 14px;
-  color: #8a8fa8;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 // ── Botón flotante de bebidas ─────────────────────────────

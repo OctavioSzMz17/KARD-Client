@@ -1,12 +1,12 @@
 <section class="catalog">
 
-  <!-- ── Portada: la imagen contiene el título, la búsqueda
-       y las categorías; nada de esto vive fuera de ella ─── -->
-  <header class="cat-hero" id="portada"
-          [class.cat-hero-amplio]="portadaAmplia()"
-          [class.cat-hero-plano]="!fondo()"
-          [style.background-image]="fondo() ? 'url(' + fondo() + ')' : null">
-    <div class="cat-hero-velo"></div>
+  <!-- ── Fondo fijo: la imagen (con su velo) no se mueve al hacer scroll ── -->
+  <div class="cat-fondo" aria-hidden="true"
+       [class.cat-fondo-plano]="!fondo()"
+       [style.background-image]="fondo() ? 'url(' + fondo() + ')' : null"></div>
+
+  <!-- ── Portada: título, búsqueda y categorías sobre el fondo ─── -->
+  <header class="cat-hero" id="portada" [class.cat-hero-amplio]="portadaAmplia()">
 
     <div class="cat-hero-inner">
       <div class="cat-hero-texto">
@@ -92,8 +92,8 @@
           </div>
 
           <div class="products-grid">
-            @for (p of g.productos; track p.product_id) {
-              <ng-container *ngTemplateOutlet="tarjeta; context: { $implicit: p }"></ng-container>
+            @for (p of g.productos; track p.product_id; let i = $index) {
+              <ng-container *ngTemplateOutlet="tarjeta; context: { $implicit: p, i: i }"></ng-container>
             }
           </div>
         </div>
@@ -105,8 +105,8 @@
     <!-- ── Lista plana: búsqueda, u ópticas ─────────────── -->
     @else {
       <div class="products-grid">
-        @for (p of products(); track p.product_id) {
-          <ng-container *ngTemplateOutlet="tarjeta; context: { $implicit: p }"></ng-container>
+        @for (p of products(); track p.product_id; let i = $index) {
+          <ng-container *ngTemplateOutlet="tarjeta; context: { $implicit: p, i: i }"></ng-container>
         }
       </div>
 
@@ -166,8 +166,8 @@
 </ng-template>
 
 <!-- ── Tarjeta de producto, compartida por los dos modos ── -->
-<ng-template #tarjeta let-p>
-  <div class="product-card">
+<ng-template #tarjeta let-p let-i="i">
+  <div class="product-card" [style.--i]="i % 8">
 
     <div class="product-image">
       @if (primaryImage(p.images); as img) {
