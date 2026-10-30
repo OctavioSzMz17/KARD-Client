@@ -1,13 +1,13 @@
-// ── Hero (ocupa la pantalla, descontando la navbar) ───────
+// ── Hero (ocupa la pantalla; la navbar va encima, no antes) ─
 .hero {
   position: relative;
-  min-height: calc(100vh - 62px);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 40px 24px 80px;
+  padding: 100px 24px 80px;
   overflow: hidden;
   // Sin banner: degradado suave con el color del negocio
   background:
@@ -177,6 +177,6 @@
 }
 
 @media (max-width: 640px) {
-  .hero { min-height: calc(100vh - 56px); padding: 32px 20px 70px; }
+  .hero { padding: 86px 20px 70px; }
   .about { padding: 56px 20px; }
 }

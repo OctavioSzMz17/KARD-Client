@@ -12,7 +12,7 @@
   @else {
 
     <!-- ── Navbar ──────────────────────────────────────── -->
-    <nav class="sf-nav">
+    <nav class="sf-nav" [class.sf-nav-sobre]="navSobreImagen()">
       <a class="nav-brand" [routerLink]="['/s', sf.slug]">
         <span class="nav-logo">
           @if (sf.store()?.logo_url) {

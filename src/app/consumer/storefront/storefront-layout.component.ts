@@ -1,5 +1,7 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, DestroyRef, computed, inject, signal, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { StorefrontStore } from '../../core/store/storefront.store';
 
@@ -16,9 +18,35 @@ const TYPE_LABELS: Record<string, string> = {
 })
 export class StorefrontLayoutComponent implements OnInit {
   readonly sf = inject(StorefrontStore);
-  private auth   = inject(AuthService);
-  private route  = inject(ActivatedRoute);
-  private router = inject(Router);
+  private auth       = inject(AuthService);
+  private route      = inject(ActivatedRoute);
+  private router     = inject(Router);
+  private destroyRef = inject(DestroyRef);
+
+  private url      = signal('');
+  private desplazo = signal(false);
+
+  constructor() {
+    this.url.set(this.router.url);
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(e => this.url.set(e.urlAfterRedirects));
+
+    const alDesplazar = () => this.desplazo.set(window.scrollY > 24);
+    alDesplazar();
+    window.addEventListener('scroll', alDesplazar, { passive: true });
+    this.destroyRef.onDestroy(() => window.removeEventListener('scroll', alDesplazar));
+  }
+
+  /**
+   * La barra se funde con la portada en lugar de quedar como una franja
+   * blanca encima. Solo mientras detrás haya algo oscuro: el catálogo
+   * siempre lo tiene, la portada solo si el negocio subió su banner.
+   */
+  readonly navSobreImagen = computed(() =>
+    !this.desplazo() && (this.url().includes('/productos') || !!this.sf.store()?.banner_url)
+  );
 
   ngOnInit(): void {
     const slug = this.route.snapshot.paramMap.get('slug') ?? '';

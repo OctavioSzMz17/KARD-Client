@@ -9,9 +9,13 @@
 }
 
 // ── Navbar ────────────────────────────────────────────────
+// Va fija sobre la página, no empujándola: así la portada empieza
+// pegada al borde y la barra queda dentro de la imagen.
 .sf-nav {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   display: flex;
   align-items: center;
@@ -21,6 +25,55 @@
   background: rgba(255,255,255,0.85);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(0,0,0,0.06);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+// Sobre la portada: sin franja blanca, solo una sombra que
+// garantiza que el texto se lea sea cual sea la foto detrás.
+.sf-nav-sobre {
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom-color: transparent;
+
+  // La sombra se desvanece más abajo que la barra: si terminara justo en
+  // su borde se vería el corte como una línea.
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 190%;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(8,6,24,0.6) 0%, rgba(8,6,24,0) 100%);
+  }
+
+  > * { position: relative; }
+
+  .nav-name { color: white; text-shadow: 0 1px 10px rgba(0,0,0,0.4); }
+
+  .nav-logo { background: rgba(255,255,255,0.92); }
+
+  .nav-links a {
+    color: rgba(255,255,255,0.85);
+
+    &:hover { background: rgba(255,255,255,0.16); color: white; }
+
+    &.active {
+      color: white;
+      background: rgba(255,255,255,0.22);
+    }
+  }
+
+  .nav-exit {
+    background: rgba(255,255,255,0.14);
+    border-color: rgba(255,255,255,0.32);
+    color: white;
+
+    &:hover { background: rgba(255,255,255,0.26); border-color: white; color: white; }
+  }
+
+  .cart-badge { border-color: rgba(255,255,255,0.4); }
 }
 
 .nav-brand {

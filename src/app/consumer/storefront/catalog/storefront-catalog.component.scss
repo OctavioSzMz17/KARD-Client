@@ -1,31 +1,14 @@
 .catalog {
+  padding-bottom: 64px;
+}
+
+// Lo que va bajo la portada: solo la categoría elegida.
+.catalog-body {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 40px 24px 64px;
-}
-
-// ── Encabezado ────────────────────────────────────────────
-.catalog-head {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
-
-  h1 {
-    font-size: 30px;
-    font-weight: 800;
-    color: #12122a;
-    letter-spacing: -0.6px;
-    margin: 0;
-  }
-}
-
-.catalog-tools {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+  padding: 36px 24px 0;
+  // Deja aire bajo la barra fija al bajar a la categoría.
+  scroll-margin-top: 68px;
 }
 
 .cat-search {
@@ -55,12 +38,6 @@
 
     &::placeholder { color: #b0b4c8; }
   }
-}
-
-.cat-count {
-  font-size: 13px;
-  color: #8a8fa8;
-  white-space: nowrap;
 }
 
 // ── Grid ──────────────────────────────────────────────────
@@ -261,23 +238,27 @@
 }
 
 @media (max-width: 640px) {
-  .catalog { padding: 28px 20px 48px; }
-  .catalog-head h1 { font-size: 24px; }
+  .catalog-body { padding: 28px 20px 0; }
 }
 
-// ── Encabezado con imagen de fondo ────────────────────────
+// ── Portada a sangre, con la navbar encima ────────────────
 .cat-hero {
   position: relative;
-  border-radius: 18px;
-  overflow: hidden;
-  padding: 34px 26px 26px;
-  margin-bottom: 22px;
+  // La barra va fija sobre la imagen: este hueco evita que la tape.
+  padding: 96px 24px 56px;
+  min-height: 300px;
   background-size: cover;
   background-position: center;
+  background-attachment: scroll;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
+
+// Con hub dentro, la portada ocupa la pantalla completa.
+.cat-hero-amplio { min-height: 100vh; }
 
 // Sin banner propio, un degradado con el color del negocio.
 .cat-hero-plano {
@@ -288,41 +269,53 @@
 .cat-hero-velo {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(10, 8, 30, 0.35) 0%, rgba(10, 8, 30, 0.68) 100%);
+  background: linear-gradient(180deg, rgba(10, 8, 30, 0.52) 0%, rgba(10, 8, 30, 0.72) 100%);
+}
+
+.cat-hero-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 .cat-hero-texto {
-  position: relative;
+  text-align: center;
 
   h1 {
     margin: 0;
-    font-size: 27px;
+    font-size: clamp(27px, 4.4vw, 38px);
     font-weight: 800;
     color: white;
-    letter-spacing: -0.01em;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.38);
   }
 
   p {
-    margin: 5px 0 0;
-    font-size: 13.5px;
+    margin: 6px 0 0;
+    font-size: 14px;
     color: rgba(255, 255, 255, 0.86);
   }
 }
 
 .cat-hero .cat-search {
-  position: relative;
+  width: 100%;
   max-width: 360px;
   background: rgba(255, 255, 255, 0.96);
   border: none;
   backdrop-filter: blur(4px);
 }
 
-// ── Hub de categorías ─────────────────────────────────────
+// ── Hub de categorías (dentro de la portada) ──────────────
 .hub {
   position: relative;
-  margin: 0 auto 30px;
+  width: 100%;
   max-width: 560px;
+  margin: 4px auto 0;
 }
 
 .hub-grid {
@@ -345,9 +338,12 @@
   justify-content: flex-end;
   gap: 3px;
   color: white;
-  background: var(--cat);
+  // Translúcido para que la foto de la portada siga viéndose detrás.
+  background: color-mix(in srgb, var(--cat) 78%, transparent);
+  backdrop-filter: blur(3px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
   overflow: hidden;
-  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
 
   // Un velo sutil da profundidad sin cambiar el color de la categoría.
   &::after {
@@ -359,8 +355,15 @@
 
   &:hover, &:focus-visible {
     transform: translateY(-3px);
-    box-shadow: 0 12px 26px rgba(20, 15, 50, 0.22);
+    background: var(--cat);
+    box-shadow: 0 12px 26px rgba(20, 15, 50, 0.3);
   }
+}
+
+// La categoría que se está mostrando abajo.
+.hub-elegido {
+  background: var(--cat);
+  box-shadow: 0 0 0 2.5px white, 0 10px 24px rgba(20, 15, 50, 0.3);
 }
 
 // Se deja libre el centro para que el círculo no tape el texto.
@@ -411,15 +414,23 @@
     box-shadow: 0 12px 30px rgba(20, 15, 50, 0.32);
   }
 
+  &.hub-elegido {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.45), 0 10px 28px rgba(20, 15, 50, 0.34);
+  }
+
   .hub-nombre { font-size: 14px; }
   .hub-cuenta { font-size: 11.5px; }
 }
 
-// ── Secciones por categoría ───────────────────────────────
+// ── La categoría que se está mostrando ────────────────────
 .seccion {
-  // Deja aire bajo el encabezado pegajoso de la tienda al hacer scroll.
-  scroll-margin-top: 84px;
   margin-bottom: 30px;
+  animation: seccionEntra 0.22s ease;
+}
+
+@keyframes seccionEntra {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .seccion-head {
@@ -445,6 +456,31 @@
   color: white;
   font-size: 11.5px;
   font-weight: 700;
+}
+
+// Vuelve a la portada para cambiar de categoría sin buscarla.
+.seccion-volver {
+  margin-left: auto;
+  padding: 7px 14px;
+  border: 1.5px solid #e4e6ef;
+  border-radius: 999px;
+  background: white;
+  color: #5a5f7a;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+
+  &:hover { border-color: var(--cat); color: #1a1a2e; }
+}
+
+.cat-hint {
+  margin: 0;
+  padding: 30px 0 10px;
+  text-align: center;
+  font-size: 14px;
+  color: #8a8fa8;
 }
 
 // ── Botón flotante de bebidas ─────────────────────────────
@@ -478,10 +514,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hub-cuadrante, .hub-centro, .bebidas-flotante { transition: none; animation: none; }
+  .hub-cuadrante, .hub-centro, .bebidas-flotante, .seccion { transition: none; animation: none; }
 }
 
 @media (max-width: 560px) {
+  .cat-hero { padding: 84px 20px 44px; }
   .hub { max-width: 100%; }
   .hub-cuadrante { min-height: 100px; }
   .hub-centro { width: 88px; height: 88px; }

@@ -41,6 +41,8 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
   loadingProducts = signal(true);
   loadingMore     = signal(false);
   searchQuery     = signal('');
+  /** Categoría elegida en la portada; nada se lista hasta que haya una. */
+  categoriaActiva = signal<string | null>(null);
   private page    = 1;
 
   private search$ = new Subject<string>();
@@ -86,15 +88,21 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
   readonly fondo = computed(() => this.sf.store()?.banner_url ?? null);
 
   /**
+   * La portada alta se reserva desde el tipo de negocio, antes de que
+   * lleguen los productos: de otro modo daría un salto al cargar.
+   */
+  readonly portadaAmplia = computed(() =>
+    this.sf.store()?.business_type === 'restaurant' && !this.searchQuery()
+  );
+
+  /**
    * El hub solo tiene sentido en un menú por categorías.
    *
    * Una óptica no las usa —sus productos se describen por graduación— y
    * durante una búsqueda estorba: el cliente ya dijo qué quiere ver.
    */
   readonly modoHub = computed(() =>
-    this.sf.store()?.business_type === 'restaurant'
-    && !this.searchQuery()
-    && this.products().some(p => !!p.metadata?.['categoria'])
+    this.portadaAmplia() && this.products().some(p => !!p.metadata?.['categoria'])
   );
 
   /** Productos agrupados, respetando el orden de `categorias`. */
@@ -106,6 +114,12 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
         productos: items.filter(p => p.metadata?.['categoria'] === c.key),
       }))
       .filter(g => g.productos.length > 0);
+  });
+
+  /** La única categoría que se lista: la que el cliente eligió arriba. */
+  readonly grupoActivo = computed(() => {
+    const key = this.categoriaActiva();
+    return key ? this.porCategoria().find(g => g.key === key) ?? null : null;
   });
 
   cuantosEn(key: string): number {
@@ -120,7 +134,12 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
       debounceTime(300),
       distinctUntilChanged(),
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe(q => { this.searchQuery.set(q); this.fetch(true); });
+    ).subscribe(q => {
+      this.searchQuery.set(q);
+      // Buscar sustituye a la categoría: los resultados cruzan el menú entero.
+      this.categoriaActiva.set(null);
+      this.fetch(true);
+    });
 
     this.fetch(true);
   }
@@ -133,9 +152,17 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
     this.search$.next((e.target as HTMLInputElement).value.trim());
   }
 
-  /** Lleva a la sección de una categoría. */
-  irA(key: string): void {
-    const destino = document.getElementById('cat-' + key);
+  /** Deja abajo solo esa categoría y baja a ella. */
+  elegir(key: string): void {
+    this.categoriaActiva.set(key);
+    // La sección se pinta al aplicarse la señal; se baja en el turno siguiente.
+    setTimeout(() => this.desplazarA('productos'));
+  }
+
+  volverAlHub(): void { this.desplazarA('portada'); }
+
+  private desplazarA(id: string): void {
+    const destino = document.getElementById(id);
     if (!destino) return;
     const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     destino.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' });
