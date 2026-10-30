@@ -28,9 +28,12 @@
         <div class="hub" #hub>
           <div class="hub-grid">
             @for (c of categoriasCuadrante(); track c.key) {
-              <button type="button" class="hub-cuadrante" [style.--cat]="c.color"
+              <button type="button" class="hub-cuadrante"
                 [class.hub-elegido]="categoriaActiva() === c.key"
                 (click)="elegir(c.key)" [attr.aria-label]="'Ver ' + c.nombre">
+                <span class="hub-icono">
+                  <ng-container *ngTemplateOutlet="icono; context: { $implicit: c.key }"></ng-container>
+                </span>
                 <span class="hub-nombre">{{ c.nombre }}</span>
                 <span class="hub-cuenta">{{ cuantosEn(c.key) }}</span>
               </button>
@@ -39,10 +42,13 @@
 
           <!-- La quinta categoría va al centro, encima de las otras cuatro -->
           @if (cuantosEn(categoriaCentral().key) > 0) {
-            <button type="button" class="hub-centro" [style.--cat]="categoriaCentral().color"
+            <button type="button" class="hub-centro"
               [class.hub-elegido]="categoriaActiva() === categoriaCentral().key"
               (click)="elegir(categoriaCentral().key)"
               [attr.aria-label]="'Ver ' + categoriaCentral().nombre">
+              <span class="hub-icono">
+                <ng-container *ngTemplateOutlet="icono; context: { $implicit: categoriaCentral().key }"></ng-container>
+              </span>
               <span class="hub-nombre">{{ categoriaCentral().nombre }}</span>
               <span class="hub-cuenta">{{ cuantosEn(categoriaCentral().key) }}</span>
             </button>
@@ -77,7 +83,7 @@
     @else if (modoHub()) {
       @if (grupoActivo(); as g) {
         <div class="seccion">
-          <div class="seccion-head" [style.--cat]="g.color">
+          <div class="seccion-head">
             <h2>{{ g.nombre }}</h2>
             <span class="seccion-cuenta">{{ g.productos.length }}</span>
             <button type="button" class="seccion-volver" (click)="volverAlHub()">
@@ -119,18 +125,45 @@
        el círculo del centro ya cumple esa función. -->
   @if (modoHub() && hubFuera() && categoriaActiva() !== categoriaCentral().key
        && cuantosEn(categoriaCentral().key) > 0) {
-    <button type="button" class="bebidas-flotante" [style.--cat]="categoriaCentral().color"
+    <button type="button" class="bebidas-flotante"
       (click)="elegir(categoriaCentral().key)" [attr.aria-label]="'Ver ' + categoriaCentral().nombre">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/>
-        <line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
-      </svg>
+      <span class="flotante-icono">
+        <ng-container *ngTemplateOutlet="icono; context: { $implicit: categoriaCentral().key }"></ng-container>
+      </span>
       <span>Bebidas</span>
     </button>
   }
 
 </section>
+
+<!-- ── Icono de cada categoría (se dibuja al tamaño de su contenedor) ── -->
+<ng-template #icono let-key>
+  <svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor"
+       stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    @switch (key) {
+      @case ('entrada') {
+        <!-- ensalada: tazón con una hoja -->
+        <path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M12 12c-.5-4 1.5-7 6-8 .5 4-1.5 7-6 8z"/><path d="M12 12 9 8"/>
+      }
+      @case ('plato_fuerte') {
+        <!-- cubiertos -->
+        <path d="M3 2v7a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6a2 2 0 0 0 2 2h3zm0 0v7"/>
+      }
+      @case ('guarnicion') {
+        <!-- plato visto desde arriba -->
+        <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>
+      }
+      @case ('postre') {
+        <!-- helado -->
+        <path d="M7 11a5 5 0 1 1 10 0z"/><path d="m7 11 5 11 5-11"/>
+      }
+      @case ('bebida') {
+        <!-- vaso -->
+        <path d="M5.1 4.1A1 1 0 0 1 6.1 3h11.8a1 1 0 0 1 1 1.1L17.2 20.2A2 2 0 0 1 15.2 22H8.8a2 2 0 0 1-2-1.8z"/><path d="M6 12a5 5 0 0 1 6 0 5 5 0 0 0 6 0"/>
+      }
+    }
+  </svg>
+</ng-template>
 
 <!-- ── Tarjeta de producto, compartida por los dos modos ── -->
 <ng-template #tarjeta let-p>

@@ -284,7 +284,9 @@
 .cat-hero-velo {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(10, 8, 30, 0.52) 0%, rgba(10, 8, 30, 0.72) 100%);
+  // Un solo velo negro al 60 % sobre toda la foto: da contraste al texto
+  // sin teñirla ni quitarle el fondo.
+  background: rgba(0, 0, 0, 0.6);
 }
 
 .cat-hero-inner {
@@ -357,21 +359,27 @@
   justify-content: center;
   gap: 4px;
   color: white;
-  // Casi transparente: la foto se ve a través y el color solo la tiñe.
-  background: color-mix(in srgb, var(--cat) 20%, transparent);
+  // Sin fondo propio: el contraste lo da el velo de la portada.
+  background: transparent;
   // Las líneas blancas son las que dividen la pantalla en cuatro.
-  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.45);
   transition: background 0.2s ease;
 
   &:hover, &:focus-visible {
-    background: color-mix(in srgb, var(--cat) 44%, transparent);
+    background: rgba(255, 255, 255, 0.1);
     outline: none;
   }
 }
 
 // La categoría que se está mostrando abajo.
-.hub-elegido {
-  background: color-mix(in srgb, var(--cat) 52%, transparent);
+.hub-elegido { background: rgba(255, 255, 255, 0.16); }
+
+.hub-icono {
+  position: relative;
+  width: clamp(34px, 4.4vw, 52px);
+  height: clamp(34px, 4.4vw, 52px);
+  margin-bottom: 4px;
+  filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.5));
 }
 
 .hub-nombre {
@@ -401,8 +409,9 @@
   width: 108px;
   height: 108px;
   border-radius: 50%;
-  border: 4px solid white;
-  background: var(--cat);
+  border: 2px solid white;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
   color: white;
   cursor: pointer;
   font-family: inherit;
@@ -421,11 +430,13 @@
   }
 
   &.hub-elegido {
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.45), 0 10px 28px rgba(20, 15, 50, 0.34);
+    background: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.35), 0 10px 28px rgba(0, 0, 0, 0.4);
   }
 
-  .hub-nombre { font-size: 14px; }
-  .hub-cuenta { font-size: 11.5px; }
+  .hub-icono { width: 30px; height: 30px; margin-bottom: 0; }
+  .hub-nombre { font-size: 13px; letter-spacing: 0; }
+  .hub-cuenta { font-size: 11px; }
 }
 
 // ── La categoría que se está mostrando ────────────────────
@@ -445,7 +456,7 @@
   gap: 10px;
   margin-bottom: 14px;
   padding-bottom: 9px;
-  border-bottom: 2px solid var(--cat);
+  border-bottom: 2px solid var(--sf-primary);
 
   h2 {
     margin: 0;
@@ -458,7 +469,7 @@
 .seccion-cuenta {
   padding: 2px 9px;
   border-radius: 999px;
-  background: var(--cat);
+  background: var(--sf-primary);
   color: white;
   font-size: 11.5px;
   font-weight: 700;
@@ -478,7 +489,7 @@
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 
-  &:hover { border-color: var(--cat); color: #1a1a2e; }
+  &:hover { border-color: var(--sf-primary); color: #1a1a2e; }
 }
 
 .cat-hint {
@@ -499,9 +510,9 @@
   align-items: center;
   gap: 8px;
   padding: 13px 20px 13px 17px;
-  border: none;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
   border-radius: 999px;
-  background: var(--cat);
+  background: rgba(0, 0, 0, 0.72);
   color: white;
   font-family: inherit;
   font-size: 13.5px;
@@ -513,6 +524,8 @@
 
   &:hover, &:focus-visible { transform: translateY(-2px); }
 }
+
+.flotante-icono { width: 20px; height: 20px; display: flex; }
 
 @keyframes bebidasEntra {
   from { opacity: 0; transform: translateY(12px); }
