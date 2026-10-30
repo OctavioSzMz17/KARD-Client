@@ -19,6 +19,7 @@ export class DashboardLayoutComponent {
     { label: 'Inventory', icon: 'archive', route: '/dashboard/inventory', exact: false, enabled: true },
     { label: 'Ventas', icon: 'chart', route: '/dashboard/sales', exact: false, enabled: true },
     { label: 'Personalización', icon: 'palette', route: '/dashboard/branding', exact: false, enabled: true },
+    { label: 'Suscripción', icon: 'card', route: '/dashboard/suscripcion', exact: false, enabled: true },
     { label: 'Customers', icon: 'users', route: '/dashboard/customers', exact: false, enabled: false },
     { label: 'Audit Log', icon: 'log', route: '/dashboard/audit', exact: false, enabled: false },
   ];

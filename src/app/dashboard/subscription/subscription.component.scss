@@ -1,0 +1,203 @@
+.sub-page {
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.page-sub {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: #8a8fa8;
+}
+
+.sub-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: #8a8fa8;
+  font-size: 13.5px;
+}
+
+// ── Estado actual ─────────────────────────────────────────
+.estado-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px;
+  padding: 18px 22px;
+  background: white;
+  border: 1.5px solid #e8eaf0;
+  border-radius: 14px;
+}
+
+.estado-aviso { border-color: #fcd34d; background: #fffbeb; }
+
+.estado-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.estado-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8a8fa8;
+}
+
+.estado-valor {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.aviso {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 11px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+// ── Planes ────────────────────────────────────────────────
+.planes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 22px;
+  background: white;
+  border: 1.5px solid #e8eaf0;
+  border-radius: 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover { border-color: #c5cef8; }
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+}
+
+.plan-destacado {
+  border-color: #1e3a8a;
+  box-shadow: 0 10px 30px rgba(30, 58, 138, 0.09);
+}
+
+.plan-actual {
+  border-color: #15803d;
+  background: #f7fdf9;
+}
+
+.plan-tag {
+  position: absolute;
+  top: -10px;
+  left: 22px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: #1e3a8a;
+  color: white;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.plan-tag-actual { background: #15803d; }
+
+.plan-resumen {
+  margin: 0;
+  font-size: 13px;
+  color: #8a8fa8;
+  min-height: 34px;
+}
+
+.plan-precio {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  padding-bottom: 4px;
+
+  .moneda { font-size: 17px; font-weight: 600; color: #5a5f7a; }
+  .monto  { font-size: 36px; font-weight: 800; color: #1a1a2e; letter-spacing: -0.02em; }
+  .periodo { font-size: 12.5px; color: #8a8fa8; margin-left: 4px; }
+}
+
+.plan-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #3e3f5e;
+    line-height: 1.45;
+
+    svg { flex: 0 0 auto; margin-top: 3px; color: #15803d; }
+  }
+}
+
+.plan-btn {
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 11px;
+  border: none;
+  background: #1e3a8a;
+  color: white;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) { background: #1e3799; }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+
+.plan-btn-ghost {
+  background: white;
+  color: #1e3a8a;
+  border: 1.5px solid #d9def0;
+
+  &:hover:not(:disabled) { background: #f5f7ff; border-color: #1e3a8a; }
+}
+
+.nota-pago {
+  margin: 0;
+  font-size: 12.5px;
+  color: #8a8fa8;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .planes { grid-template-columns: 1fr; }
+  .plan-resumen { min-height: 0; }
+}

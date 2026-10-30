@@ -1,0 +1,93 @@
+<div class="sub-page">
+
+  <div class="page-header">
+    <div>
+      <h1>Suscripción</h1>
+      <p class="page-sub">Tu plan de KARD y lo que incluye</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="sub-loading"><div class="spinner-lg"></div><p>Cargando tu suscripción…</p></div>
+  } @else {
+
+    <!-- Estado actual -->
+    <div class="estado-card" [class.estado-aviso]="avisoPago()">
+      <div class="estado-main">
+        <span class="estado-label">Estado</span>
+        <span class="estado-valor">{{ estadoLabel() }}</span>
+      </div>
+      @if (planActual(); as p) {
+        <div class="estado-main">
+          <span class="estado-label">Plan</span>
+          <span class="estado-valor">{{ p | titlecase }}</span>
+        </div>
+      }
+      @if (info()?.current_period_end; as hasta) {
+        <div class="estado-main">
+          <span class="estado-label">Pagado hasta</span>
+          <span class="estado-valor">{{ hasta | date:'d MMM y' }}</span>
+        </div>
+      }
+    </div>
+
+    @if (avisoPago()) {
+      <p class="aviso">
+        No pudimos cobrar la última renovación. Tu acceso sigue activo mientras
+        Stripe reintenta el cobro — revisa tu método de pago.
+      </p>
+    }
+
+    <!-- Planes -->
+    <div class="planes">
+      @for (p of planes; track p.key) {
+        <div class="plan" [class.plan-destacado]="p.destacado" [class.plan-actual]="planActual() === p.key">
+          @if (p.destacado && planActual() !== p.key) {
+            <span class="plan-tag">Más elegido</span>
+          }
+          @if (planActual() === p.key) {
+            <span class="plan-tag plan-tag-actual">Tu plan</span>
+          }
+
+          <h2>{{ p.nombre }}</h2>
+          <p class="plan-resumen">{{ p.resumen }}</p>
+
+          <div class="plan-precio">
+            <span class="moneda">$</span>
+            <span class="monto">{{ p.precio }}</span>
+            <span class="periodo">MXN / mes</span>
+          </div>
+
+          <ul class="plan-lista">
+            @for (f of p.incluye; track f) {
+              <li>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                {{ f }}
+              </li>
+            }
+          </ul>
+
+          <button class="plan-btn" [class.plan-btn-ghost]="!p.destacado"
+            (click)="contratar(p.key)"
+            [disabled]="enviando() !== null || planActual() === p.key">
+            @if (enviando() === p.key) {
+              Redirigiendo…
+            } @else if (planActual() === p.key) {
+              Plan activo
+            } @else if (planActual()) {
+              Cambiar a {{ p.nombre }}
+            } @else {
+              Contratar {{ p.nombre }}
+            }
+          </button>
+        </div>
+      }
+    </div>
+
+    <p class="nota-pago">
+      El pago se procesa en Stripe. KARD nunca ve ni guarda los datos de tu tarjeta.
+    </p>
+  }
+</div>

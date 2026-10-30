@@ -38,7 +38,8 @@ export const routes: Routes = [
       { path: 'products',  loadComponent: () => import('./dashboard/products/products.component').then(m => m.ProductsComponent) },
       { path: 'inventory', loadComponent: () => import('./dashboard/inventory/inventory.component').then(m => m.InventoryComponent) },
       { path: 'sales',     loadComponent: () => import('./dashboard/sales/sales.component').then(m => m.SalesComponent) },
-      { path: 'branding',  loadComponent: () => import('./dashboard/personalization/personalization.component').then(m => m.PersonalizationComponent) }
+      { path: 'branding',  loadComponent: () => import('./dashboard/personalization/personalization.component').then(m => m.PersonalizationComponent) },
+      { path: 'suscripcion', loadComponent: () => import('./dashboard/subscription/subscription.component').then(m => m.SubscriptionComponent) }
     ]
   },
   { path: '**', redirectTo: '/login' }
