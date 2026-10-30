@@ -257,8 +257,23 @@
   overflow: hidden;
 }
 
-// Con hub dentro, la portada ocupa la pantalla completa.
-.cat-hero-amplio { min-height: 100vh; }
+// Con hub, la portada es la pantalla entera y las cuatro secciones
+// la reparten de borde a borde; solo el título y el buscador quedan arriba.
+.cat-hero-amplio {
+  height: 100vh;
+  min-height: 560px;
+  padding: 84px 0 0;
+  justify-content: flex-start;
+
+  .cat-hero-inner {
+    max-width: none;
+    flex: 1;
+    min-height: 0;
+    gap: 16px;
+  }
+
+  .cat-hero-texto { flex-shrink: 0; padding: 0 24px; }
+}
 
 // Sin banner propio, un degradado con el color del negocio.
 .cat-hero-plano {
@@ -303,6 +318,7 @@
 }
 
 .cat-hero .cat-search {
+  flex: 0 0 auto;
   width: 100%;
   max-width: 360px;
   background: rgba(255, 255, 255, 0.96);
@@ -311,79 +327,69 @@
 }
 
 // ── Hub de categorías (dentro de la portada) ──────────────
+// Ocupa todo lo que deja el título: de borde a borde y hasta abajo.
 .hub {
   position: relative;
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  max-width: 560px;
-  margin: 4px auto 0;
+  margin-top: 4px;
 }
 
 .hub-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-rows: 1fr 1fr;
+  height: 100%;
 }
 
 .hub-cuadrante {
   position: relative;
-  min-height: 118px;
-  padding: 18px;
+  min-height: 0;
+  padding: 16px;
   border: none;
-  border-radius: 16px;
+  border-radius: 0;
   cursor: pointer;
   font-family: inherit;
-  text-align: left;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   color: white;
-  // Translúcido para que la foto de la portada siga viéndose detrás.
-  background: color-mix(in srgb, var(--cat) 78%, transparent);
-  backdrop-filter: blur(3px);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
-  overflow: hidden;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-
-  // Un velo sutil da profundidad sin cambiar el color de la categoría.
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(145deg, rgba(255,255,255,0.14), rgba(0,0,0,0.12));
-  }
+  // Casi transparente: la foto se ve a través y el color solo la tiñe.
+  background: color-mix(in srgb, var(--cat) 20%, transparent);
+  // Las líneas blancas son las que dividen la pantalla en cuatro.
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  transition: background 0.2s ease;
 
   &:hover, &:focus-visible {
-    transform: translateY(-3px);
-    background: var(--cat);
-    box-shadow: 0 12px 26px rgba(20, 15, 50, 0.3);
+    background: color-mix(in srgb, var(--cat) 44%, transparent);
+    outline: none;
   }
 }
 
 // La categoría que se está mostrando abajo.
 .hub-elegido {
-  background: var(--cat);
-  box-shadow: 0 0 0 2.5px white, 0 10px 24px rgba(20, 15, 50, 0.3);
+  background: color-mix(in srgb, var(--cat) 52%, transparent);
 }
-
-// Se deja libre el centro para que el círculo no tape el texto.
-.hub-grid .hub-cuadrante:nth-child(1) { padding-right: 56px; }
-.hub-grid .hub-cuadrante:nth-child(2) { padding-left: 56px; align-items: flex-end; text-align: right; }
-.hub-grid .hub-cuadrante:nth-child(3) { padding-right: 56px; justify-content: flex-start; }
-.hub-grid .hub-cuadrante:nth-child(4) { padding-left: 56px; align-items: flex-end; text-align: right; justify-content: flex-start; }
 
 .hub-nombre {
   position: relative;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-size: clamp(20px, 3.2vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
 }
 
 .hub-cuenta {
   position: relative;
-  font-size: 12px;
-  font-weight: 500;
-  opacity: 0.85;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.9;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
 
 // La quinta categoría, al centro de las otras cuatro.
@@ -519,11 +525,8 @@
 
 @media (max-width: 560px) {
   .cat-hero { padding: 84px 20px 44px; }
-  .hub { max-width: 100%; }
-  .hub-cuadrante { min-height: 100px; }
+  .cat-hero-amplio { padding: 72px 0 0; }
   .hub-centro { width: 88px; height: 88px; }
-  .hub-grid .hub-cuadrante:nth-child(odd)  { padding-right: 44px; }
-  .hub-grid .hub-cuadrante:nth-child(even) { padding-left: 44px; }
   .bebidas-flotante span { display: none; }
   .bebidas-flotante { padding: 15px; }
 }
