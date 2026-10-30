@@ -264,3 +264,229 @@
   .catalog { padding: 28px 20px 48px; }
   .catalog-head h1 { font-size: 24px; }
 }
+
+// ── Encabezado con imagen de fondo ────────────────────────
+.cat-hero {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  padding: 34px 26px 26px;
+  margin-bottom: 22px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// Sin banner propio, un degradado con el color del negocio.
+.cat-hero-plano {
+  background: linear-gradient(135deg, var(--sf-primary) 0%, var(--sf-accent) 100%);
+}
+
+// Vela la foto para que el texto se lea sin depender de qué imagen suban.
+.cat-hero-velo {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 8, 30, 0.35) 0%, rgba(10, 8, 30, 0.68) 100%);
+}
+
+.cat-hero-texto {
+  position: relative;
+
+  h1 {
+    margin: 0;
+    font-size: 27px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.01em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  p {
+    margin: 5px 0 0;
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.86);
+  }
+}
+
+.cat-hero .cat-search {
+  position: relative;
+  max-width: 360px;
+  background: rgba(255, 255, 255, 0.96);
+  border: none;
+  backdrop-filter: blur(4px);
+}
+
+// ── Hub de categorías ─────────────────────────────────────
+.hub {
+  position: relative;
+  margin: 0 auto 30px;
+  max-width: 560px;
+}
+
+.hub-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.hub-cuadrante {
+  position: relative;
+  min-height: 118px;
+  padding: 18px;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 3px;
+  color: white;
+  background: var(--cat);
+  overflow: hidden;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+
+  // Un velo sutil da profundidad sin cambiar el color de la categoría.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(145deg, rgba(255,255,255,0.14), rgba(0,0,0,0.12));
+  }
+
+  &:hover, &:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 26px rgba(20, 15, 50, 0.22);
+  }
+}
+
+// Se deja libre el centro para que el círculo no tape el texto.
+.hub-grid .hub-cuadrante:nth-child(1) { padding-right: 56px; }
+.hub-grid .hub-cuadrante:nth-child(2) { padding-left: 56px; align-items: flex-end; text-align: right; }
+.hub-grid .hub-cuadrante:nth-child(3) { padding-right: 56px; justify-content: flex-start; }
+.hub-grid .hub-cuadrante:nth-child(4) { padding-left: 56px; align-items: flex-end; text-align: right; justify-content: flex-start; }
+
+.hub-nombre {
+  position: relative;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.hub-cuenta {
+  position: relative;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+// La quinta categoría, al centro de las otras cuatro.
+.hub-centro {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  border: 4px solid white;
+  background: var(--cat);
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-shadow: 0 8px 24px rgba(20, 15, 50, 0.26);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  z-index: 2;
+
+  &:hover, &:focus-visible {
+    transform: translate(-50%, -50%) scale(1.06);
+    box-shadow: 0 12px 30px rgba(20, 15, 50, 0.32);
+  }
+
+  .hub-nombre { font-size: 14px; }
+  .hub-cuenta { font-size: 11.5px; }
+}
+
+// ── Secciones por categoría ───────────────────────────────
+.seccion {
+  // Deja aire bajo el encabezado pegajoso de la tienda al hacer scroll.
+  scroll-margin-top: 84px;
+  margin-bottom: 30px;
+}
+
+.seccion-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 9px;
+  border-bottom: 2px solid var(--cat);
+
+  h2 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+}
+
+.seccion-cuenta {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--cat);
+  color: white;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+// ── Botón flotante de bebidas ─────────────────────────────
+.bebidas-flotante {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 20px 13px 17px;
+  border: none;
+  border-radius: 999px;
+  background: var(--cat);
+  color: white;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(20, 15, 50, 0.3);
+  animation: bebidasEntra 0.22s ease;
+  transition: transform 0.16s ease;
+
+  &:hover, &:focus-visible { transform: translateY(-2px); }
+}
+
+@keyframes bebidasEntra {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-cuadrante, .hub-centro, .bebidas-flotante { transition: none; animation: none; }
+}
+
+@media (max-width: 560px) {
+  .hub { max-width: 100%; }
+  .hub-cuadrante { min-height: 100px; }
+  .hub-centro { width: 88px; height: 88px; }
+  .hub-grid .hub-cuadrante:nth-child(odd)  { padding-right: 44px; }
+  .hub-grid .hub-cuadrante:nth-child(even) { padding-left: 44px; }
+  .bebidas-flotante span { display: none; }
+  .bebidas-flotante { padding: 15px; }
+}

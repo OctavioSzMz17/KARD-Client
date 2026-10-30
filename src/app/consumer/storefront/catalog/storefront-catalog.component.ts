@@ -1,19 +1,37 @@
-import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component, DestroyRef, ElementRef, computed, effect, inject,
+  OnDestroy, OnInit, signal, viewChild,
+} from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { StorefrontProduct, StorefrontService } from '../../../core/services/storefront.service';
 import { ProductImage } from '../../../core/services/image.service';
 import { StorefrontStore } from '../../../core/store/storefront.store';
 
+// El hub muestra el menú completo agrupado, así que se pide de una vez en
+// lugar de paginar: una carta de restaurante rara vez pasa de esto, y
+// paginar dejaría categorías incompletas al agrupar.
 const PAGE_SIZE = 24;
+// 100 es el máximo que acepta el endpoint público (page_size le=100).
+const PAGE_SIZE_MENU = 100;
+
+/** Una categoría del hub, con su lugar en la cuadrícula. */
+interface Categoria {
+  key: string;
+  nombre: string;
+  color: string;
+  /** El quinto va al centro, como círculo flotante. */
+  centro?: boolean;
+}
 
 @Component({
   selector: 'app-storefront-catalog',
-  imports: [],
+  imports: [NgTemplateOutlet],
   templateUrl: './storefront-catalog.component.html',
   styleUrl: './storefront-catalog.component.scss'
 })
-export class StorefrontCatalogComponent implements OnInit {
+export class StorefrontCatalogComponent implements OnInit, OnDestroy {
   readonly sf = inject(StorefrontStore);
   private svc        = inject(StorefrontService);
   private destroyRef = inject(DestroyRef);
@@ -27,7 +45,75 @@ export class StorefrontCatalogComponent implements OnInit {
 
   private search$ = new Subject<string>();
 
+  // Referencia al hub para saber cuándo salió de pantalla y sacar el
+  // botón flotante de bebidas.
+  private hubRef = viewChild<ElementRef<HTMLElement>>('hub');
+  private observer?: IntersectionObserver;
+  hubFuera = signal(false);
+
+  /**
+   * Los colores coinciden con los de las imágenes de respaldo del catálogo,
+   * para que la categoría se reconozca igual en el hub que en la tarjeta.
+   */
+  readonly categorias: Categoria[] = [
+    { key: 'entrada',      nombre: 'Entradas',       color: '#15803d' },
+    { key: 'plato_fuerte', nombre: 'Platos fuertes', color: '#b91c1c' },
+    { key: 'guarnicion',   nombre: 'Guarniciones',   color: '#a16207' },
+    { key: 'postre',       nombre: 'Postres',        color: '#be185d' },
+    { key: 'bebida',       nombre: 'Bebidas',        color: '#0e7490', centro: true },
+  ];
+
+  constructor() {
+    // El hub no existe al construir el componente: aparece cuando llegan los
+    // productos. Un efecto lo observa en cuanto el elemento está en el DOM,
+    // que es lo que `ngAfterViewInit` no alcanzaba a ver.
+    effect(() => {
+      const el = this.hubRef()?.nativeElement;
+      this.observer?.disconnect();
+      if (!el) { this.hubFuera.set(false); return; }
+
+      this.observer = new IntersectionObserver(
+        ([entry]) => this.hubFuera.set(!entry.isIntersecting),
+        { threshold: 0 },
+      );
+      this.observer.observe(el);
+    });
+  }
+
   hasMore = computed(() => this.products().length < this.total());
+
+  /** Imagen de fondo del encabezado: la del negocio, si la configuró. */
+  readonly fondo = computed(() => this.sf.store()?.banner_url ?? null);
+
+  /**
+   * El hub solo tiene sentido en un menú por categorías.
+   *
+   * Una óptica no las usa —sus productos se describen por graduación— y
+   * durante una búsqueda estorba: el cliente ya dijo qué quiere ver.
+   */
+  readonly modoHub = computed(() =>
+    this.sf.store()?.business_type === 'restaurant'
+    && !this.searchQuery()
+    && this.products().some(p => !!p.metadata?.['categoria'])
+  );
+
+  /** Productos agrupados, respetando el orden de `categorias`. */
+  readonly porCategoria = computed(() => {
+    const items = this.products();
+    return this.categorias
+      .map(c => ({
+        ...c,
+        productos: items.filter(p => p.metadata?.['categoria'] === c.key),
+      }))
+      .filter(g => g.productos.length > 0);
+  });
+
+  cuantosEn(key: string): number {
+    return this.products().filter(p => p.metadata?.['categoria'] === key).length;
+  }
+
+  readonly categoriaCentral = computed(() => this.categorias.find(c => c.centro)!);
+  readonly categoriasCuadrante = computed(() => this.categorias.filter(c => !c.centro));
 
   ngOnInit(): void {
     this.search$.pipe(
@@ -39,8 +125,20 @@ export class StorefrontCatalogComponent implements OnInit {
     this.fetch(true);
   }
 
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+  }
+
   onSearch(e: Event): void {
     this.search$.next((e.target as HTMLInputElement).value.trim());
+  }
+
+  /** Lleva a la sección de una categoría. */
+  irA(key: string): void {
+    const destino = document.getElementById('cat-' + key);
+    if (!destino) return;
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    destino.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'start' });
   }
 
   loadMore(): void {
@@ -60,7 +158,10 @@ export class StorefrontCatalogComponent implements OnInit {
 
   private fetch(reset: boolean): void {
     if (reset) { this.page = 1; this.loadingProducts.set(true); }
-    this.svc.getProducts(this.sf.slug, { search: this.searchQuery() || undefined, page: this.page, pageSize: PAGE_SIZE })
+    // Sin búsqueda se trae el menú completo para poder agruparlo; al buscar
+    // se vuelve a la lista paginada de siempre.
+    const pageSize = this.searchQuery() ? PAGE_SIZE : PAGE_SIZE_MENU;
+    this.svc.getProducts(this.sf.slug, { search: this.searchQuery() || undefined, page: this.page, pageSize })
       .subscribe({
         next: (res) => { this.products.set(res.items); this.total.set(res.total); this.loadingProducts.set(false); },
         error: () => { this.products.set([]); this.total.set(0); this.loadingProducts.set(false); }
@@ -79,7 +180,6 @@ export class StorefrontCatalogComponent implements OnInit {
 
     if (type === 'restaurant') {
       const chips: string[] = [];
-      if (m['categoria'])              chips.push(String(m['categoria']).replace('_', ' '));
       if (m['tiempo_preparacion_min']) chips.push(`${m['tiempo_preparacion_min']} min`);
       if (m['picante'])                chips.push('🌶 picante');
       return chips;
