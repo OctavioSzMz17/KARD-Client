@@ -122,11 +122,60 @@
 
   <!-- ── Bebidas flotante ────────────────────────────────
        Aparece solo cuando el hub salió de pantalla: mientras se ve,
-       el círculo del centro ya cumple esa función. -->
-  @if (modoHub() && hubFuera() && categoriaActiva() !== categoriaCentral().key
-       && cuantosEn(categoriaCentral().key) > 0) {
-    <button type="button" class="bebidas-flotante"
-      (click)="elegir(categoriaCentral().key)" [attr.aria-label]="'Ver ' + categoriaCentral().nombre">
+       el círculo del centro ya cumple esa función. Abre un mini menú
+       con las bebidas para combinarlas sin cambiar de categoría. -->
+  @if (mostrarFlotante()) {
+    @if (bebidasAbiertas()) {
+      <!-- Cierra al tocar fuera -->
+      <div class="bebidas-fuera" (click)="bebidasAbiertas.set(false)"></div>
+
+      <aside class="bebidas-panel" role="dialog" aria-label="Bebidas para acompañar">
+        <div class="bebidas-panel-head">
+          <div>
+            <h3>Bebidas</h3>
+            <p>Combínalas con tu pedido</p>
+          </div>
+          <button type="button" class="bebidas-cerrar" (click)="bebidasAbiertas.set(false)" aria-label="Cerrar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <ul class="bebidas-lista">
+          @for (p of bebidas(); track p.product_id; let i = $index) {
+            <li class="bebida-fila" [style.--i]="i">
+              <span class="bebida-img">
+                @if (primaryImage(p.images); as img) {
+                  <img [src]="img.url" [alt]="img.alt_text || p.name" loading="lazy"/>
+                }
+              </span>
+              <span class="bebida-info">
+                <span class="bebida-nombre">{{ p.name }}</span>
+                <span class="bebida-precio">${{ p.price }}</span>
+              </span>
+
+              @if (sf.qtyInCart(p.product_id) === 0) {
+                <button type="button" class="btn-add-cart" (click)="sf.addToCart(p.product_id)"
+                  [disabled]="sf.pendingAddId() === p.product_id" [attr.aria-label]="'Agregar ' + p.name">
+                  @if (sf.pendingAddId() === p.product_id) { ··· } @else { + Agregar }
+                </button>
+              } @else {
+                <div class="qty-stepper">
+                  <button (click)="sf.changeQty(p.product_id, -1)" [disabled]="sf.cartBusy()">−</button>
+                  <span>{{ sf.qtyInCart(p.product_id) }}</span>
+                  <button (click)="sf.changeQty(p.product_id, 1)" [disabled]="sf.cartBusy()">+</button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      </aside>
+    }
+
+    <button type="button" class="bebidas-flotante" [class.bebidas-flotante-abierto]="bebidasAbiertas()"
+      (click)="bebidasAbiertas.set(!bebidasAbiertas())"
+      [attr.aria-expanded]="bebidasAbiertas()" aria-label="Bebidas para acompañar">
       <span class="flotante-icono">
         <ng-container *ngTemplateOutlet="icono; context: { $implicit: categoriaCentral().key }"></ng-container>
       </span>

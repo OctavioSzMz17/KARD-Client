@@ -1,5 +1,5 @@
 import {
-  Component, DestroyRef, ElementRef, computed, effect, inject,
+  Component, DestroyRef, ElementRef, HostListener, computed, effect, inject,
   OnDestroy, OnInit, signal, viewChild,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
@@ -132,6 +132,23 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
   }
 
   readonly categoriaCentral = computed(() => this.categorias.find(c => c.centro)!);
+
+  /** Mini menú de bebidas del botón flotante. */
+  bebidasAbiertas = signal(false);
+
+  readonly bebidas = computed(() =>
+    this.products().filter(p => p.metadata?.['categoria'] === this.categoriaCentral().key)
+  );
+
+  /**
+   * El botón sale cuando el hub quedó atrás. Si la categoría abierta ya es
+   * Bebidas no hace falta: están a la vista.
+   */
+  readonly mostrarFlotante = computed(() =>
+    this.modoHub() && this.hubFuera()
+    && this.categoriaActiva() !== this.categoriaCentral().key
+    && this.bebidas().length > 0
+  );
   readonly categoriasCuadrante = computed(() => this.categorias.filter(c => !c.centro));
 
   ngOnInit(): void {
@@ -160,12 +177,19 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
 
   /** Deja abajo solo esa categoría y baja a ella. */
   elegir(key: string): void {
+    this.bebidasAbiertas.set(false);
     this.categoriaActiva.set(key);
     // La sección se pinta al aplicarse la señal; se baja en el turno siguiente.
     setTimeout(() => this.desplazarA('productos'));
   }
 
-  volverAlHub(): void { this.desplazarA('portada'); }
+  volverAlHub(): void {
+    this.bebidasAbiertas.set(false);
+    this.desplazarA('portada');
+  }
+
+  @HostListener('document:keydown.escape')
+  cerrarBebidas(): void { this.bebidasAbiertas.set(false); }
 
   /**
    * Baja (o sube) animando el scroll.
