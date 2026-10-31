@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -14,6 +14,19 @@ export type AuthMode = 'login' | 'register';
 export type AuthAudience = 'cliente' | 'negocio';
 
 const AUDIENCE_KEY = 'kard_auth_tipo';
+
+/** Una burbuja en la simulación: posición del centro y velocidad, en px (y px/s). */
+interface Ball {
+  el: HTMLElement;
+  x: number; y: number;
+  vx: number; vy: number;
+  r: number;
+  /** Rapidez a la que tiende al deambular. */
+  speed: number;
+}
+
+/** La caja invisible donde flotan, en px dentro del panel de burbujas. */
+interface Box { x0: number; y0: number; x1: number; y1: number; }
 
 /** Solo se exige igualdad cuando el campo de confirmación está activo (registro). */
 function passwordMatchValidator(group: AbstractControl) {
@@ -106,6 +119,18 @@ export class AuthPageComponent {
       .join(' ');
   });
 
+  private readonly stage = viewChild.required<ElementRef<HTMLElement>>('stage');
+
+  // Simulación de las burbujas
+  private balls: Ball[] = [];
+  private box: Box = { x0: 0, y0: 0, x1: 0, y1: 0 };
+  private bubbleFrame = 0;
+  private lastFrame = 0;
+  /** Hasta cuándo corre: sin fin en Cliente; tras salir, un momento, para no congelarse a media transición. */
+  private bubblesUntil = Infinity;
+  private bubblesReady = false;
+  private calmMotion = false;
+
   private liveTimer?: ReturnType<typeof setInterval>;
   private nextOrderId = 1043;
   private pointerFrame = 0;
@@ -137,9 +162,28 @@ export class AuthPageComponent {
   constructor() {
     // El panel en vivo solo late mientras se ve: en el lado Cliente está oculto.
     effect(() => (this.audience() === 'negocio' ? this.startLive() : this.stopLive()));
+
+    // Las burbujas, al revés: solo se simulan en el lado Cliente. Al salir
+    // siguen un instante para que no se congelen mientras se desvanecen.
+    effect(() => {
+      const cliente = this.audience() === 'cliente';
+      this.bubblesUntil = cliente ? Infinity : performance.now() + 900;
+      if (cliente && this.bubblesReady) this.kickBubbles();
+    });
+
+    afterNextRender(() => {
+      this.calmMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.addEventListener('resize', this.onResize, { passive: true });
+      this.collectBubbles(true);
+      this.bubblesReady = true;
+      this.kickBubbles();
+    });
+
     inject(DestroyRef).onDestroy(() => {
       this.stopLive();
       cancelAnimationFrame(this.pointerFrame);
+      cancelAnimationFrame(this.bubbleFrame);
+      window.removeEventListener('resize', this.onResize);
     });
 
     // Como /login y /register comparten ruta, la página no se reconstruye al
@@ -164,6 +208,144 @@ export class AuthPageComponent {
       stage.style.setProperty('--my', String((clientY / window.innerHeight - 0.5) * 2));
     });
   }
+
+  // ══ Burbujas flotando ═══════════════════════════════════════════
+  //
+  // Cada burbuja deambula: gira su rumbo un poco al azar en cada cuadro,
+  // rebota con las paredes de la caja invisible y, si choca con otra, se
+  // empujan como bolas de billar blandas (las grandes pesan más). El
+  // navegador solo recibe un `transform` por burbuja y cuadro.
+
+  private readonly onResize = () => this.collectBubbles(false);
+
+  /** Caja de vuelo, en píxeles del panel: el lado derecho de la diagonal (o la mitad de abajo en celular). */
+  private computeBox(stage: HTMLElement): Box {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    // El panel mide 106 % de la pantalla y empieza un 3 % antes de su borde.
+    const ox = w * 0.03, oy = h * 0.03;
+    if (w <= 820) return { x0: ox, y0: oy + h * 0.6, x1: ox + w, y1: oy + h };
+    // Se queda a la derecha de la diagonal (su punto más a la derecha es 59 %).
+    return { x0: ox + w * (w <= 1180 ? 0.64 : 0.61), y0: oy, x1: ox + w, y1: oy + h };
+  }
+
+  /**
+   * Reúne las burbujas visibles y mide sus radios. Al iniciar las coloca al
+   * azar sin que se encimen; al redimensionar conserva su lugar y solo las
+   * mete en la caja nueva.
+   */
+  private collectBubbles(place: boolean): void {
+    const stage = this.stage().nativeElement;
+    this.box = this.computeBox(stage);
+    const els = Array.from(stage.querySelectorAll<HTMLElement>('.bubble')).filter(el => el.offsetWidth > 0);
+    const known = new Map(this.balls.map(b => [b.el, b]));
+    const calm = this.calmMotion ? 0.8 : 1;
+
+    this.balls = els.map(el => {
+      const old = known.get(el);
+      const r = el.offsetWidth / 2;
+      if (old) { old.r = r; return old; }
+      // Las grandes se mueven un poco más despacio: pesan más y están más cerca.
+      const speed = (52 + Math.random() * 46) * Math.pow(100 / (r * 2), 0.25) * calm;
+      const angle = Math.random() * Math.PI * 2;
+      return { el, x: 0, y: 0, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, r, speed };
+    });
+
+    const { x0, y0, x1, y1 } = this.box;
+    this.balls.forEach((ball, i) => {
+      if (!place && known.has(ball.el)) return;
+      // Hasta 40 intentos de caer libre de las ya colocadas; si no, donde caiga.
+      for (let tries = 0; tries < 40; tries++) {
+        ball.x = x0 + ball.r + Math.random() * Math.max(1, x1 - x0 - 2 * ball.r);
+        ball.y = y0 + ball.r + Math.random() * Math.max(1, y1 - y0 - 2 * ball.r);
+        const libre = this.balls.slice(0, i).every(o => Math.hypot(o.x - ball.x, o.y - ball.y) > o.r + ball.r + 8);
+        if (libre) break;
+      }
+    });
+
+    // Tras redimensionar, nadie debe quedar fuera de la caja nueva.
+    for (const b of this.balls) this.clampToBox(b);
+    this.paintBubbles(true);
+  }
+
+  private clampToBox(b: Ball): void {
+    const { x0, y0, x1, y1 } = this.box;
+    b.x = Math.min(Math.max(b.x, x0 + b.r), Math.max(x0 + b.r, x1 - b.r));
+    b.y = Math.min(Math.max(b.y, y0 + b.r), Math.max(y0 + b.r, y1 - b.r));
+  }
+
+  private paintBubbles(reveal = false): void {
+    for (const b of this.balls) {
+      b.el.style.transform = `translate3d(${(b.x - b.r).toFixed(1)}px, ${(b.y - b.r).toFixed(1)}px, 0)`;
+      if (reveal) b.el.style.opacity = '1';
+    }
+  }
+
+  private kickBubbles(): void {
+    if (this.bubbleFrame) return;   // ya está corriendo
+    this.lastFrame = performance.now();
+    this.bubbleFrame = requestAnimationFrame(this.stepBubbles);
+  }
+
+  private readonly stepBubbles = (now: number): void => {
+    this.bubbleFrame = 0;
+    if (now > this.bubblesUntil) return;   // fuera del lado Cliente: se detiene hasta volver
+
+    // Si la pestaña estuvo en segundo plano, el salto de tiempo no debe lanzarlas por la pantalla.
+    const dt = Math.min((now - this.lastFrame) / 1000, 0.05);
+    this.lastFrame = now;
+    const { x0, y0, x1, y1 } = this.box;
+    const balls = this.balls;
+
+    for (const b of balls) {
+      // Deambular: un giro de rumbo al azar, de hasta ±1.6 rad/s…
+      const turn = (Math.random() - 0.5) * 3.2 * dt;
+      const cos = Math.cos(turn), sin = Math.sin(turn);
+      const vx = b.vx * cos - b.vy * sin;
+      b.vy = b.vx * sin + b.vy * cos;
+      b.vx = vx;
+      // …y la rapidez regresa suavemente a la suya, para que no se frenen ni se disparen.
+      const sp = Math.hypot(b.vx, b.vy) || 1;
+      const k = 1 + ((b.speed - sp) / sp) * Math.min(1, 2 * dt);
+      b.vx *= k; b.vy *= k;
+
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+
+      // Rebote en las paredes.
+      if (b.x - b.r < x0) { b.x = x0 + b.r; b.vx = Math.abs(b.vx); }
+      if (b.x + b.r > x1) { b.x = x1 - b.r; b.vx = -Math.abs(b.vx); }
+      if (b.y - b.r < y0) { b.y = y0 + b.r; b.vy = Math.abs(b.vy); }
+      if (b.y + b.r > y1) { b.y = y1 - b.r; b.vy = -Math.abs(b.vy); }
+    }
+
+    // Choques entre burbujas: se separan y se intercambian impulso (masa ∝ r²).
+    for (let i = 0; i < balls.length; i++) {
+      for (let j = i + 1; j < balls.length; j++) {
+        const a = balls[i], c = balls[j];
+        const dx = c.x - a.x, dy = c.y - a.y;
+        const min = a.r + c.r;
+        const d2 = dx * dx + dy * dy;
+        if (d2 >= min * min || d2 === 0) continue;
+
+        const dist = Math.sqrt(d2);
+        const nx = dx / dist, ny = dy / dist;
+        const ma = a.r * a.r, mc = c.r * c.r;
+        const overlap = min - dist;
+        a.x -= nx * overlap * (mc / (ma + mc)); a.y -= ny * overlap * (mc / (ma + mc));
+        c.x += nx * overlap * (ma / (ma + mc)); c.y += ny * overlap * (ma / (ma + mc));
+
+        const vn = (a.vx - c.vx) * nx + (a.vy - c.vy) * ny;
+        if (vn > 0) {   // se acercaban
+          const impulso = (1.85 * vn) / (1 / ma + 1 / mc);
+          a.vx -= (impulso / ma) * nx; a.vy -= (impulso / ma) * ny;
+          c.vx += (impulso / mc) * nx; c.vy += (impulso / mc) * ny;
+        }
+      }
+    }
+
+    this.paintBubbles();
+    this.bubbleFrame = requestAnimationFrame(this.stepBubbles);
+  };
 
   private startLive(): void {
     if (this.liveTimer) return;

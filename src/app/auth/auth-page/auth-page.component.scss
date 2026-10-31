@@ -145,42 +145,22 @@
   mask-image: radial-gradient(circle at 82% 30%, #000, transparent 72%);
 }
 
-// Cada burbuja emerge por debajo de la pantalla, sube y se desvanece arriba;
-// luego vuelve a empezar. La altura no se fija: la pone la animación (los
-// desfases negativos reparten las burbujas por todo el recorrido desde el
-// primer cuadro, así que nunca arrancan todas juntas desde abajo).
+// Las burbujas flotan dentro de una caja invisible: su posición la escribe, en
+// cada cuadro, la simulación del componente (rumbo al azar, rebote en las
+// paredes y entre ellas). Aquí solo se fija su tamaño y cómo aparecen.
 .bubble {
   --k: 1;
   position: absolute;
   top: 0;
-  left: var(--x);
+  left: 0;
   width: calc(var(--size) * var(--k));
   aspect-ratio: 1;
-  margin: calc(var(--size) * var(--k) / -2) 0 0 calc(var(--size) * var(--k) / -2);
   // El cursor las empuja según su profundidad (las grandes, más).
   translate: calc(var(--mx) * var(--depth) * 1px) calc(var(--my) * var(--depth) * 1px);
-  transition: translate 0.5s ease-out;
-  animation: sube var(--rise) linear var(--delay) infinite both;
-  will-change: transform, opacity;
-}
-
-@keyframes sube {
-  0%   { transform: translate3d(0, 112vh, 0); opacity: 0; }
-  9%   { opacity: 1; }
-  86%  { opacity: 1; }
-  100% { transform: translate3d(0, -30vh, 0); opacity: 0; }
-}
-
-// El vaivén lateral vive en su propia capa para no pelear con el ascenso.
-.bubble-sway {
-  position: absolute;
-  inset: 0;
-  animation: mece calc(var(--rise) / 4) ease-in-out var(--delay) infinite alternate;
-}
-
-@keyframes mece {
-  from { transform: translateX(calc(var(--sway) * -1)); }
-  to   { transform: translateX(var(--sway)); }
+  // Invisible hasta que la simulación las coloca: evita verlas todas en la esquina.
+  opacity: 0;
+  transition: translate 0.5s ease-out, opacity 0.8s ease;
+  will-change: transform;
 }
 
 .bubble-img {
@@ -810,7 +790,7 @@
   .brand { top: 18px; left: 20px; font-size: 17px; }
   .live-card, .live-tag { display: none; }
 
-  .bubble { display: none; left: var(--xm); --k: 0.62; }
+  .bubble { display: none; --k: 0.62; }
   .bubble.show-m { display: block; }
 
   .card-wrap { padding: 64px 14px 20px; }
@@ -840,7 +820,5 @@
   .is-cliente .pane-client, .is-cliente .pane-bubbles,
   .is-negocio .pane-live, .is-negocio .pane-business { transition: opacity 0.6s ease, visibility 0s; }
 
-  // Subir sigue, pero a media velocidad.
-  .bubble { animation-duration: calc(var(--rise) * 1.8); }
-  .bubble-sway { animation-duration: calc(var(--rise) * 0.9); }
+  // Las burbujas siguen flotando (la simulación solo baja su velocidad).
 }

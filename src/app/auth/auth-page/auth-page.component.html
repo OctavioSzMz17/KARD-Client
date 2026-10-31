@@ -1,4 +1,4 @@
-<div class="stage" [class.is-negocio]="esNegocio()" [class.is-cliente]="!esNegocio()"
+<div class="stage" #stage [class.is-negocio]="esNegocio()" [class.is-cliente]="!esNegocio()"
      (pointermove)="onPointer($event)">
 
   <!-- ══ Fondo: la pantalla partida en diagonal ═════════════════════
@@ -67,13 +67,9 @@
       <div class="stars"></div>
       @for (b of bubbles; track b.img) {
         <div class="bubble" [class.show-m]="b.mobile"
-             [style.--size]="b.size + 'px'" [style.--x]="b.x" [style.--y]="b.y" [style.--xm]="b.xm"
-             [style.--depth]="b.depth" [style.--sway]="b.sway + 'px'"
-             [style.--rise]="b.rise + 's'" [style.--delay]="b.delay + 's'">
-          <span class="bubble-sway">
-            <span class="bubble-img" [style.background-image]="b.bg"></span>
-            @if (b.label) { <span class="bubble-label">{{ b.label }}</span> }
-          </span>
+             [style.--size]="b.size + 'px'" [style.--depth]="b.depth">
+          <span class="bubble-img" [style.background-image]="b.bg"></span>
+          @if (b.label) { <span class="bubble-label">{{ b.label }}</span> }
         </div>
       }
     </div>
