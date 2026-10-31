@@ -1,41 +1,98 @@
-<div class="auth-layout">
-  <!-- Left Panel -->
-  <div class="auth-left">
-    <div class="brand">
-      <div class="logo">
-        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-          <rect width="40" height="40" rx="8" fill="white" fill-opacity="0.2"/>
-          <path d="M10 10H18L24 20L18 30H10L16 20L10 10Z" fill="white"/>
-          <path d="M20 10H28L22 20L28 30H20L14 20L20 10Z" fill="white" fill-opacity="0.6"/>
-        </svg>
-        <span class="logo-text">KARD</span>
+<div class="stage" [class.is-negocio]="esNegocio()" [class.is-cliente]="!esNegocio()"
+     (pointermove)="onPointer($event)">
+
+  <!-- ══ Fondo: la pantalla partida en diagonal ═════════════════════
+       Cada mitad guarda dos capas y solo una se ve según el interruptor:
+         Cliente → izquierda: foto de cliente   · derecha: burbujas de negocios
+         Negocio → izquierda: panel en vivo     · derecha: foto de negocio
+       La diagonal no se mueve; lo que cambia es lo que hay a cada lado. -->
+
+  <div class="region region-left" aria-hidden="true">
+    <div class="pane pane-photo pane-client" [style.background-image]="clientPhoto">
+      <div class="shade"></div>
+      <div class="caption caption-left">
+        <h2>Pide lo que se te antoja</h2>
+        <p>Explora negocios, arma tu pedido y recíbelo como prefieras.</p>
       </div>
-      <p class="tagline">{{ tagline() }}</p>
     </div>
-    <div class="illustration">
-      <svg width="260" height="200" viewBox="0 0 260 200" fill="none">
-        <rect x="30" y="30" width="180" height="130" rx="12" fill="white" fill-opacity="0.25"/>
-        <rect x="55" y="55" width="90" height="8" rx="4" fill="white" fill-opacity="0.6"/>
-        <rect x="55" y="72" width="70" height="6" rx="3" fill="white" fill-opacity="0.4"/>
-        <rect x="55" y="86" width="80" height="6" rx="3" fill="white" fill-opacity="0.4"/>
-        <rect x="55" y="100" width="60" height="6" rx="3" fill="white" fill-opacity="0.3"/>
-        <circle cx="175" cy="75" r="20" fill="white" fill-opacity="0.3"/>
-        <circle cx="175" cy="70" r="10" fill="white" fill-opacity="0.5"/>
-        <path d="M155 95 Q175 85 195 95" stroke="white" stroke-width="2" fill="none" stroke-opacity="0.5"/>
-        <circle cx="60" cy="145" r="12" fill="white" fill-opacity="0.4"/>
-        <path d="M48 170 Q60 158 72 170" stroke="white" stroke-width="3" fill="none" stroke-opacity="0.4"/>
-        <circle cx="190" cy="140" r="12" fill="white" fill-opacity="0.4"/>
-        <path d="M178 165 Q190 153 202 165" stroke="white" stroke-width="3" fill="none" stroke-opacity="0.4"/>
-        <rect x="80" y="130" width="90" height="50" rx="8" fill="white" fill-opacity="0.15"/>
-        <rect x="92" y="142" width="50" height="5" rx="2.5" fill="white" fill-opacity="0.5"/>
-        <rect x="92" y="155" width="35" height="5" rx="2.5" fill="white" fill-opacity="0.4"/>
-      </svg>
+
+    <div class="pane pane-live">
+      <div class="live-grid"></div>
+      <span class="live-tag">Así se ve tu panel · datos de ejemplo</span>
+
+      <div class="live-card card-ventas">
+        <span class="lc-label">Ventas de hoy</span>
+        <strong class="lc-big">{{ ventasTexto() }}</strong>
+        <span class="lc-delta">▲ 12.4% vs. ayer</span>
+        <svg class="spark" viewBox="0 0 120 32" preserveAspectRatio="none">
+          <polyline [attr.points]="sparkPoints()" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <div class="live-card card-pedidos">
+        <span class="lc-label"><i class="dot-live"></i>Pedidos en vivo</span>
+        @for (o of pedidos(); track o.id) {
+          <div class="order-row">
+            <span class="o-id">#{{ o.id }}</span>
+            <span class="o-who">{{ o.who }}<small>{{ o.mode }}</small></span>
+            <b>${{ o.total }}</b>
+          </div>
+        }
+      </div>
+
+      <div class="live-card card-stock">
+        <span class="lc-label">Inventario</span>
+        @for (s of inventario; track s.name) {
+          <div class="stock-row" [class.low]="s.pct < 20">
+            <span>{{ s.name }}</span>
+            <span class="bar"><i [style.width.%]="s.pct"></i></span>
+            <em>{{ s.pct }}%</em>
+          </div>
+        }
+        <span class="lc-warn">Aguacate: stock bajo</span>
+      </div>
     </div>
   </div>
 
-  <!-- Right Panel -->
-  <div class="auth-right">
-    <div class="form-card">
+  <div class="region region-right" aria-hidden="true">
+    <div class="pane pane-bubbles">
+      <div class="stars"></div>
+      @for (b of bubbles; track b.img) {
+        <div class="bubble" [class.show-m]="b.mobile"
+             [style.--size]="b.size + 'px'" [style.--x]="b.x" [style.--y]="b.y"
+             [style.--xm]="b.xm" [style.--ym]="b.ym" [style.--depth]="b.depth"
+             [style.--dur]="b.dur + 's'" [style.--delay]="b.delay + 's'">
+          <span class="bubble-img" [style.background-image]="b.bg"></span>
+          @if (b.label) { <span class="bubble-label">{{ b.label }}</span> }
+        </div>
+      }
+    </div>
+
+    <div class="pane pane-photo pane-business" [style.background-image]="businessPhoto">
+      <div class="shade"></div>
+      <div class="caption caption-right">
+        <h2>Tu negocio, a otro nivel</h2>
+        <p>Tienda en línea, inventario y pedidos en un solo lugar.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- La línea que marca la diagonal -->
+  <div class="diagonal" aria-hidden="true"><i></i></div>
+
+  <div class="brand" aria-hidden="true">
+    <svg width="34" height="34" viewBox="0 0 40 40" fill="none">
+      <rect width="40" height="40" rx="9" fill="white" fill-opacity="0.2"/>
+      <path d="M10 10H18L24 20L18 30H10L16 20L10 10Z" fill="white"/>
+      <path d="M20 10H28L22 20L28 30H20L14 20L20 10Z" fill="white" fill-opacity="0.6"/>
+    </svg>
+    <span>KARD</span>
+  </div>
+
+  <!-- ══ Formulario de vidrio, sobre la diagonal ═════════════════ -->
+  <main class="card-wrap">
+    <div class="glass-card">
 
       <!-- Interruptor Cliente / Negocio -->
       <div class="audience-switch" role="tablist" aria-label="Tipo de cuenta">
@@ -174,5 +231,5 @@
         }
       </p>
     </div>
-  </div>
+  </main>
 </div>

@@ -1,10 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { BUBBLES, BUSINESS_PHOTO, CLIENT_PHOTO } from './auth-images';
 
 /** Qué pide la página: entrar o crear cuenta. Sale de la ruta (/login, /register). */
 export type AuthMode = 'login' | 'register';
@@ -62,6 +63,43 @@ export class AuthPageComponent {
     confirmPassword: [''],
   }, { validators: passwordMatchValidator });
 
+  // ── Fondo ───────────────────────────────────────────────
+  readonly clientPhoto   = `url(${CLIENT_PHOTO})`;
+  readonly businessPhoto = `url(${BUSINESS_PHOTO})`;
+  readonly bubbles = BUBBLES.map(b => ({ ...b, bg: `url(${b.img})` }));
+
+  // ── Panel en vivo (lado izquierdo del modo Negocio) ─────
+  // Datos de ejemplo que laten solos: es lo que un dueño verá al entrar, no
+  // información real de nadie.
+  readonly ventas      = signal(4820);
+  readonly ventasSerie = signal<number[]>([4310, 4390, 4402, 4515, 4560, 4601, 4688, 4724, 4790, 4820]);
+  readonly pedidos     = signal<{ id: number; who: string; mode: string; total: number }[]>([
+    { id: 1042, who: 'Mesa 7',        mode: 'Comer aquí',  total: 245 },
+    { id: 1041, who: 'Ana',           mode: 'A domicilio', total: 318 },
+    { id: 1040, who: 'Para llevar',   mode: 'Para llevar', total: 129 },
+  ]);
+  readonly inventario = [
+    { name: 'Limones',   pct: 82 },
+    { name: 'Tortillas', pct: 54 },
+    { name: 'Aguacate',  pct: 12 },
+  ];
+
+  readonly ventasTexto = computed(() => '$' + this.ventas().toLocaleString('es-MX'));
+
+  /** Puntos de la línea de tendencia, ajustados al alto del recuadro (viewBox 120×32). */
+  readonly sparkPoints = computed(() => {
+    const serie = this.ventasSerie();
+    const min = Math.min(...serie), max = Math.max(...serie);
+    const alto = Math.max(max - min, 1);
+    return serie
+      .map((v, i) => `${((i / (serie.length - 1)) * 120).toFixed(1)},${(28 - ((v - min) / alto) * 24).toFixed(1)}`)
+      .join(' ');
+  });
+
+  private liveTimer?: ReturnType<typeof setInterval>;
+  private nextOrderId = 1043;
+  private pointerFrame = 0;
+
   readonly esRegistro = computed(() => this.mode() === 'register');
   readonly esNegocio  = computed(() => this.audience() === 'negocio');
 
@@ -81,22 +119,70 @@ export class AuthPageComponent {
       : 'Entra para explorar y pedir en tus negocios favoritos';
   });
 
-  readonly tagline = computed(() =>
-    this.esNegocio() ? 'Inventario inteligente\npara tu negocio' : 'Descubre y pide en\ntus negocios favoritos'
-  );
-
   readonly submitLabel = computed(() => {
     if (!this.esRegistro()) return 'Iniciar sesión';
     return this.esNegocio() ? 'Registrar negocio' : 'Crear cuenta';
   });
 
   constructor() {
+    // El panel en vivo solo late mientras se ve: en el lado Cliente está oculto.
+    effect(() => (this.audience() === 'negocio' ? this.startLive() : this.stopLive()));
+    inject(DestroyRef).onDestroy(() => {
+      this.stopLive();
+      cancelAnimationFrame(this.pointerFrame);
+    });
+
     // Como /login y /register comparten ruta, la página no se reconstruye al
     // pasar de una a otra: solo cambia el modo, y el formulario se reajusta.
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(params => {
       this.mode.set(params.get('mode') === 'register' ? 'register' : 'login');
       this.applyContext();
     });
+  }
+
+  /**
+   * Parallax: el cursor desplaza las burbujas y las fotos según su
+   * profundidad. Solo escribe dos variables CSS (-1 a 1) por cuadro; el
+   * movimiento lo hace el navegador.
+   */
+  onPointer(event: PointerEvent): void {
+    const stage = event.currentTarget as HTMLElement;
+    const { clientX, clientY } = event;
+    cancelAnimationFrame(this.pointerFrame);
+    this.pointerFrame = requestAnimationFrame(() => {
+      stage.style.setProperty('--mx', String((clientX / window.innerWidth - 0.5) * 2));
+      stage.style.setProperty('--my', String((clientY / window.innerHeight - 0.5) * 2));
+    });
+  }
+
+  private startLive(): void {
+    if (this.liveTimer) return;
+    const quienes = ['Mesa 3', 'Luis', 'Mesa 5', 'Para llevar', 'Sofía', 'Mesa 2'];
+    const modos   = ['Comer aquí', 'A domicilio', 'Para llevar', 'Recoger'];
+    let tick = 0;
+
+    this.liveTimer = setInterval(() => {
+      tick++;
+      const suma = 45 + Math.floor(Math.random() * 140);
+      this.ventas.update(v => v + suma);
+      this.ventasSerie.update(serie => [...serie.slice(1), this.ventas()]);
+
+      // Un pedido nuevo cada dos ticks, para que la lista no se agite demasiado.
+      if (tick % 2 === 0) {
+        const nuevo = {
+          id: this.nextOrderId++,
+          who: quienes[Math.floor(Math.random() * quienes.length)],
+          mode: modos[Math.floor(Math.random() * modos.length)],
+          total: 90 + Math.floor(Math.random() * 280),
+        };
+        this.pedidos.update(lista => [nuevo, ...lista.slice(0, 2)]);
+      }
+    }, 1900);
+  }
+
+  private stopLive(): void {
+    if (this.liveTimer) clearInterval(this.liveTimer);
+    this.liveTimer = undefined;
   }
 
   setAudience(audience: AuthAudience): void {
