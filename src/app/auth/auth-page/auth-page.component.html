@@ -11,7 +11,7 @@
     <div class="pane pane-photo pane-client" [style.background-image]="clientPhoto">
       <div class="shade"></div>
       <div class="caption caption-left">
-        <h2>Pide lo que se te antoja</h2>
+        <h2>Todo lo que buscas, cerca de ti</h2>
         <p>Explora negocios, arma tu pedido y recíbelo como prefieras.</p>
       </div>
     </div>
@@ -35,7 +35,7 @@
         @for (o of pedidos(); track o.id) {
           <div class="order-row">
             <span class="o-id">#{{ o.id }}</span>
-            <span class="o-who">{{ o.who }}<small>{{ o.mode }}</small></span>
+            <span class="o-who">{{ o.who }}<small>{{ o.items }} artículo{{ o.items === 1 ? '' : 's' }} · {{ o.mode }}</small></span>
             <b>${{ o.total }}</b>
           </div>
         }
@@ -43,14 +43,21 @@
 
       <div class="live-card card-stock">
         <span class="lc-label">Inventario</span>
-        @for (s of inventario; track s.name) {
-          <div class="stock-row" [class.low]="s.pct < 20">
-            <span>{{ s.name }}</span>
-            <span class="bar"><i [style.width.%]="s.pct"></i></span>
-            <em>{{ s.pct }}%</em>
+        <div class="stock-body">
+          <div class="donut">
+            <svg viewBox="0 0 56 56" aria-hidden="true">
+              <circle class="d-bg" cx="28" cy="28" r="22"/>
+              <circle class="d-fg" cx="28" cy="28" r="22" transform="rotate(-90 28 28)"
+                      [style.stroke-dasharray]="donaTrazo()"/>
+            </svg>
+            <span class="d-pct">{{ saludInventario() }}%</span>
           </div>
-        }
-        <span class="lc-warn">Aguacate: stock bajo</span>
+          <div class="stock-txt">
+            <strong>{{ productosActivos }}</strong>
+            <span>productos activos</span>
+            <em class="lc-warn">{{ stockBajo() }} con stock bajo</em>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -60,11 +67,13 @@
       <div class="stars"></div>
       @for (b of bubbles; track b.img) {
         <div class="bubble" [class.show-m]="b.mobile"
-             [style.--size]="b.size + 'px'" [style.--x]="b.x" [style.--y]="b.y"
-             [style.--xm]="b.xm" [style.--ym]="b.ym" [style.--depth]="b.depth"
-             [style.--dur]="b.dur + 's'" [style.--delay]="b.delay + 's'">
-          <span class="bubble-img" [style.background-image]="b.bg"></span>
-          @if (b.label) { <span class="bubble-label">{{ b.label }}</span> }
+             [style.--size]="b.size + 'px'" [style.--x]="b.x" [style.--y]="b.y" [style.--xm]="b.xm"
+             [style.--depth]="b.depth" [style.--sway]="b.sway + 'px'"
+             [style.--rise]="b.rise + 's'" [style.--delay]="b.delay + 's'">
+          <span class="bubble-sway">
+            <span class="bubble-img" [style.background-image]="b.bg"></span>
+            @if (b.label) { <span class="bubble-label">{{ b.label }}</span> }
+          </span>
         </div>
       }
     </div>

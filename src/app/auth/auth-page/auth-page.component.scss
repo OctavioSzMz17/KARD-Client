@@ -145,17 +145,42 @@
   mask-image: radial-gradient(circle at 82% 30%, #000, transparent 72%);
 }
 
+// Cada burbuja emerge por debajo de la pantalla, sube y se desvanece arriba;
+// luego vuelve a empezar. La altura no se fija: la pone la animación (los
+// desfases negativos reparten las burbujas por todo el recorrido desde el
+// primer cuadro, así que nunca arrancan todas juntas desde abajo).
 .bubble {
   --k: 1;
   position: absolute;
+  top: 0;
   left: var(--x);
-  top: var(--y);
   width: calc(var(--size) * var(--k));
   aspect-ratio: 1;
   margin: calc(var(--size) * var(--k) / -2) 0 0 calc(var(--size) * var(--k) / -2);
   // El cursor las empuja según su profundidad (las grandes, más).
   translate: calc(var(--mx) * var(--depth) * 1px) calc(var(--my) * var(--depth) * 1px);
   transition: translate 0.5s ease-out;
+  animation: sube var(--rise) linear var(--delay) infinite both;
+  will-change: transform, opacity;
+}
+
+@keyframes sube {
+  0%   { transform: translate3d(0, 112vh, 0); opacity: 0; }
+  9%   { opacity: 1; }
+  86%  { opacity: 1; }
+  100% { transform: translate3d(0, -30vh, 0); opacity: 0; }
+}
+
+// El vaivén lateral vive en su propia capa para no pelear con el ascenso.
+.bubble-sway {
+  position: absolute;
+  inset: 0;
+  animation: mece calc(var(--rise) / 4) ease-in-out var(--delay) infinite alternate;
+}
+
+@keyframes mece {
+  from { transform: translateX(calc(var(--sway) * -1)); }
+  to   { transform: translateX(var(--sway)); }
 }
 
 .bubble-img {
@@ -170,7 +195,8 @@
     0 14px 44px rgba(0, 0, 0, 0.5),
     0 0 46px rgba(124, 111, 255, 0.28),
     inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-  animation: flota var(--dur) ease-in-out var(--delay) infinite alternate;
+  // Se achata y se estira un poco, como gelatina: eso la hace burbuja.
+  animation: gelatina 3.4s ease-in-out infinite alternate;
 
   // El reflejo que la hace parecer una burbuja y no un recorte.
   &::after {
@@ -185,9 +211,9 @@
   }
 }
 
-@keyframes flota {
-  from { transform: translate3d(0, -10px, 0); }
-  to   { transform: translate3d(0, 12px, 0); }
+@keyframes gelatina {
+  from { transform: scale(1.035, 0.965); }
+  to   { transform: scale(0.965, 1.035); }
 }
 
 .bubble-label {
@@ -313,41 +339,62 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.stock-row {
-  display: grid;
-  grid-template-columns: 70px 1fr 36px;
+// Inventario: una dona con la salud del catálogo y el resumen al lado.
+.stock-body {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 12.5px;
-  font-weight: 500;
+  gap: 14px;
+  margin-top: 12px;
+}
 
-  em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; color: rgba(255, 255, 255, 0.7); }
+.donut {
+  position: relative;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
 
-  .bar {
-    height: 6px;
-    border-radius: 99px;
-    background: rgba(255, 255, 255, 0.14);
-    overflow: hidden;
+  svg { width: 100%; height: 100%; overflow: visible; }
 
-    i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #34d399, #38bdf8); }
+  circle { fill: none; stroke-width: 6; }
+  .d-bg { stroke: rgba(255, 255, 255, 0.14); }
+  .d-fg {
+    stroke: #34d399;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 5px rgba(52, 211, 153, 0.7));
+    transition: stroke-dasharray 0.8s ease;
   }
 
-  &.low {
-    em { color: #fbbf24; font-weight: 700; }
-    .bar i { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+  .d-pct {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
   }
 }
 
-// Las barras se llenan cada vez que el panel aparece.
-.is-negocio .stock-row .bar i { animation: llena 1.2s cubic-bezier(0.2, 0.7, 0.3, 1) 0.5s both; }
+// La dona se dibuja cada vez que el panel aparece.
+.is-negocio .donut .d-fg { animation: dibuja 1.2s cubic-bezier(0.2, 0.7, 0.3, 1) 0.5s both; }
 
-@keyframes llena { from { width: 0; } }
+@keyframes dibuja { from { stroke-dasharray: 0 140; } }
+
+.stock-txt {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+
+  strong { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  span   { font-size: 12px; color: rgba(255, 255, 255, 0.62); }
+  em     { font-style: normal; }
+}
 
 .lc-warn {
   display: flex;
   align-items: center;
-  margin-top: 12px;
+  margin-top: 6px;
   font-size: 11.5px;
   font-weight: 600;
   color: #fbbf24;
@@ -763,7 +810,7 @@
   .brand { top: 18px; left: 20px; font-size: 17px; }
   .live-card, .live-tag { display: none; }
 
-  .bubble { display: none; left: var(--xm); top: var(--ym); --k: 0.62; }
+  .bubble { display: none; left: var(--xm); --k: 0.62; }
   .bubble.show-m { display: block; }
 
   .card-wrap { padding: 64px 14px 20px; }
@@ -775,9 +822,25 @@
   .audience-switch { margin-bottom: 18px; }
 }
 
+// "Reducir movimiento" pide menos, no nada. Apagarlo todo dejaba la pantalla
+// muerta justo para quien lo tiene activo (en Windows basta con tener
+// desactivadas las animaciones del sistema), así que aquí se quita lo que más
+// marea —parallax, gelatina, deslizamientos— y se conserva lo suave: el
+// fundido entre lados y las burbujas, más lentas.
 @media (prefers-reduced-motion: reduce) {
-  .bubble-img, .live-card, .dot-live, .glass-card, .field-enter, .order-row { animation: none; }
-  .is-negocio .stock-row .bar i { animation: none; }
-  .pane, .bubble, .switch-thumb { transition: none; }
   .pane-photo, .bubble { translate: none; }
+  .bubble-img { animation: none; }
+  .live-card, .dot-live, .glass-card, .field-enter { animation: none; }
+
+  // Las capas se funden en lugar de deslizarse.
+  .pane-client, .pane-live, .pane-bubbles, .pane-business,
+  .is-cliente .pane-client, .is-cliente .pane-bubbles,
+  .is-negocio .pane-live, .is-negocio .pane-business { transform: none; }
+  .pane { transition: opacity 0.6s ease, visibility 0s linear 0.6s; }
+  .is-cliente .pane-client, .is-cliente .pane-bubbles,
+  .is-negocio .pane-live, .is-negocio .pane-business { transition: opacity 0.6s ease, visibility 0s; }
+
+  // Subir sigue, pero a media velocidad.
+  .bubble { animation-duration: calc(var(--rise) * 1.8); }
+  .bubble-sway { animation-duration: calc(var(--rise) * 0.9); }
 }

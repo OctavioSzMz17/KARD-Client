@@ -70,19 +70,29 @@ export class AuthPageComponent {
 
   // ── Panel en vivo (lado izquierdo del modo Negocio) ─────
   // Datos de ejemplo que laten solos: es lo que un dueño verá al entrar, no
-  // información real de nadie.
+  // información real de nadie. Se mantienen genéricos a propósito: la
+  // plataforma es multi-negocio (restaurantes, ópticas, lo que venga), así que
+  // aquí no hay platillos, mesas ni lentes, solo cosas que existen en cualquier
+  // negocio: ventas, pedidos con su modo de entrega e inventario.
   readonly ventas      = signal(4820);
   readonly ventasSerie = signal<number[]>([4310, 4390, 4402, 4515, 4560, 4601, 4688, 4724, 4790, 4820]);
-  readonly pedidos     = signal<{ id: number; who: string; mode: string; total: number }[]>([
-    { id: 1042, who: 'Mesa 7',        mode: 'Comer aquí',  total: 245 },
-    { id: 1041, who: 'Ana',           mode: 'A domicilio', total: 318 },
-    { id: 1040, who: 'Para llevar',   mode: 'Para llevar', total: 129 },
+  readonly pedidos     = signal<{ id: number; who: string; items: number; mode: string; total: number }[]>([
+    { id: 1042, who: 'Ana',   items: 3, mode: 'A domicilio', total: 318 },
+    { id: 1041, who: 'Luis',  items: 2, mode: 'En el local', total: 245 },
+    { id: 1040, who: 'Sofía', items: 1, mode: 'Para llevar', total: 129 },
   ]);
-  readonly inventario = [
-    { name: 'Limones',   pct: 82 },
-    { name: 'Tortillas', pct: 54 },
-    { name: 'Aguacate',  pct: 12 },
-  ];
+
+  readonly productosActivos = 128;
+  readonly stockBajo = signal(7);
+  /** Qué parte del catálogo tiene existencias suficientes. */
+  readonly saludInventario = computed(() => Math.round((1 - this.stockBajo() / this.productosActivos) * 100));
+
+  /** Circunferencia de la dona (r = 22), para dibujar el arco como `trazo vacío`. */
+  private static readonly DONA = 2 * Math.PI * 22;
+  readonly donaTrazo = computed(() => {
+    const lleno = (this.saludInventario() / 100) * AuthPageComponent.DONA;
+    return `${lleno.toFixed(1)} ${AuthPageComponent.DONA.toFixed(1)}`;
+  });
 
   readonly ventasTexto = computed(() => '$' + this.ventas().toLocaleString('es-MX'));
 
@@ -157,8 +167,8 @@ export class AuthPageComponent {
 
   private startLive(): void {
     if (this.liveTimer) return;
-    const quienes = ['Mesa 3', 'Luis', 'Mesa 5', 'Para llevar', 'Sofía', 'Mesa 2'];
-    const modos   = ['Comer aquí', 'A domicilio', 'Para llevar', 'Recoger'];
+    const quienes = ['Marco', 'Elena', 'Diego', 'Valeria', 'Pablo', 'Lucía'];
+    const modos   = ['En el local', 'A domicilio', 'Para llevar', 'Recoger'];
     let tick = 0;
 
     this.liveTimer = setInterval(() => {
@@ -172,10 +182,16 @@ export class AuthPageComponent {
         const nuevo = {
           id: this.nextOrderId++,
           who: quienes[Math.floor(Math.random() * quienes.length)],
+          items: 1 + Math.floor(Math.random() * 4),
           mode: modos[Math.floor(Math.random() * modos.length)],
           total: 90 + Math.floor(Math.random() * 280),
         };
         this.pedidos.update(lista => [nuevo, ...lista.slice(0, 2)]);
+      }
+
+      // De vez en cuando el inventario se mueve: se repone o se agota algo.
+      if (tick % 3 === 0) {
+        this.stockBajo.update(n => Math.min(11, Math.max(4, n + (Math.random() < 0.5 ? -1 : 1))));
       }
     }, 1900);
   }
