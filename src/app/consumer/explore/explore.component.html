@@ -1,65 +1,80 @@
-<div class="explore-page">
+<div class="explore" [style.--base]="baseDelay() + 's'">
 
-  <!-- ── Header ────────────────────────────────────────── -->
+  <!-- ══ Fondo ambiental: luces que derivan y una diagonal tenue ═════
+       Es la misma identidad que la pantalla de acceso (oscuro, vidrio,
+       burbujas, diagonal), sin repetir su peso: todo es CSS. -->
+  <div class="ambient" aria-hidden="true">
+    <i class="orb orb-1"></i>
+    <i class="orb orb-2"></i>
+    <i class="orb orb-3"></i>
+    <i class="slash"></i>
+    <div class="stars"></div>
+  </div>
+
+  <!-- ── Encabezado ──────────────────────────────────────── -->
   <header class="explore-header">
-    <span class="brand">KARD</span>
-    <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+    <span class="brand">
+      <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect width="40" height="40" rx="9" fill="white" fill-opacity="0.2"/>
+        <path d="M10 10H18L24 20L18 30H10L16 20L10 10Z" fill="white"/>
+        <path d="M20 10H28L22 20L28 30H20L14 20L20 10Z" fill="white" fill-opacity="0.6"/>
+      </svg>
+      KARD
+    </span>
+    <button class="btn-logout" (click)="logout()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Cerrar sesión
+    </button>
   </header>
 
-  <!-- ── Hero / landscape ──────────────────────────────── -->
+  <!-- ── Hero: se arma capa por capa ─────────────────────── -->
   <section class="hero">
-    <!-- Paisaje decorativo -->
-    <div class="landscape" aria-hidden="true">
-      <div class="sun"></div>
-      <div class="hill hill-back"></div>
-      <div class="hill hill-front"></div>
-    </div>
+
+    @for (b of heroBubbles; track b.slot; let i = $index) {
+      <span class="hbubble" [class]="'hbubble hb-' + b.slot" [style.--size]="b.size + 'px'" [style.--i]="i" aria-hidden="true">
+        <span class="hb-img" [style.background-image]="b.bg"></span>
+        @if (b.label) { <span class="hb-label">{{ b.label }}</span> }
+      </span>
+    }
 
     <div class="hero-content">
-      <h1>¿Qué tienes en mente?😀</h1>
+      <span class="eyebrow"><i class="dot-live"></i>Explora la plataforma</span>
+
+      <h1>
+        @for (w of palabras; track $index; let i = $index) {
+          <span class="word" [class.grad]="i === palabras.length - 1" [style.--i]="i">{{ w }}</span>
+        }
+      </h1>
+
       <p class="hero-sub">Descubre los negocios de la plataforma y ordena lo que necesites.</p>
 
-      <!-- Búsqueda central -->
-      <div class="search-bar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <!-- Búsqueda -->
+      <label class="search-bar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
-        <input type="text" placeholder="Buscar negocios..." (input)="onSearch($event)"/>
-      </div>
+        <input type="text" placeholder="Buscar negocios..." (input)="onSearch($event)" aria-label="Buscar negocios"/>
+      </label>
 
-      <!-- Etiquetas de categorías -->
+      <!-- Categorías -->
       @if (categories().length > 0) {
-        <div class="category-row">
-          @for (c of categories(); track c.business_type) {
-            <button class="category-tag"
-              [class.active]="activeCategory() === c.business_type"
+        <div class="category-row" role="group" aria-label="Categorías">
+          <button class="chip" [class.active]="activeCategory() === null" [style.--i]="0"
+            (click)="clearCategory()">
+            <span class="chip-name">Todos</span>
+            <span class="chip-count">{{ totalStores() }}</span>
+          </button>
+
+          @for (c of categories(); track c.business_type; let i = $index) {
+            <button class="chip" [class.active]="activeCategory() === c.business_type" [style.--i]="i + 1"
               (click)="selectCategory(c.business_type)">
-              <span class="category-icon">
-                @switch (c.business_type) {
-                  @case ('restaurant') {
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
-                      <path d="M7 2v20"/>
-                      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
-                    </svg>
-                  }
-                  @case ('optician') {
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                      <circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/>
-                      <path d="M10 15h4"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/>
-                    </svg>
-                  }
-                  @default {
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                      <path d="m2 7 4.4-4.4A2 2 0 0 1 7.8 2h8.4a2 2 0 0 1 1.4.6L22 7"/>
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                      <path d="M2 7h20v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-2-1 2.7 2.7 0 0 1-4 0 2.7 2.7 0 0 1-4 0 2.7 2.7 0 0 1-4 0 2.7 2.7 0 0 1-2 1 2 2 0 0 1-2-2Z"/>
-                    </svg>
-                  }
-                }
+              <span class="chip-icon">
+                <ng-container *ngTemplateOutlet="tipoIcono; context: { $implicit: c.business_type }"></ng-container>
               </span>
-              <span class="category-name">{{ categoryLabel(c.business_type) }}</span>
-              <span class="category-count">{{ c.store_count }}</span>
+              <span class="chip-name">{{ categoryLabel(c.business_type) }}</span>
+              <span class="chip-count">{{ c.store_count }}</span>
             </button>
           }
         </div>
@@ -67,11 +82,18 @@
     </div>
   </section>
 
-  <!-- ── Resultados ────────────────────────────────────── -->
+  <!-- ── Resultados ──────────────────────────────────────── -->
   <section class="stores-section">
 
+    @if (!loadingStores() && !loadError() && stores().length > 0) {
+      <div class="section-head">
+        <h2>Negocios disponibles</h2>
+        <span class="section-count">{{ stores().length }} {{ stores().length === 1 ? 'negocio' : 'negocios' }}</span>
+      </div>
+    }
+
     @if (loadingStores()) {
-      <div class="stores-grid">
+      <div class="stores-grid" aria-hidden="true">
         @for (i of [1,2,3]; track i) {
           <div class="store-skeleton"></div>
         }
@@ -80,6 +102,11 @@
 
     @else if (loadError()) {
       <div class="stores-empty">
+        <div class="empty-icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>
+          </svg>
+        </div>
         <p class="empty-title">No pudimos cargar las tiendas</p>
         <p class="empty-sub">Revisa tu conexión e intenta de nuevo.</p>
       </div>
@@ -87,6 +114,11 @@
 
     @else if (stores().length === 0) {
       <div class="stores-empty">
+        <div class="empty-icon">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </div>
         <p class="empty-title">Sin resultados</p>
         <p class="empty-sub">
           {{ searchQuery() ? 'No encontramos negocios para "' + searchQuery() + '"' : 'Aún no hay tiendas disponibles en esta categoría.' }}
@@ -96,50 +128,68 @@
 
     @else {
       <div class="stores-grid">
-        @for (s of stores(); track s.slug) {
-          <div class="store-card" (click)="openStore(s)">
+        @for (s of stores(); track s.slug; let i = $index) {
+          <!-- Una tarjeta es un enlace: se puede abrir con teclado y en pestaña nueva -->
+          <a class="store-card" [routerLink]="['/s', s.slug]" [style.--i]="i"
+             (pointermove)="onTilt($event)" (pointerleave)="resetTilt($event)">
 
-            <!-- Logo del negocio (placeholder por tipo si aún no tiene) -->
-            <div class="store-image" [class.img-restaurant]="s.business_type === 'restaurant'" [class.img-optician]="s.business_type === 'optician'">
+            <div class="cover" [class.cover-restaurant]="s.business_type === 'restaurant'"
+                 [class.cover-optician]="s.business_type === 'optician'">
+              @if (s.banner_url) {
+                <img class="cover-img" [src]="s.banner_url" alt="" loading="lazy"/>
+              } @else {
+                <span class="cover-icon">
+                  <ng-container *ngTemplateOutlet="tipoIcono; context: { $implicit: s.business_type }"></ng-container>
+                </span>
+              }
+              <span class="cover-shade"></span>
+              <span class="type-badge">{{ categoryLabel(s.business_type) }}</span>
+            </div>
+
+            <!-- El logo, entero y en un círculo: ya no se recorta como foto -->
+            <span class="logo-pin">
               @if (s.logo_url) {
                 <img [src]="s.logo_url" [alt]="s.business_name" loading="lazy"/>
               } @else {
-                @switch (s.business_type) {
-                  @case ('restaurant') {
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-                      <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
-                      <path d="M7 2v20"/>
-                      <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
-                    </svg>
-                  }
-                  @case ('optician') {
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-                      <circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/>
-                      <path d="M10 15h4"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/>
-                    </svg>
-                  }
-                  @default {
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-                      <path d="m2 7 4.4-4.4A2 2 0 0 1 7.8 2h8.4a2 2 0 0 1 1.4.6L22 7"/>
-                      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
-                    </svg>
-                  }
-                }
+                <b>{{ initial(s) }}</b>
               }
-              <span class="store-type-badge">{{ categoryLabel(s.business_type) }}</span>
-            </div>
+            </span>
 
-            <!-- Nombre + descripción -->
-            <div class="store-info">
+            <div class="card-body">
               <h3 class="store-name">{{ s.business_name }}</h3>
               <p class="store-desc">{{ storeDescription(s) }}</p>
+              <span class="cta">
+                Ver tienda
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>
+                </svg>
+              </span>
             </div>
-
-          </div>
+          </a>
         }
       </div>
     }
 
   </section>
-
 </div>
+
+<!-- Icono de cada tipo de negocio (se dibuja al tamaño de su contenedor) -->
+<ng-template #tipoIcono let-tipo>
+  <svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor"
+       stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    @switch (tipo) {
+      @case ('restaurant') {
+        <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>
+      }
+      @case ('optician') {
+        <circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/>
+        <path d="M10 15h4"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/>
+      }
+      @default {
+        <path d="m2 7 4.4-4.4A2 2 0 0 1 7.8 2h8.4a2 2 0 0 1 1.4.6L22 7"/>
+        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+        <path d="M2 7h20v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-2-1 2.7 2.7 0 0 1-4 0 2.7 2.7 0 0 1-4 0 2.7 2.7 0 0 1-4 0 2.7 2.7 0 0 1-2 1 2 2 0 0 1-2-2Z"/>
+      }
+    }
+  </svg>
+</ng-template>

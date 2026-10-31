@@ -1,5 +1,5 @@
 /**
- * Imágenes de la pantalla de acceso.
+ * Imágenes de la identidad visual de KARD (pantalla de acceso y catálogo de negocios).
  *
  * Son fotos de prueba de Unsplash, que permite enlazarlas directo (su licencia
  * es libre). Para cambiar una basta reemplazar su URL o id aquí: la pantalla

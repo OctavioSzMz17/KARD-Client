@@ -19,6 +19,7 @@ export interface ExploreStore {
   business_name: string;
   business_type: string;
   logo_url?: string | null;   // logo del negocio (branding)
+  banner_url?: string | null; // portada de la tarjeta (el logo es un logotipo: recortado como foto se ve mal)
   tagline?: string | null;    // eslogan corto — subtítulo de la card
 }
 

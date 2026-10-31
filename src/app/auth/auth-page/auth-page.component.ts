@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
-import { BUBBLES, BUSINESS_PHOTO, CLIENT_PHOTO } from './auth-images';
+import { BUBBLES, BUSINESS_PHOTO, CLIENT_PHOTO } from '../../shared/brand-images';
 
 /** Qué pide la página: entrar o crear cuenta. Sale de la ruta (/login, /register). */
 export type AuthMode = 'login' | 'register';
