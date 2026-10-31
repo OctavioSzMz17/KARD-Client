@@ -105,7 +105,7 @@ describe('PC-05 · ExploreComponent', () => {
     expect(activo?.textContent).toContain('2');
   });
 
-  it('elegir una categoría pide solo esa y "Todos" la quita', () => {
+  it('elegir una categoría pide solo esa; "Todos" vuelve a la lista sin pedirla otra vez', () => {
     const f = crear();
     const chips = Array.from(el(f).querySelectorAll<HTMLButtonElement>('.chip'));
 
@@ -116,10 +116,11 @@ describe('PC-05 · ExploreComponent', () => {
     f.detectChanges();
     expect(el(f).querySelectorAll('a.store-card').length).toBe(1);
 
+    // La lista completa ya se pidió al abrir la pantalla: se reutiliza.
     chips.find(c => c.textContent?.includes('Todos'))!.click();
-    const todos = httpMock.expectOne(r => r.url === `${API}/explore`);
-    expect(todos.request.params.has('category')).toBe(false);
-    todos.flush(stores);
+    httpMock.expectNone(r => r.url === `${API}/explore`);
+    f.detectChanges();
+    expect(el(f).querySelectorAll('a.store-card').length).toBe(2);
   });
 
   it('la búsqueda espera a que se deje de escribir', () => {
