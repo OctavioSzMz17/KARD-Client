@@ -1,16 +1,21 @@
-import { Routes } from '@angular/router';
+import { Routes, UrlMatcher } from '@angular/router';
 import { authGuard, consumerGuard } from './core/guards/auth.guard';
 import { StorefrontStore } from './core/store/storefront.store';
+
+/** Casa con /login y /register y entrega cuál de las dos fue como parámetro `mode`. */
+export const authMatcher: UrlMatcher = (segments) =>
+  segments.length === 1 && (segments[0].path === 'login' || segments[0].path === 'register')
+    ? { consumed: segments, posParams: { mode: segments[0] } }
+    : null;
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   {
-    path: 'login',
-    loadComponent: () => import('./auth/login/login.component').then(m => m.LoginComponent)
-  },
-  {
-    path: 'register',
-    loadComponent: () => import('./auth/register/register.component').then(m => m.RegisterComponent)
+    // /login y /register son la misma página (un interruptor Cliente/Negocio):
+    // comparten configuración para que Angular conserve el componente al pasar
+    // de una a otra, en vez de reconstruirlo.
+    matcher: authMatcher,
+    loadComponent: () => import('./auth/auth-page/auth-page.component').then(m => m.AuthPageComponent)
   },
   {
     path: 'explore',

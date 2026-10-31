@@ -18,20 +18,30 @@ export interface ConsumerLoginResponse {
   consumer_id: string;
 }
 
-export interface RegisterRequest {
+/** Auto-registro de un negocio (POST /auth/register-tenant). */
+export interface TenantRegisterRequest {
   business_name: string;
   business_type: 'restaurant' | 'optician';
   email: string;
-  phone?: string;
+  password: string;
 }
 
-export interface RegisterResponse {
+/** Trae el JWT ya emitido: el dueño entra directo a su panel. */
+export interface TenantRegisterResponse {
+  access_token: string;
+  token_type: string;
+  user_id: string;
   tenant_id: string;
-  business_name: string;
+  role: string;
   business_type: string;
+  slug: string;
+}
+
+/** Registro de un cliente (POST /consumers/register). El nombre es opcional. */
+export interface ConsumerRegisterRequest {
   email: string;
-  phone?: string;
-  is_active: boolean;
+  password: string;
+  name?: string;
 }
 
 export interface ApiError {

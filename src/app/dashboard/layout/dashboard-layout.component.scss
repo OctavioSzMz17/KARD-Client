@@ -5,7 +5,15 @@
 }
 
 // ── Sidebar ───────────────────────────────────────────────
+// Fijo al alto de la pantalla: sin esto el sidebar se estira al alto de la
+// página y, en una vista larga como Ventas, "Cerrar sesión" quedaba al final
+// de la tabla en lugar de a la vista.
 .sidebar {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  overflow-y: auto;
   width: 220px;
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.75);

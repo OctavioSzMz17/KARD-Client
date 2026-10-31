@@ -106,4 +106,33 @@ describe('PC-01 · AuthService', () => {
     expect(service.getSession()).toBeNull();
     expect(service.isLoggedIn()).toBe(false);
   });
+  // ── Registro ─────────────────────────────────────────────
+
+  it('registerTenant usa /auth/register-tenant y deja la sesión de negocio iniciada', () => {
+    service.registerTenant({
+      business_name: 'Sabor', business_type: 'restaurant', email: 'a@b.com', password: 'abc12345'
+    }).subscribe();
+
+    httpMock.expectNone(`${API}/saasadmin/tenants`);   // ese endpoint es solo del admin de la plataforma
+    httpMock.expectOne(`${API}/auth/register-tenant`).flush({
+      access_token: 'token-nuevo', token_type: 'bearer', user_id: 'u_9', tenant_id: 't_9',
+      role: 'business_admin', business_type: 'restaurant', slug: 'sabor'
+    });
+
+    expect(service.getToken()).toBe('token-nuevo');
+    expect(service.isConsumer()).toBe(false);
+    expect(service.getSession()?.tenant_id).toBe('t_9');
+  });
+
+  it('registerConsumer usa /consumers/register y deja la sesión de cliente iniciada', () => {
+    service.registerConsumer({ email: 'ana@correo.com', password: 'abc12345' }).subscribe();
+
+    httpMock.expectOne(`${API}/consumers/register`).flush({
+      access_token: 'token-cliente', token_type: 'bearer', consumer_id: 'con_9'
+    });
+
+    expect(service.getToken()).toBe('token-cliente');
+    expect(service.isConsumer()).toBe(true);
+    expect(service.getSession()).toBeNull();
+  });
 });
