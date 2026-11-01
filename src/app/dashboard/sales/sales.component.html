@@ -90,6 +90,16 @@
         <span class="kpi-label">Ticket promedio</span>
         <span class="kpi-value">${{ averageTicket() | number:'1.2-2' }}</span>
       </div>
+      @if (hasCashDetail()) {
+        <div class="kpi">
+          <span class="kpi-label">Propinas (incluidas)</span>
+          <span class="kpi-value">${{ s.tips | number:'1.2-2' }}</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Descuentos</span>
+          <span class="kpi-value">${{ s.discounts | number:'1.2-2' }}</span>
+        </div>
+      }
       <div class="kpi">
         <span class="kpi-label">Cancelados</span>
         <span class="kpi-value muted">{{ s.canceled_count }}</span>
@@ -119,6 +129,7 @@
               <th>Fecha</th>
               <th>Cliente</th>
               <th>Estado</th>
+              <th>Pago</th>
               <th class="num">Artículos</th>
               <th class="num">Total</th>
             </tr>
@@ -145,6 +156,7 @@
                     }
                   </select>
                 </td>
+                <td class="nowrap">{{ paymentLabel(sale.payment_method) }}</td>
                 <td class="num">{{ sale.item_count }}</td>
                 <td class="num strong">${{ sale.total | number:'1.2-2' }}</td>
               </tr>

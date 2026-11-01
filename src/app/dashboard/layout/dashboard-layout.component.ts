@@ -15,6 +15,8 @@ export class DashboardLayoutComponent {
 
   navItems = [
     { label: 'Dashboard', icon: 'home', route: '/dashboard', exact: true, enabled: true },
+    { label: 'Cobrar', icon: 'cart', route: '/dashboard/cobrar', exact: false, enabled: true },
+    { label: 'Caja', icon: 'cash', route: '/dashboard/caja', exact: false, enabled: true },
     { label: 'Products', icon: 'box', route: '/dashboard/products', exact: false, enabled: true },
     { label: 'Inventory', icon: 'archive', route: '/dashboard/inventory', exact: false, enabled: true },
     { label: 'Ventas', icon: 'chart', route: '/dashboard/sales', exact: false, enabled: true },

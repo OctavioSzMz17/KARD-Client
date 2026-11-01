@@ -1024,3 +1024,27 @@
   .bulk-modal { width: calc(100vw - 24px); }
   .bulk-table .col-price { width: 108px; }
 }
+
+// SKU y código de barras
+.code-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #8b90a3;
+
+  &.err { color: #dc2626; }
+}
+
+.product-sku {
+  display: inline-block;
+  margin-top: 2px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #8b90a3;
+}

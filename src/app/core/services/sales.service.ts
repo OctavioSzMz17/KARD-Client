@@ -17,6 +17,14 @@ export interface Sale {
   customer_email: string;
   items: OrderItem[];
   created_at: string;
+  // Desglose de caja. Las ventas anteriores a la caja traen ceros y null.
+  payment_method?: PaymentMethod | null;
+  captured_by?: 'consumer' | 'employee';
+  subtotal?: string;
+  discount_amount?: string;
+  tip_amount?: string;
+  amount_received?: string | null;
+  change_given?: string | null;
 }
 
 /** Totales del conjunto filtrado completo, no solo de la página visible. */
@@ -25,6 +33,9 @@ export interface SalesSummary {
   canceled_count: number;
   revenue: string;
   units: number;
+  /** Propinas y descuentos del conjunto filtrado (la propina ya va dentro de `revenue`). */
+  tips?: string;
+  discounts?: string;
 }
 
 export interface SalesReport {
@@ -34,6 +45,44 @@ export interface SalesReport {
   total: number;
   page: number;
   page_size: number;
+}
+
+export type PaymentMethod = 'cash' | 'card' | 'transfer' | 'online';
+
+/** Cómo se atiende una venta de mostrador. */
+export type PosFulfillment = 'dine_in' | 'takeaway';
+
+export interface PosSaleRequest {
+  items: { product_id: string; quantity: number }[];
+  payment_method: PaymentMethod;
+  fulfillment_type: PosFulfillment;
+  table_number?: string;
+  customer_name?: string;
+  discount?: { type: 'percent' | 'amount'; value: string };
+  tip?: string;
+  /** Solo con efectivo: lo que entregó el cliente. */
+  amount_received?: string;
+}
+
+/** La venta ya cobrada, con todo lo que lleva el ticket. */
+export interface PosSale {
+  order_id: string;
+  status: string;
+  fulfillment_type: string;
+  payment_method: PaymentMethod | null;
+  subtotal: string;
+  shipping_cost: string;
+  discount_amount: string;
+  tip_amount: string;
+  total: string;
+  amount_received: string | null;
+  change_given: string | null;
+  table_number: string | null;
+  customer_name: string | null;
+  cashier: string | null;
+  items: OrderItem[];
+  created_at: string;
+  business_name: string;
 }
 
 /** Filtros del reporte. Todos opcionales: sin ninguno devuelve el histórico. */
@@ -84,6 +133,11 @@ export class SalesService {
       headers: this.headers,
       params,
     });
+  }
+
+  /** Cobra una venta de mostrador. Exige un turno de caja abierto (409 CASH_CLOSED si no). */
+  charge(body: PosSaleRequest): Observable<PosSale> {
+    return this.http.post<PosSale>(`${API}/orders/business/sales`, body, { headers: this.headers });
   }
 
   /** Cambia el estado de una venta. Devuelve la venta ya actualizada. */

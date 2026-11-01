@@ -67,6 +67,16 @@ export class SalesComponent implements OnInit {
 
   sales = computed(() => this.report()?.items ?? []);
   summary = computed(() => this.report()?.summary ?? null);
+
+  /** Hay propinas o descuentos en lo filtrado: solo entonces vale la pena mostrar esas tarjetas. */
+  hasCashDetail = computed(() => {
+    const s = this.summary();
+    return !!s && (Number(s.tips ?? 0) > 0 || Number(s.discounts ?? 0) > 0);
+  });
+
+  paymentLabel(method: string | null | undefined): string {
+    return ({ cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', online: 'En línea' } as Record<string, string>)[method ?? ''] ?? '—';
+  }
   totalRows = computed(() => this.report()?.total ?? 0);
   totalPages = computed(() => Math.max(1, Math.ceil(this.totalRows() / PAGE_SIZE)));
 

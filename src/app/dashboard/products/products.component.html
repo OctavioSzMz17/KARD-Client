@@ -105,6 +105,7 @@
           <!-- Name + description -->
           <div class="card-body">
             <h3 class="product-name">{{ p.name }}</h3>
+            @if (p.sku) { <span class="product-sku">{{ p.sku }}</span> }
             @if (p.description) {
               <p class="product-desc">{{ p.description }}</p>
             }
@@ -262,6 +263,22 @@
           <span>$</span>
           <input class="form-input" type="number" formControlName="price" step="0.01" min="0.01"/>
         </div>
+      </div>
+
+      <!-- SKU y código de barras -->
+      <div class="form-section">
+        <label class="form-label">SKU y código de barras (opcional)</label>
+        <div class="code-row">
+          <input class="form-input" formControlName="sku" placeholder="SKU, ej. CAFE-001" maxlength="64"
+            [class.invalid]="form.get('sku')?.invalid"/>
+          <input class="form-input" formControlName="barcode" placeholder="Código de barras" maxlength="64"
+            [class.invalid]="form.get('barcode')?.invalid"/>
+        </div>
+        @if (form.get('sku')?.invalid || form.get('barcode')?.invalid) {
+          <small class="field-hint err">Solo letras, números y . _ / -</small>
+        } @else {
+          <small class="field-hint">Sirven para buscar y escanear el producto al cobrar. No se pueden repetir.</small>
+        }
       </div>
 
       <!-- ── Images section ──────────────────────────────── -->

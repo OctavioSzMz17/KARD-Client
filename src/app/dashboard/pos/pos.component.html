@@ -1,0 +1,229 @@
+<div class="pos-page">
+
+  <!-- ═══ Catálogo ═══════════════════════════════════════ -->
+  <section class="catalog">
+    <header class="catalog-head">
+      <div>
+        <h1>Cobrar</h1>
+        <p class="subtitle">Busca por nombre, SKU o escanea un código de barras.</p>
+      </div>
+
+      @if (session(); as s) {
+        <a class="cash-chip open" routerLink="/dashboard/caja" title="Ver la caja">
+          <span class="dot"></span>
+          Caja abierta · fondo {{ money(s.opening_float) }}
+        </a>
+      } @else if (session() === null) {
+        <span class="cash-chip closed"><span class="dot"></span>Caja cerrada</span>
+      }
+    </header>
+
+    <div class="search-row">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input
+        class="search-input"
+        type="search"
+        placeholder="Nombre, SKU o código de barras…"
+        autocomplete="off"
+        [value]="query()"
+        (input)="onQuery($event)"
+        (keydown.enter)="onSearchEnter()"
+        aria-label="Buscar producto" />
+    </div>
+
+    @if (categories().length > 1) {
+      <div class="chips" role="tablist" aria-label="Categorías">
+        <button class="chip" [class.active]="category() === ''" (click)="category.set('')">Todo</button>
+        @for (c of categories(); track c) {
+          <button class="chip" [class.active]="category() === c" (click)="category.set(c)">
+            {{ c.replace('_', ' ') }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (loading() && visible().length === 0) {
+      <p class="empty">Cargando productos…</p>
+    } @else if (visible().length === 0) {
+      <p class="empty">No hay productos que coincidan.</p>
+    } @else {
+      <div class="grid">
+        @for (p of visible(); track p.product_id) {
+          <button class="tile" (click)="add(p)" [attr.aria-label]="'Agregar ' + p.name">
+            <div class="tile-img">
+              @if (primaryImage(p.images); as img) {
+                <img [src]="img.url" [alt]="img.alt_text || p.name" loading="lazy" />
+              } @else {
+                <span class="tile-initial">{{ p.name.charAt(0).toUpperCase() }}</span>
+              }
+            </div>
+            <div class="tile-body">
+              <span class="tile-name">{{ p.name }}</span>
+              @if (p.sku) { <span class="tile-sku">{{ p.sku }}</span> }
+              <span class="tile-price">{{ money(p.price) }}</span>
+            </div>
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- ═══ Ticket ═════════════════════════════════════════ -->
+  <aside class="ticket" aria-label="Ticket de venta">
+    <header class="ticket-head">
+      <h2>Ticket</h2>
+      @if (cart().length) {
+        <button class="link-btn" (click)="clearTicket()">Vaciar</button>
+      }
+    </header>
+
+    <!-- Modo de atención -->
+    <div class="seg" role="group" aria-label="Tipo de atención">
+      <button [class.active]="fulfillment() === 'takeaway'" (click)="fulfillment.set('takeaway')">Para llevar</button>
+      <button [class.active]="fulfillment() === 'dine_in'" (click)="fulfillment.set('dine_in')">En mesa</button>
+    </div>
+    @if (fulfillment() === 'dine_in') {
+      <input class="input" placeholder="Número de mesa" maxlength="20"
+             [value]="tableNumber()" (input)="tableNumber.set($any($event.target).value)" aria-label="Número de mesa" />
+    }
+
+    <!-- Líneas -->
+    <div class="lines">
+      @if (cart().length === 0) {
+        <p class="lines-empty">Toca un producto para agregarlo.</p>
+      }
+      @for (l of cart(); track l.product.product_id) {
+        <div class="line">
+          <div class="line-info">
+            <span class="line-name">{{ l.product.name }}</span>
+            <span class="line-unit">{{ money(l.product.price) }} c/u</span>
+          </div>
+          <div class="qty">
+            <button (click)="step(l, -1)" aria-label="Quitar uno">−</button>
+            <span>{{ l.quantity }}</span>
+            <button (click)="step(l, 1)" aria-label="Agregar uno">+</button>
+          </div>
+          <span class="line-total">{{ lineTotal(l) }}</span>
+        </div>
+      }
+    </div>
+
+    <!-- Descuento y propina -->
+    <div class="adjust">
+      <div class="adjust-row">
+        <label for="pos-discount">Descuento</label>
+        <div class="adjust-input">
+          <div class="mini-seg" role="group" aria-label="Tipo de descuento">
+            <button [class.active]="discountKind() === 'percent'" (click)="setDiscountKind('percent')">%</button>
+            <button [class.active]="discountKind() === 'amount'" (click)="setDiscountKind('amount')">$</button>
+          </div>
+          <input id="pos-discount" class="input small" inputmode="decimal" placeholder="0"
+                 [value]="discountText()" (input)="discountText.set($any($event.target).value)" />
+        </div>
+      </div>
+
+      <div class="adjust-row">
+        <label for="pos-tip">Propina</label>
+        <div class="adjust-input">
+          @for (p of tipPercents; track p) {
+            <button class="pill" [class.active]="isTipPercent(p)" (click)="setTipPercent(p)">{{ p }}%</button>
+          }
+          <input id="pos-tip" class="input small" inputmode="decimal" placeholder="$0.00"
+                 [value]="tipText()" (input)="tipText.set($any($event.target).value)" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Totales -->
+    <dl class="totals">
+      <div><dt>Subtotal ({{ itemCount() }})</dt><dd>{{ cents(totals().subtotal) }}</dd></div>
+      @if (totals().discount > 0) {
+        <div class="minus"><dt>Descuento</dt><dd>-{{ cents(totals().discount) }}</dd></div>
+      }
+      @if (totals().tip > 0) {
+        <div><dt>Propina</dt><dd>{{ cents(totals().tip) }}</dd></div>
+      }
+      <div class="grand"><dt>Total</dt><dd>{{ cents(totals().total) }}</dd></div>
+    </dl>
+
+    <!-- Pago -->
+    <div class="seg pay" role="group" aria-label="Método de pago">
+      @for (o of paymentOptions; track o.value) {
+        <button [class.active]="payment() === o.value" (click)="setPayment(o.value)">{{ o.label }}</button>
+      }
+    </div>
+
+    @if (payment() === 'cash') {
+      <div class="cash-box">
+        <label for="pos-received">Recibido</label>
+        <input id="pos-received" class="input" inputmode="decimal" placeholder="$0.00"
+               [value]="receivedText()" (input)="receivedText.set($any($event.target).value)" />
+        <div class="quick">
+          @for (q of quick(); track q) {
+            <button class="pill" [class.active]="isReceived(q)" (click)="setReceived(q)">
+              {{ q === totals().total ? 'Exacto' : cents(q) }}
+            </button>
+          }
+        </div>
+        @if (receivedText().trim()) {
+          <div class="change" [class.short]="!change().enough">
+            @if (change().enough) {
+              <span>Cambio</span><strong>{{ cents(change().change) }}</strong>
+            } @else {
+              <span>Faltan</span><strong>{{ cents(change().missing) }}</strong>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <input class="input" placeholder="Nombre del cliente (opcional)" maxlength="120"
+           [value]="customerName()" (input)="customerName.set($any($event.target).value)" aria-label="Nombre del cliente" />
+
+    @if (blocker(); as why) {
+      <p class="blocker" role="status">{{ why }}</p>
+    }
+    <button class="charge-btn" [disabled]="!!blocker() || charging()" (click)="charge()">
+      {{ charging() ? 'Cobrando…' : 'Cobrar ' + cents(totals().total) }}
+    </button>
+  </aside>
+
+  <!-- ═══ Caja cerrada: pide abrirla ═════════════════════ -->
+  @if (session() === null) {
+    <div class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+      <div class="gate-card">
+        <h2 id="gate-title">Abre la caja para empezar a cobrar</h2>
+        <p>Cuenta el efectivo que dejas en el cajón: ese es el fondo inicial. Al cerrar, el corte lo compara con lo que debería haber.</p>
+        <label for="pos-float">Fondo inicial</label>
+        <input id="pos-float" class="input" inputmode="decimal" placeholder="$0.00"
+               [value]="floatText()" (input)="floatText.set($any($event.target).value)"
+               (keydown.enter)="openCash()" />
+        <button class="charge-btn" [disabled]="opening()" (click)="openCash()">
+          {{ opening() ? 'Abriendo…' : 'Abrir caja' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ═══ Ticket cobrado ═════════════════════════════════ -->
+  @if (receipt(); as sale) {
+    <div class="gate" role="dialog" aria-modal="true" aria-labelledby="receipt-title">
+      <div class="receipt-card">
+        <div class="paid-banner">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <h2 id="receipt-title">Venta cobrada</h2>
+        </div>
+        @if (sale.change_given !== null) {
+          <p class="change-big">Cambio: <strong>{{ money(sale.change_given) }}</strong></p>
+        }
+        <div class="receipt-scroll"><app-receipt [sale]="sale" /></div>
+        <div class="receipt-actions">
+          <button class="btn-ghost" (click)="print()">Imprimir ticket</button>
+          <button class="charge-btn" (click)="closeReceipt()">Nueva venta</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

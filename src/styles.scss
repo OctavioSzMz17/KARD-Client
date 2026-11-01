@@ -17,3 +17,34 @@ body {
   color: #1a1a2e;
   -webkit-font-smoothing: antialiased;
 }
+
+// ── Impresión de tickets y cortes de caja ───────────────────
+// `printSheet()` (dashboard/pos/print.ts) pone la clase en <body>; con ella,
+// al imprimir solo queda visible la hoja `.print-sheet`, sin menú ni pantalla.
+@media print {
+  @page { margin: 6mm; }
+
+  body.printing-sheet {
+    background: #fff;
+
+    * { visibility: hidden !important; }
+
+    .print-sheet,
+    .print-sheet * { visibility: visible !important; }
+
+    .print-sheet {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      max-width: 80mm;
+      margin: 0;
+      padding: 0;
+      box-shadow: none;
+      border: 0;
+    }
+
+    // El corte es una hoja carta, no un ticket de 80 mm.
+    .print-sheet.print-wide { max-width: none; }
+  }
+}

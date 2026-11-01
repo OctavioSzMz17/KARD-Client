@@ -19,6 +19,8 @@ export interface Product {
   metadata:            Record<string, any>;
   images:              ProductImage[];
   is_deleted:          boolean;
+  sku:                 string | null;
+  barcode:             string | null;
 }
 
 interface ProductsResponse {

@@ -1,0 +1,170 @@
+<div class="cash-page">
+
+  <header class="page-head">
+    <div>
+      <h1>Caja</h1>
+      <p class="subtitle">Abre el turno, sigue cómo va y ciérralo con el corte.</p>
+    </div>
+    @if (session()) {
+      <a class="btn btn-primary" routerLink="/dashboard/cobrar">Ir a cobrar</a>
+    }
+  </header>
+
+  <!-- ═══ Estado del turno ═══════════════════════════════ -->
+  @if (session() === undefined) {
+    <section class="panel"><p class="muted">Cargando…</p></section>
+  } @else if (session() === null) {
+    <section class="panel open-panel">
+      <div>
+        <h2>La caja está cerrada</h2>
+        <p class="muted">Cuenta el efectivo que dejas en el cajón: es el fondo inicial con el que se compara el corte.</p>
+      </div>
+      <div class="open-form">
+        <label for="c-float">Fondo inicial</label>
+        <input id="c-float" class="input" inputmode="decimal" placeholder="$0.00"
+               [value]="floatText()" (input)="floatText.set($any($event.target).value)"
+               (keydown.enter)="open()" />
+        <button class="btn btn-primary" [disabled]="busy()" (click)="open()">
+          {{ busy() ? 'Abriendo…' : 'Abrir caja' }}
+        </button>
+      </div>
+    </section>
+  } @else {
+    @if (session(); as s) {
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2><span class="live-dot"></span>Turno abierto</h2>
+            <p class="muted">
+              Desde {{ s.opened_at | date: "dd/MM/yyyy HH:mm" }} · Abrió {{ s.opened_by || '—' }}
+            </p>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><span>Fondo inicial</span><strong>{{ money(s.opening_float) }}</strong></div>
+          <div class="stat"><span>Ventas ({{ s.summary.sales_count }})</span><strong>{{ money(s.summary.gross) }}</strong></div>
+          <div class="stat"><span>Efectivo ({{ s.summary.cash.count }})</span><strong>{{ money(s.summary.cash.total) }}</strong></div>
+          <div class="stat"><span>Tarjeta ({{ s.summary.card.count }})</span><strong>{{ money(s.summary.card.total) }}</strong></div>
+          <div class="stat"><span>Transferencia ({{ s.summary.transfer.count }})</span><strong>{{ money(s.summary.transfer.total) }}</strong></div>
+          <div class="stat"><span>Descuentos</span><strong>{{ money(s.summary.discounts) }}</strong></div>
+          <div class="stat"><span>Propinas</span><strong>{{ money(s.summary.tips_total) }}</strong></div>
+          <div class="stat highlight"><span>Efectivo esperado</span><strong>{{ money(s.expected_cash) }}</strong></div>
+        </div>
+        @if (s.summary.excluded_count > 0) {
+          <p class="muted small">{{ s.summary.excluded_count }} venta(s) cancelada(s) no cuentan en el corte.</p>
+        }
+      </section>
+
+      <section class="panel">
+        <h2>Cerrar caja</h2>
+        <p class="muted">Cuenta billetes y monedas del cajón y escribe el total. El corte te dice si cuadra con lo esperado.</p>
+
+        <div class="close-form">
+          <div class="field">
+            <label for="c-counted">Efectivo contado</label>
+            <input id="c-counted" class="input" inputmode="decimal" placeholder="$0.00"
+                   [value]="countedText()" (input)="countedText.set($any($event.target).value)" />
+          </div>
+          <div class="field grow">
+            <label for="c-notes">Notas (opcional)</label>
+            <input id="c-notes" class="input" maxlength="500" placeholder="Ej. Se pagó al proveedor $200 del cajón"
+                   [value]="notes()" (input)="notes.set($any($event.target).value)" />
+          </div>
+        </div>
+
+        @if (liveDifference(); as d) {
+          <p class="live-diff" [class.short]="toneOfCents(d) === 'short'" [class.over]="toneOfCents(d) === 'over'">
+            @if (toneOfCents(d) === 'ok') { Cuadra exacto. }
+            @else if (toneOfCents(d) === 'short') { Faltan {{ cents(-d) }} respecto a lo esperado. }
+            @else { Sobran {{ cents(d) }} respecto a lo esperado. }
+          </p>
+        } @else if (countedText().trim() && liveDifference() === null) {
+          <p class="live-diff short">Escribe un importe válido.</p>
+        }
+        @if (liveDifference() === 0) {
+          <p class="live-diff">Cuadra exacto.</p>
+        }
+
+        <button class="btn btn-danger" [disabled]="busy() || !countedText().trim()" (click)="askClose()">
+          Cerrar caja y hacer el corte
+        </button>
+      </section>
+    }
+  }
+
+  <!-- ═══ Historial ═════════════════════════════════════ -->
+  <section class="panel">
+    <h2>Cortes anteriores</h2>
+
+    @if (history().length === 0) {
+      <p class="muted">{{ historyLoading() ? 'Cargando…' : 'Todavía no hay cortes cerrados.' }}</p>
+    } @else {
+      <div class="table-wrap">
+        <table class="history">
+          <thead>
+            <tr>
+              <th>Cierre</th><th>Cajero</th>
+              <th class="n">Ventas</th><th class="n">Esperado</th><th class="n">Contado</th><th class="n">Diferencia</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of history(); track h.session_id) {
+              <tr>
+                <td>{{ h.closed_at | date: "dd/MM/yyyy HH:mm" }}</td>
+                <td>{{ h.closed_by || '—' }}</td>
+                <td class="n">{{ h.summary.sales_count }}</td>
+                <td class="n">{{ money(h.expected_cash) }}</td>
+                <td class="n">{{ money(h.counted_cash) }}</td>
+                <td class="n">
+                  <span class="tag" [class.short]="toneOf(h.difference) === 'short'" [class.over]="toneOf(h.difference) === 'over'">
+                    {{ toneOf(h.difference) === 'ok' ? 'Cuadra' : (toneOf(h.difference) === 'over' ? '+' : '') + money(h.difference) }}
+                  </span>
+                </td>
+                <td class="n"><button class="link-btn" (click)="view(h)">Ver corte</button></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (pages() > 1) {
+        <div class="pager">
+          <button class="btn btn-ghost" [disabled]="page() <= 1" (click)="go(-1)">Anterior</button>
+          <span>Página {{ page() }} de {{ pages() }}</span>
+          <button class="btn btn-ghost" [disabled]="page() >= pages()" (click)="go(1)">Siguiente</button>
+        </div>
+      }
+    }
+  </section>
+
+  <!-- ═══ Confirmar cierre ══════════════════════════════ -->
+  @if (confirmingClose()) {
+    <div class="overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <div class="dialog small-dialog">
+        <h2 id="confirm-title">¿Cerrar la caja?</h2>
+        <p class="muted">
+          Contaste <strong>{{ money(countedText()) }}</strong>.
+          Después de cerrar no se puede cobrar hasta abrir un turno nuevo, y el corte queda guardado.
+        </p>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" [disabled]="busy()" (click)="confirmingClose.set(false)">Revisar</button>
+          <button class="btn btn-danger" [disabled]="busy()" (click)="close()">{{ busy() ? 'Cerrando…' : 'Sí, cerrar' }}</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ═══ Corte ═════════════════════════════════════════ -->
+  @if (viewing(); as v) {
+    <div class="overlay" role="dialog" aria-modal="true" aria-label="Corte de caja">
+      <div class="dialog">
+        <div class="sheet-scroll"><app-cut-sheet [session]="v" /></div>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" (click)="dismiss()">Cerrar</button>
+          <button class="btn btn-primary" (click)="print()">Imprimir corte</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -93,6 +93,9 @@ export class ProductsComponent implements OnInit {
     name:                   ['', Validators.required],
     description:            [''],
     price:                  [0, [Validators.required, Validators.min(0.01)]],
+    // Códigos opcionales para buscar y escanear en el punto de venta
+    sku:                    ['', Validators.pattern(/^[A-Za-z0-9._\/\-]*$/)],
+    barcode:                ['', Validators.pattern(/^[A-Za-z0-9._\/\-]*$/)],
     // restaurant
     categoria:              ['plato_fuerte'],
     tiempo_preparacion_min: [15],
@@ -115,6 +118,7 @@ export class ProductsComponent implements OnInit {
     const q = this.searchQuery().toLowerCase();
     return this.finalProducts().filter(p =>
       !q || p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
+        || (p.sku ?? '').toLowerCase().includes(q) || (p.barcode ?? '').toLowerCase().includes(q)
     );
   });
 
@@ -152,7 +156,7 @@ export class ProductsComponent implements OnInit {
     this.selectedInsumoId = '';
     this.selectedInsumoQty = 1;
     this.form.reset({
-      price: 0,
+      price: 0, sku: '', barcode: '',
       categoria: 'plato_fuerte', tiempo_preparacion_min: 15, picante: false,
       esfera: '0.00', cilindro: '0.00', eje: 0, material: 'CR-39'
     });
@@ -179,6 +183,8 @@ export class ProductsComponent implements OnInit {
       name:                   p.name,
       description:            p.description,
       price:                  parseFloat(p.price),
+      sku:                    p.sku ?? '',
+      barcode:                p.barcode ?? '',
       categoria:              p.metadata?.['categoria']              ?? 'plato_fuerte',
       tiempo_preparacion_min: p.metadata?.['tiempo_preparacion_min'] ?? 15,
       picante:                p.metadata?.['picante']                ?? false,
@@ -272,7 +278,9 @@ export class ProductsComponent implements OnInit {
     // can't sensibly say "I have 3 lasagna plates left". Stock tracking applies
     // to insumos only (see Inventory page). Send neutral defaults.
     const body = { product_type: 'final', name: v.name, description: v.description || '',
-                   price: v.price, inventory_count: 0, low_stock_threshold: 1, metadata };
+                   price: v.price, inventory_count: 0, low_stock_threshold: 1, metadata,
+                   // Cadena vacía = sin código (en edición, la API la entiende como "quitar").
+                   sku: (v.sku ?? '').trim(), barcode: (v.barcode ?? '').trim() };
 
     const id = this.editingId();
 

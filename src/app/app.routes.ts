@@ -40,6 +40,8 @@ export const routes: Routes = [
     loadComponent: () => import('./dashboard/layout/dashboard-layout.component').then(m => m.DashboardLayoutComponent),
     children: [
       { path: '', loadComponent: () => import('./dashboard/home/home.component').then(m => m.HomeComponent) },
+      { path: 'cobrar',    loadComponent: () => import('./dashboard/pos/pos.component').then(m => m.PosComponent) },
+      { path: 'caja',      loadComponent: () => import('./dashboard/cash/cash.component').then(m => m.CashComponent) },
       { path: 'products',  loadComponent: () => import('./dashboard/products/products.component').then(m => m.ProductsComponent) },
       { path: 'inventory', loadComponent: () => import('./dashboard/inventory/inventory.component').then(m => m.InventoryComponent) },
       { path: 'sales',     loadComponent: () => import('./dashboard/sales/sales.component').then(m => m.SalesComponent) },
