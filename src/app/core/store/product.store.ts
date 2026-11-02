@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { ProductImage } from '../services/image.service';
@@ -103,6 +103,17 @@ export class ProductStore {
           this.loading.set(false);
         }
       });
+  }
+
+  /**
+   * Producto que corresponde a un código escaneado (código de barras, SKU o id).
+   * Va al servidor y no al catálogo en memoria: éste solo trae 100 productos.
+   */
+  lookup(code: string): Observable<Product> {
+    return this.http.get<Product>(`${API}/products/lookup`, {
+      headers: this.headers,
+      params: new HttpParams().set('code', code),
+    });
   }
 
   // ── Mutations ─────────────────────────────────────────

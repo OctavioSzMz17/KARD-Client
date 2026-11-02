@@ -18,6 +18,15 @@
           aria-label="Buscar producto" />
       </div>
 
+      @if (canScan) {
+        <button type="button" class="scan-btn" (click)="openScanner()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/>
+          </svg>
+          Escanear
+        </button>
+      }
+
       @if (session(); as s) {
         <a class="cash-chip open" routerLink="/dashboard/caja" title="Ver la caja">
           <span class="dot"></span>
@@ -228,5 +237,10 @@
       <span class="fab-label">Ver ticket</span>
       <strong>{{ cents(totals().total) }}</strong>
     </button>
+  }
+  <!-- Escáner de cámara: lee códigos de barras y QR de los productos. -->
+  @if (scannerOpen()) {
+    <app-scanner [status]="scanStatus()" [summary]="scanSummary()"
+      (scanned)="onScanned($event)" (closed)="closeScanner()" />
   }
 </div>

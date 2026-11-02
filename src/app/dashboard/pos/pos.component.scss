@@ -84,6 +84,19 @@
   &.closed { color: $danger; }
 }
 
+// Botón para abrir la cámara: el mismo degradado de la acción principal.
+.scan-btn {
+  @include action;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  padding: 0 22px;
+  border-radius: 20px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
 .chips {
   display: flex;
   gap: 10px;
@@ -568,6 +581,7 @@
 }
 
 @media (max-width: 600px) {
+  .scan-btn { width: 100%; justify-content: center; height: 52px; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
   .search-row { min-width: 0; height: 52px; }
   .cash-chip { width: 100%; justify-content: center; }

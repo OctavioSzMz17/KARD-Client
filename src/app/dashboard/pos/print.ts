@@ -1,15 +1,32 @@
 /**
- * Imprime solo la hoja marcada con `.print-sheet` (ticket o corte), no la
- * pantalla completa. Los estilos de impresión viven en `styles.scss` y se
- * activan con esta clase en <body>, que se quita al terminar el diálogo.
+ * Imprime solo la hoja marcada con `.print-sheet` (ticket, corte o etiquetas),
+ * no la pantalla completa.
+ *
+ * La hoja se COPIA a una capa propia colgada de <body> y el resto de la página
+ * se oculta al imprimir (ver `styles.scss`). Ocultar el resto con CSS y dejar
+ * la hoja donde estaba la recortaba si vivía dentro de un diálogo con scroll;
+ * la copia queda libre de cualquier contenedor.
  */
-export function printSheet(): void {
-  const cls = 'printing-sheet';
-  const done = () => {
-    document.body.classList.remove(cls);
-    window.removeEventListener('afterprint', done);
-  };
-  document.body.classList.add(cls);
-  window.addEventListener('afterprint', done);
+const ROOT_ID = 'print-root';
+const BODY_CLASS = 'printing-sheet';
+
+export function printSheet(selector = '.print-sheet'): void {
+  const source = document.querySelector(selector);
+  if (!source) return;
+
+  cleanup();
+
+  const root = document.createElement('div');
+  root.id = ROOT_ID;
+  root.appendChild(source.cloneNode(true));
+  document.body.appendChild(root);
+  document.body.classList.add(BODY_CLASS);
+
+  window.addEventListener('afterprint', cleanup, { once: true });
   window.print();
+}
+
+function cleanup(): void {
+  document.body.classList.remove(BODY_CLASS);
+  document.getElementById(ROOT_ID)?.remove();
 }

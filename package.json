@@ -20,6 +20,9 @@
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
+    "barcode-detector": "^3.2.3",
+    "jsbarcode": "^3.12.3",
+    "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -27,6 +30,8 @@
     "@angular/build": "^22.0.0",
     "@angular/cli": "^22.0.0",
     "@angular/compiler-cli": "^22.0.0",
+    "@types/jsbarcode": "^3.11.4",
+    "@types/qrcode": "^1.5.6",
     "@vitest/browser": "^4.1.10",
     "jsdom": "^30.0.1",
     "prettier": "^3.8.1",

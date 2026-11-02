@@ -17,6 +17,8 @@ import {
 } from './pos-math';
 import { printSheet } from './print';
 import { ReceiptComponent } from './receipt.component';
+import { ScanStatus } from './scan-logic';
+import { ScannerComponent } from './scanner.component';
 
 interface CartItem {
   product: Product;
@@ -37,7 +39,7 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
  */
 @Component({
   selector: 'app-pos',
-  imports: [RouterLink, ReceiptComponent],
+  imports: [RouterLink, ReceiptComponent, ScannerComponent],
   templateUrl: './pos.component.html',
   styleUrl: './pos.component.scss',
 })
@@ -93,6 +95,13 @@ export class PosComponent implements OnInit {
       );
     });
   });
+
+  // ── Escáner de cámara ─────────────────────────────────
+  /** El navegador puede abrir una cámara (hace falta https o localhost). */
+  readonly canScan = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && window.isSecureContext;
+  readonly scannerOpen = signal(false);
+  readonly scanStatus = signal<ScanStatus | null>(null);
+  private scanCounter = 0;
 
   // ── Ticket ────────────────────────────────────────────
   readonly cart = signal<CartItem[]>([]);
@@ -202,6 +211,63 @@ export class PosComponent implements OnInit {
     } else {
       this.snack.warning(this.visible().length ? 'Hay varias coincidencias: toca el producto.' : 'No hay productos con ese código.');
     }
+  }
+
+  // ── Escáner de cámara ─────────────────────────────────
+  openScanner(): void {
+    if (!this.session()) {
+      this.snack.warning('Abre la caja para poder cobrar.');
+      return;
+    }
+    this.scanStatus.set(null);
+    this.scannerOpen.set(true);
+  }
+
+  closeScanner(): void {
+    this.scannerOpen.set(false);
+  }
+
+  /** Resumen sobre el botón "Listo" del escáner. */
+  readonly scanSummary = computed(() =>
+    this.itemCount() === 0
+      ? 'Todavía no hay productos'
+      : `${this.itemCount()} en el ticket · ${formatCents(this.totals().total)}`,
+  );
+
+  private report(ok: boolean, text: string): void {
+    this.scanStatus.set({ n: ++this.scanCounter, ok, text });
+  }
+
+  /**
+   * Una lectura de la cámara: se busca el producto y, si es vendible, entra al ticket.
+   * Primero en el catálogo ya cargado (instantáneo) y, si no está, en el servidor.
+   */
+  onScanned(code: string): void {
+    const q = code.toLowerCase();
+    const local = this.finals().find(
+      p => p.barcode === code || (p.sku ?? '').toLowerCase() === q || p.product_id === code,
+    );
+    if (local) {
+      this.addScanned(local);
+      return;
+    }
+
+    this.store.lookup(code).subscribe({
+      next: product => this.addScanned(product),
+      error: err => {
+        this.report(false, err?.status === 404 ? `Código no registrado: ${code}` : 'No se pudo buscar el producto.');
+      },
+    });
+  }
+
+  private addScanned(product: Product): void {
+    if (product.product_type !== 'final') {
+      this.report(false, `${product.name} es un insumo, no se vende.`);
+      return;
+    }
+    this.add(product);
+    const qty = this.cart().find(l => l.product.product_id === product.product_id)?.quantity ?? 1;
+    this.report(true, `${product.name} · ${qty} en el ticket`);
   }
 
   // ── Ticket ────────────────────────────────────────────

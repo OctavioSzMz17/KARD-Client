@@ -7,6 +7,10 @@ import { SnackbarService } from '../../core/services/snackbar.service';
 import { ImageService, ProductImage } from '../../core/services/image.service';
 import { RecipeService, RecipeItem } from '../../core/services/recipe.service';
 import { ProductStore, Product } from '../../core/store/product.store';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { printSheet } from '../pos/print';
+import { LabelSheetComponent, LabelItem } from './label-sheet.component';
+import { LABEL_MODES, LabelMode, barcodeSvg, labelCode, qrSvg, usesFallbackId } from './labels';
 
 export type { Product };
 
@@ -50,7 +54,7 @@ interface BulkRow {
 
 @Component({
   selector: 'app-products',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, LabelSheetComponent],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })
@@ -61,6 +65,7 @@ export class ProductsComponent implements OnInit {
   private snack     = inject(SnackbarService);
   private imgSvc    = inject(ImageService);
   private recipeSvc = inject(RecipeService);
+  private sanitizer = inject(DomSanitizer);
 
   session: UserSession | null = null;
 
@@ -80,6 +85,33 @@ export class ProductsComponent implements OnInit {
     { key: 'xs', label: 'Compactas', cols: 5 },
   ];
   searchQuery   = signal('');
+
+  // ── Etiquetas (QR y código de barras) ────────────────
+  // Modo de selección: se marcan productos en el catálogo y se imprimen sus
+  // etiquetas juntas; cada uno elige si lleva QR, barras o ambos.
+  readonly labelModes = LABEL_MODES;
+  selecting   = signal(false);
+  selectedIds = signal<ReadonlySet<string>>(new Set());
+  labelsOpen  = signal(false);
+  /** Qué lleva la etiqueta de cada producto; el que no aparece usa `labelDefault`. */
+  private labelChoice = signal<Record<string, LabelMode>>({});
+  labelDefault = signal<LabelMode>('both');
+
+  /** Productos seleccionados, en el orden en que se ven en el catálogo. */
+  selectedProducts = computed(() => {
+    const ids = this.selectedIds();
+    return this.filteredProducts().filter(p => ids.has(p.product_id));
+  });
+
+  labelItems = computed<LabelItem[]>(() =>
+    this.selectedProducts().map(product => ({ product, mode: this.modeOf(product.product_id) })),
+  );
+
+  /** Producto abierto en el panel de edición (para imprimir su etiqueta suelta). */
+  editingProduct = computed(() => this.products().find(p => p.product_id === this.editingId()) ?? null);
+
+  /** Código y dibujos del producto abierto en el panel de edición, para verlos por separado. */
+  drawerLabel = signal<{ code: string; fallback: boolean; qr: SafeHtml; bars: SafeHtml } | null>(null);
 
   // ── Drawer state ──────────────────────────────────────
   drawerOpen   = signal(false);
@@ -226,10 +258,79 @@ export class ProductsComponent implements OnInit {
       eje:                    p.metadata?.['eje']                    ?? 0,
       material:               p.metadata?.['material']               ?? 'CR-39',
     });
+    this.showDrawerLabel(p);
     this.drawerOpen.set(true);
   }
 
   closeDrawer(): void { this.drawerOpen.set(false); }
+
+  // ── Etiquetas ─────────────────────────────────────────
+  private showDrawerLabel(p: Product): void {
+    this.drawerLabel.set(null);
+    const code = labelCode(p);
+    qrSvg(code).then(qr => {
+      // Si mientras tanto se abrió otro producto, no se pisa su vista.
+      if (this.editingId() !== p.product_id) return;
+      this.drawerLabel.set({
+        code,
+        fallback: usesFallbackId(p),
+        qr: this.sanitizer.bypassSecurityTrustHtml(qr),
+        bars: this.sanitizer.bypassSecurityTrustHtml(barcodeSvg(code)),
+      });
+    });
+  }
+
+  toggleSelecting(): void {
+    this.selecting.update(v => !v);
+    if (!this.selecting()) this.selectedIds.set(new Set());
+  }
+
+  isSelected(id: string): boolean { return this.selectedIds().has(id); }
+
+  toggleSelect(id: string): void {
+    this.selectedIds.update(prev => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+
+  selectAllVisible(): void {
+    this.selectedIds.set(new Set(this.filteredProducts().map(p => p.product_id)));
+  }
+
+  clearSelection(): void { this.selectedIds.set(new Set()); }
+
+  modeOf(id: string): LabelMode { return this.labelChoice()[id] ?? this.labelDefault(); }
+
+  setLabelMode(id: string, mode: LabelMode): void {
+    this.labelChoice.update(c => ({ ...c, [id]: mode }));
+  }
+
+  /** Aplica el mismo contenido a todas las etiquetas del lote (y lo deja como predeterminado). */
+  setAllLabelModes(mode: LabelMode): void {
+    this.labelDefault.set(mode);
+    this.labelChoice.set({});
+  }
+
+  /** Abre el diálogo de impresión para lo seleccionado, o para un solo producto con un modo dado. */
+  openLabels(single?: { product: Product; mode: LabelMode }): void {
+    if (single) {
+      this.selectedIds.set(new Set([single.product.product_id]));
+      this.setLabelMode(single.product.product_id, single.mode);
+    }
+    if (this.selectedIds().size === 0) return;
+    this.labelsOpen.set(true);
+  }
+
+  closeLabels(): void {
+    this.labelsOpen.set(false);
+    // Una impresión suelta (desde el panel de edición) no deja una selección invisible.
+    if (!this.selecting()) this.selectedIds.set(new Set());
+  }
+
+  printLabels(): void { printSheet('.labels'); }
+
 
   // ── Alergenos ─────────────────────────────────────────
   toggleAlergen(a: string): void {
