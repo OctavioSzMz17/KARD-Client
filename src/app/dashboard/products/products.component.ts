@@ -8,7 +8,23 @@ import { ImageService, ProductImage } from '../../core/services/image.service';
 import { RecipeService, RecipeItem } from '../../core/services/recipe.service';
 import { ProductStore, Product } from '../../core/store/product.store';
 
-export type { Product };   // re-export so existing template references compile
+export type { Product };
+
+/** Tamaño de las tarjetas del catálogo: más pequeñas = más productos a la vista. */
+export type CardSize = 'l' | 'm' | 's' | 'xs';
+
+const SIZE_KEY = 'kard.products.cardSize';
+const SIZES: CardSize[] = ['l', 'm', 's', 'xs'];
+
+/** El tamaño que el negocio eligió la última vez; si no se puede leer, el grande de siempre. */
+function savedSize(): CardSize {
+  try {
+    const v = localStorage.getItem(SIZE_KEY) as CardSize | null;
+    return v && SIZES.includes(v) ? v : 'l';
+  } catch {
+    return 'l';
+  }
+}   // re-export so existing template references compile
 
 /**
  * Una fila de la edición masiva.
@@ -54,6 +70,15 @@ export class ProductsComponent implements OnInit {
 
   // ── Local UI state ────────────────────────────────────
   saving        = signal(false);
+
+  // Tamaño de las tarjetas (se recuerda entre visitas).
+  cardSize = signal<CardSize>(savedSize());
+  readonly cardSizes: { key: CardSize; label: string; cols: number }[] = [
+    { key: 'l',  label: 'Grandes',   cols: 2 },
+    { key: 'm',  label: 'Medianas',  cols: 3 },
+    { key: 's',  label: 'Pequeñas',  cols: 4 },
+    { key: 'xs', label: 'Compactas', cols: 5 },
+  ];
   searchQuery   = signal('');
 
   // ── Drawer state ──────────────────────────────────────
@@ -139,6 +164,14 @@ export class ProductsComponent implements OnInit {
     this.session = this.auth.getSession();
     this.store.load();   // no-op if cache is fresh; fetches only when stale/empty
   }
+
+  setCardSize(size: CardSize): void {
+    this.cardSize.set(size);
+    try { localStorage.setItem(SIZE_KEY, size); } catch { /* sin almacenamiento: solo no se recuerda */ }
+  }
+
+  /** Puntos del ícono de cuadrícula: n × n cuadritos que ilustran cuántos caben. */
+  gridDots(n: number): number[] { return Array.from({ length: n }, (_, i) => i); }
 
   // ── Search ────────────────────────────────────────────
   onSearch(e: Event): void { this.searchQuery.set((e.target as HTMLInputElement).value); }
