@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CashService, CashSession } from '../../core/services/cash.service';
 import { PaymentMethod, PosFulfillment, PosSale, SalesService } from '../../core/services/sales.service';
@@ -46,6 +46,9 @@ export class PosComponent implements OnInit {
   private cashSvc = inject(CashService);
   private sales = inject(SalesService);
   private snack = inject(SnackbarService);
+
+  /** Panel del ticket: en celular queda debajo del catálogo y la barra flotante lleva a él. */
+  private ticketPanel = viewChild<ElementRef<HTMLElement>>('ticketPanel');
 
   readonly paymentOptions = PAYMENT_OPTIONS;
   readonly tipPercents = [10, 15, 20];
@@ -267,6 +270,10 @@ export class PosComponent implements OnInit {
     this.customerName.set('');
     this.payment.set('cash');
     this.fulfillment.set('takeaway');
+  }
+
+  goToTicket(): void {
+    this.ticketPanel()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // ── Cobro ─────────────────────────────────────────────

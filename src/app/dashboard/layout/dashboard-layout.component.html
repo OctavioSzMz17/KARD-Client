@@ -31,7 +31,11 @@
   </ng-template>
 
   <!-- ── Menú lateral ───────────────────────────────────── -->
-  <aside class="sidebar">
+  <!-- En celular el menú es un cajón que entra desde la izquierda; este velo lo cierra. -->
+  @if (menuOpen()) {
+    <div class="menu-scrim" (click)="closeMenu()" aria-hidden="true"></div>
+  }
+  <aside class="sidebar" id="panel-menu" [class.open]="menuOpen()">
     <div class="sidebar-logo">
       <svg width="32" height="32" viewBox="0 0 40 40" fill="none" aria-hidden="true">
         <rect width="40" height="40" rx="9" fill="white" fill-opacity="0.2"/>
@@ -39,6 +43,11 @@
         <path d="M20 10H28L22 20L28 30H20L14 20L20 10Z" fill="white" fill-opacity="0.6"/>
       </svg>
       <span class="logo-label">KARD</span>
+      <button class="menu-close" type="button" (click)="closeMenu()" aria-label="Cerrar menú">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
     </div>
 
     <nav class="sidebar-nav" aria-label="Menú del panel">
@@ -75,6 +84,13 @@
   <!-- ── Área de trabajo ────────────────────────────────── -->
   <div class="workspace">
     <header class="topbar">
+      <button class="menu-toggle" type="button" (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()" aria-controls="panel-menu" aria-label="Abrir menú">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+          <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/>
+        </svg>
+      </button>
+
       <div class="topbar-title">
         @if (page().title) {
           <h1><span class="grad">{{ page().title }}</span></h1>
@@ -85,7 +101,7 @@
       <div class="topbar-actions">
         <span class="user-chip" [title]="'Sesión de ' + roleLabel()">
           <span class="dot-live"></span>
-          {{ businessLabel() }} · {{ roleLabel() }}
+          <span class="chip-text">{{ businessLabel() }} · {{ roleLabel() }}</span>
         </span>
       </div>
     </header>

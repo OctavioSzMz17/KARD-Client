@@ -527,10 +527,51 @@
 
 .receipt-actions { display: flex; flex-direction: column; gap: 10px; }
 
+// ── Barra flotante del ticket (solo cuando el ticket queda abajo) ──
+.ticket-fab { display: none; }
+
 // ── Responsivo ────────────────────────────────────────────
 @media (max-width: 1180px) {
-  .pos-page { grid-template-columns: 1fr; }
-  .ticket { position: static; max-height: none; }
+  .pos-page { grid-template-columns: 1fr; padding-bottom: 76px; }
+  .ticket { position: static; max-height: none; scroll-margin-top: 80px; }
+
+  .ticket-fab {
+    @include action;
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 18px;
+    font-size: 15px;
+    animation: pop 0.3s $spring backwards;
+
+    .fab-count {
+      display: grid;
+      place-items: center;
+      min-width: 26px;
+      height: 26px;
+      padding: 0 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.25);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .fab-label { flex: 1; text-align: left; font-weight: 600; }
+    strong { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  }
+}
+
+@media (max-width: 600px) {
+  .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .search-row { min-width: 0; height: 52px; }
+  .cash-chip { width: 100%; justify-content: center; }
+  .ticket { padding: 16px; border-radius: 22px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

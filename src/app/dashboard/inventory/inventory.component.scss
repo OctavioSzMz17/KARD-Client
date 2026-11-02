@@ -829,3 +829,20 @@
   &:hover:not(:disabled) { background: #1e3799; }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
+
+// ── Celular ───────────────────────────────────────────────
+// El encabezado se apila para no salirse de la pantalla.
+@media (max-width: 760px) {
+  .page-header { flex-wrap: wrap; }
+  .page-title { font-size: 22px; }
+
+  .header-right {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .search-wrap { flex: 1 1 100%; }
+  .search-input { width: 100%; min-width: 0; }
+  .btn-add { flex: 1 1 auto; justify-content: center; }
+}

@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
@@ -52,12 +52,23 @@ export class DashboardLayoutComponent {
     { label: 'Audit Log', icon: 'log', route: '/dashboard/audit', exact: false, enabled: false },
   ];
 
+  /** Menú lateral abierto (solo cuenta en pantallas angostas, donde es un cajón). */
+  menuOpen = signal(false);
+
+  toggleMenu(): void { this.menuOpen.update(v => !v); }
+  closeMenu(): void { this.menuOpen.set(false); }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void { this.closeMenu(); }
+
   /** `data` de la ruta hija activa, releída en cada navegación. */
   private routeData = toSignal(
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
       startWith(null),
       map(() => {
+        // Elegir una sección en el cajón del celular también lo cierra.
+        this.menuOpen.set(false);
         let route = this.router.routerState.snapshot.root;
         while (route.firstChild) route = route.firstChild;
         return route.data;

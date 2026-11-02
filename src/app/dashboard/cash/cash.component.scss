@@ -89,7 +89,7 @@ label { font-size: 12.5px; font-weight: 600; color: $text-soft; }
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 12px;
 }
 
@@ -247,6 +247,11 @@ label { font-size: 12.5px; font-weight: 600; color: $text-soft; }
 
 @media (max-width: 760px) {
   .open-panel { grid-template-columns: 1fr; }
+  .panel { padding: 20px 18px; border-radius: 22px; }
+  .stat strong { font-size: 19px; }
+  .close-form .field { width: 100%; }
+  .dialog { padding: 20px; }
+  .dialog-actions .btn { flex: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {

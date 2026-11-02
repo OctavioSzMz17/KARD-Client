@@ -66,7 +66,7 @@
   </section>
 
   <!-- ═══ Ticket ═════════════════════════════════════════ -->
-  <aside class="ticket" aria-label="Ticket de venta">
+  <aside class="ticket" #ticketPanel aria-label="Ticket de venta">
     <header class="ticket-head">
       <h2>Ticket</h2>
       @if (cart().length) {
@@ -220,5 +220,13 @@
         </div>
       </div>
     </div>
+  }
+  <!-- Celular: el ticket queda debajo del catálogo; esta barra lleva a él. -->
+  @if (cart().length && !receipt()) {
+    <button class="ticket-fab" type="button" (click)="goToTicket()">
+      <span class="fab-count">{{ itemCount() }}</span>
+      <span class="fab-label">Ver ticket</span>
+      <strong>{{ cents(totals().total) }}</strong>
+    </button>
   }
 </div>

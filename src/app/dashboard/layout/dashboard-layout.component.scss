@@ -63,6 +63,7 @@
   z-index: 3;
   align-self: flex-start;
   height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
   width: 232px;
   flex-shrink: 0;
@@ -258,6 +259,104 @@
     background: linear-gradient(135deg, #c5cef8 0%, #d8c6f8 50%, #c8c2f5 100%);
     box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.35);
     color: #1a1a2e;
+  }
+}
+
+// ── Botones del cajón (solo en pantallas angostas) ────────
+.menu-toggle,
+.menu-close {
+  display: none;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid $line-strong;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover { background: rgba(255, 255, 255, 0.16); }
+  &:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+}
+
+.menu-toggle { width: 44px; height: 44px; }
+.menu-close  { width: 36px; height: 36px; margin-left: auto; border-radius: 50%; }
+
+.menu-scrim { display: none; }
+
+// ══ Tableta y celular ════════════════════════════════════════════
+// El menú deja de ocupar una columna: se vuelve un cajón que entra desde la
+// izquierda con el botón de hamburguesa, y el contenido usa todo el ancho.
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 60;
+    width: min(290px, 84vw);
+    transform: translateX(-104%);
+    visibility: hidden;
+    transition: transform 0.32s cubic-bezier(0.2, 0.7, 0.3, 1), visibility 0s linear 0.32s;
+    background: rgba(14, 17, 44, 0.94);
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+
+    &.open {
+      transform: none;
+      visibility: visible;
+      transition: transform 0.32s cubic-bezier(0.2, 0.7, 0.3, 1), visibility 0s;
+    }
+  }
+
+  .menu-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(5, 7, 20, 0.6);
+    backdrop-filter: blur(3px);
+    animation: aparece 0.25s ease backwards;
+  }
+
+  .menu-toggle, .menu-close { display: grid; }
+
+  // En el cajón los ítems no se animan al abrir: ya entran con él.
+  .nav-item { animation: none; }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    gap: 12px;
+    min-height: 0;
+    padding: max(12px, env(safe-area-inset-top)) 16px 12px;
+    background: linear-gradient(180deg, rgba(7, 9, 24, 0.92), rgba(7, 9, 24, 0.7));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid $line;
+  }
+
+  .topbar-title {
+    flex: 1;
+
+    h1 { font-size: 22px; }
+    p { display: none; }   // el subtítulo no cabe junto al botón; el título basta
+  }
+
+  // Solo el punto verde: el texto completo no cabe en una barra angosta.
+  .user-chip {
+    padding: 10px;
+    .chip-text { display: none; }
+  }
+
+  .main-content {
+    padding: 16px 16px 32px;
+
+    &.light {
+      margin: 12px;
+      padding: 14px;
+      border-radius: 20px;
+    }
   }
 }
 

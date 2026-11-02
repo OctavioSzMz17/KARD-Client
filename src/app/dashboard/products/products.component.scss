@@ -1099,3 +1099,26 @@
   &.active { background: #1e3a8a; color: white; }
   &:focus-visible { outline: 2px solid #5b6ef5; outline-offset: 1px; }
 }
+
+// ── Celular ───────────────────────────────────────────────
+// El encabezado se apila: título arriba, buscador a todo lo ancho y las
+// acciones debajo, en vez de una sola fila que se sale de la pantalla.
+@media (max-width: 760px) {
+  .page-header { flex-wrap: wrap; }
+  .header-left h1 { font-size: 22px; }
+
+  .header-right {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .search-box {
+    flex: 1 1 100%;
+    input { width: 100%; min-width: 0; }
+  }
+
+  .btn-bulk, .btn-add { flex: 1 1 auto; justify-content: center; }
+
+  .code-row { grid-template-columns: 1fr; }
+}
