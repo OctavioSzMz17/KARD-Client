@@ -1,12 +1,5 @@
 <div class="sub-page">
 
-  <div class="page-header">
-    <div>
-      <h1>Suscripción</h1>
-      <p class="page-sub">Tu plan de KARD y lo que incluye</p>
-    </div>
-  </div>
-
   @if (loading()) {
     <div class="sub-loading"><div class="spinner-lg"></div><p>Cargando tu suscripción…</p></div>
   } @else {
@@ -40,8 +33,8 @@
 
     <!-- Planes -->
     <div class="planes">
-      @for (p of planes; track p.key) {
-        <div class="plan" [class.plan-destacado]="p.destacado" [class.plan-actual]="planActual() === p.key">
+      @for (p of planes; track p.key; let i = $index) {
+        <div class="plan" [style.--i]="i" [class.plan-destacado]="p.destacado" [class.plan-actual]="planActual() === p.key">
           @if (p.destacado && planActual() !== p.key) {
             <span class="plan-tag">Más elegido</span>
           }
@@ -61,7 +54,7 @@
           <ul class="plan-lista">
             @for (f of p.incluye; track f) {
               <li>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 {{ f }}

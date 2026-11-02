@@ -1,14 +1,13 @@
 <div class="cash-page">
 
-  <header class="page-head">
-    <div>
-      <h1>Caja</h1>
-      <p class="subtitle">Abre el turno, sigue cómo va y ciérralo con el corte.</p>
+  @if (session()) {
+    <div class="actions">
+      <a class="btn btn-ghost" routerLink="/dashboard/cobrar">
+        Ir a cobrar
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
     </div>
-    @if (session()) {
-      <a class="btn btn-primary" routerLink="/dashboard/cobrar">Ir a cobrar</a>
-    }
-  </header>
+  }
 
   <!-- ═══ Estado del turno ═══════════════════════════════ -->
   @if (session() === undefined) {

@@ -39,14 +39,31 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./dashboard/layout/dashboard-layout.component').then(m => m.DashboardLayoutComponent),
     children: [
-      { path: '', loadComponent: () => import('./dashboard/home/home.component').then(m => m.HomeComponent) },
-      { path: 'cobrar',    loadComponent: () => import('./dashboard/pos/pos.component').then(m => m.PosComponent) },
-      { path: 'caja',      loadComponent: () => import('./dashboard/cash/cash.component').then(m => m.CashComponent) },
+      {
+        path: '',
+        data: { title: 'Dashboard', subtitle: 'Resumen de tu inventario y de lo que pasa en tu negocio.', dark: true },
+        loadComponent: () => import('./dashboard/home/home.component').then(m => m.HomeComponent)
+      },
+      {
+        // `data` viste la barra superior del panel; `dark` marca las vistas ya rediseñadas.
+        path: 'cobrar',
+        data: { title: 'Cobrar', subtitle: 'Arma el ticket y cobra en el mostrador.', dark: true },
+        loadComponent: () => import('./dashboard/pos/pos.component').then(m => m.PosComponent)
+      },
+      {
+        path: 'caja',
+        data: { title: 'Caja', subtitle: 'Abre el turno, sigue cómo va y ciérralo con el corte.', dark: true },
+        loadComponent: () => import('./dashboard/cash/cash.component').then(m => m.CashComponent)
+      },
       { path: 'products',  loadComponent: () => import('./dashboard/products/products.component').then(m => m.ProductsComponent) },
       { path: 'inventory', loadComponent: () => import('./dashboard/inventory/inventory.component').then(m => m.InventoryComponent) },
       { path: 'sales',     loadComponent: () => import('./dashboard/sales/sales.component').then(m => m.SalesComponent) },
       { path: 'branding',  loadComponent: () => import('./dashboard/personalization/personalization.component').then(m => m.PersonalizationComponent) },
-      { path: 'suscripcion', loadComponent: () => import('./dashboard/subscription/subscription.component').then(m => m.SubscriptionComponent) }
+      {
+        path: 'suscripcion',
+        data: { title: 'Suscripción', subtitle: 'Tu plan de KARD y lo que incluye.', dark: true },
+        loadComponent: () => import('./dashboard/subscription/subscription.component').then(m => m.SubscriptionComponent)
+      }
     ]
   },
   { path: '**', redirectTo: '/login' }

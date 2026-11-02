@@ -158,8 +158,8 @@ export class HomeComponent implements OnInit {
   }
 
   getStockColor(item: Product): string {
-    if (item.inventory_count === 0) return '#e05252';
-    if (item.inventory_count < item.low_stock_threshold) return '#f59e0b';
-    return '#10b981';
+    if (item.inventory_count === 0) return '#f87171';
+    if (item.inventory_count < item.low_stock_threshold) return '#fbbf24';
+    return '#34d399';
   }
 }

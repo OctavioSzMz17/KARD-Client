@@ -1,17 +1,43 @@
-import { Component, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, computed, inject } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter, map, startWith } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ProductStore } from '../../core/store/product.store';
 
+/** Lo que cada ruta del panel declara en su `data` para vestir la barra superior. */
+interface PageInfo {
+  title: string;
+  subtitle: string;
+  /** Vista ya rediseñada al estilo oscuro. Las demás se asientan sobre un lienzo claro. */
+  dark: boolean;
+}
+
+const BUSINESS_LABEL: Record<string, string> = {
+  restaurant: 'Restaurante',
+  optician: 'Óptica',
+  platform: 'Plataforma',
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  business_admin: 'Administrador',
+  business_staff: 'Equipo',
+  platform_admin: 'Plataforma',
+};
+
 @Component({
   selector: 'app-dashboard-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet],
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.scss'
 })
 export class DashboardLayoutComponent {
-  private auth  = inject(AuthService);
-  private store = inject(ProductStore);
+  private auth   = inject(AuthService);
+  private store  = inject(ProductStore);
+  private router = inject(Router);
+
+  private session = this.auth.getSession();
 
   navItems = [
     { label: 'Dashboard', icon: 'home', route: '/dashboard', exact: true, enabled: true },
@@ -25,6 +51,32 @@ export class DashboardLayoutComponent {
     { label: 'Customers', icon: 'users', route: '/dashboard/customers', exact: false, enabled: false },
     { label: 'Audit Log', icon: 'log', route: '/dashboard/audit', exact: false, enabled: false },
   ];
+
+  /** `data` de la ruta hija activa, releída en cada navegación. */
+  private routeData = toSignal(
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      startWith(null),
+      map(() => {
+        let route = this.router.routerState.snapshot.root;
+        while (route.firstChild) route = route.firstChild;
+        return route.data;
+      }),
+    ),
+    { initialValue: {} as Record<string, unknown> },
+  );
+
+  page = computed<PageInfo>(() => {
+    const d = this.routeData();
+    return {
+      title: (d['title'] as string) ?? '',
+      subtitle: (d['subtitle'] as string) ?? '',
+      dark: d['dark'] === true,
+    };
+  });
+
+  businessLabel = computed(() => BUSINESS_LABEL[this.session?.business_type ?? ''] ?? 'Negocio');
+  roleLabel = computed(() => ROLE_LABEL[this.session?.role ?? ''] ?? (this.session?.role ?? 'Equipo'));
 
   logout(): void {
     this.store.clear();   // wipe tenant data before navigating away
