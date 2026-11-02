@@ -1,0 +1,191 @@
+<div class="team-page">
+
+  <header class="bar">
+    <p class="count">
+      @if (!loading()) { <strong>{{ members().length }}</strong> persona(s) · {{ activeCount() }} activa(s) }
+    </p>
+    @if (assignable().length) {
+      <button type="button" class="btn-primary" (click)="openAdd()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Agregar persona
+      </button>
+    }
+  </header>
+
+  @if (loading()) {
+    <p class="state">Cargando equipo…</p>
+  } @else if (loadError(); as e) {
+    <p class="state error" role="alert">{{ e }} <button type="button" class="link" (click)="reload()">Reintentar</button></p>
+  } @else {
+    <ul class="list">
+      @for (m of members(); track m.user_id; let i = $index) {
+        <li class="card" [class.off]="!m.is_active" [style.--i]="i">
+          <span class="avatar" [attr.data-pos]="m.position" aria-hidden="true">{{ initials(m.full_name, m.email) }}</span>
+
+          <div class="who">
+            <div class="name">
+              {{ m.full_name || m.email }}
+              @if (m.user_id === myId()) { <span class="you">Tú</span> }
+            </div>
+            <div class="mail">{{ m.email }}</div>
+            <div class="meta">
+              <span class="pos" [attr.data-pos]="m.position">{{ m.position_label }}</span>
+              @if (m.employee_code) { <span class="code" title="Código de empleado">#{{ m.employee_code }}</span> }
+              @if (!m.is_active) { <span class="off-tag">De baja</span> }
+              <span class="last">
+                @if (m.last_login) { Último acceso {{ m.last_login | date: 'dd/MM/yyyy HH:mm' }} } @else { Aún no ha entrado }
+              </span>
+            </div>
+          </div>
+
+          @if (m.can_manage) {
+            <div class="actions">
+              <button type="button" class="link" (click)="openEdit(m)">Editar</button>
+              <button type="button" class="link" (click)="openPassword(m)">Contraseña</button>
+              @if (m.is_active) {
+                <button type="button" class="link danger" (click)="openDeactivate(m)">Dar de baja</button>
+              } @else {
+                <button type="button" class="link" (click)="reactivate(m)">Reactivar</button>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+
+    <p class="hint">
+      Solo puedes registrar y administrar a quienes están por debajo de tu puesto. El código de empleado lo
+      asigna el sistema.
+    </p>
+  }
+
+  <!-- ═══ Equipos autorizados: las cajas registradoras de hoy ═══ -->
+  @if (canAuthorizeDevices()) {
+    <section class="devices" aria-labelledby="dev-title">
+      <h2 id="dev-title">Cajas autorizadas hoy</h2>
+      <p class="hint left">
+        Para autorizar una computadora, ábrela en <code>{{ registerUrl }}</code> y lee su código desde
+        <strong>Escanear</strong> en tu celular. Las autorizaciones terminan al cerrar la caja.
+      </p>
+
+      @if (authorizedDevices().length === 0) {
+        <p class="empty">Ninguna caja autorizada por ahora.</p>
+      } @else {
+        <ul class="dev-list">
+          @for (d of authorizedDevices(); track d.device_id) {
+            <li class="dev">
+              <div>
+                <strong>{{ d.name }}</strong>
+                <span class="dev-meta">{{ d.user_agent_label }} · autorizó {{ d.authorized_by || '—' }}</span>
+                <span class="dev-meta">
+                  Vence {{ d.expires_at | date: 'dd/MM HH:mm' }}
+                  @if (d.last_seen_at) { · visto {{ d.last_seen_at | date: 'HH:mm' }} }
+                </span>
+              </div>
+              <button type="button" class="link danger" (click)="revokeDevice(d)">Desautorizar</button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <!-- ═══ Alta / edición / contraseña / baja ═══════════════ -->
+  @if (dialog(); as d) {
+    <div class="overlay" role="presentation" (click)="closeDialog()"></div>
+    <div class="dialog" role="dialog" aria-modal="true" [attr.aria-label]="d.kind">
+
+      @switch (d.kind) {
+
+        @case ('add') {
+          <h2>Agregar persona</h2>
+          <p class="sub">Recibirá un código de empleado y entrará con su correo y la contraseña que le des.</p>
+
+          <label for="t-name">Nombre completo</label>
+          <input id="t-name" class="input" maxlength="120" autocomplete="off"
+                 [value]="fullName()" (input)="fullName.set($any($event.target).value)" />
+
+          <label for="t-mail">Correo</label>
+          <input id="t-mail" class="input" type="email" autocomplete="off"
+                 [value]="email()" (input)="email.set($any($event.target).value)" />
+
+          <label for="t-pos">Puesto</label>
+          <select id="t-pos" class="input" [value]="position()" (change)="position.set($any($event.target).value)">
+            @for (o of assignable(); track o.value) { <option [value]="o.value" [selected]="o.value === position()">{{ o.label }}</option> }
+          </select>
+
+          <label for="t-pass">Contraseña inicial</label>
+          <div class="pass-row">
+            <input id="t-pass" class="input mono" [type]="showPassword() ? 'text' : 'password'" autocomplete="new-password"
+                   [value]="password()" (input)="password.set($any($event.target).value)" />
+            <button type="button" class="btn-ghost small" (click)="regenerate()">Generar otra</button>
+          </div>
+          <p class="note">Anótala o cópiala al terminar: después no se vuelve a mostrar.</p>
+        }
+
+        @case ('edit') {
+          <h2>Editar a {{ d.member.full_name || d.member.email }}</h2>
+          <label for="t-name">Nombre completo</label>
+          <input id="t-name" class="input" maxlength="120" [value]="fullName()" (input)="fullName.set($any($event.target).value)" />
+          <label for="t-pos">Puesto</label>
+          <select id="t-pos" class="input" (change)="position.set($any($event.target).value)">
+            @for (o of assignable(); track o.value) { <option [value]="o.value" [selected]="o.value === position()">{{ o.label }}</option> }
+          </select>
+          <p class="note">El puesto define lo que la persona puede hacer; el cambio es inmediato.</p>
+        }
+
+        @case ('password') {
+          <h2>Nueva contraseña</h2>
+          <p class="sub">Para {{ d.member.full_name || d.member.email }}. La contraseña anterior dejará de servir.</p>
+          <label for="t-pass">Contraseña nueva</label>
+          <div class="pass-row">
+            <input id="t-pass" class="input mono" [type]="showPassword() ? 'text' : 'password'" autocomplete="new-password"
+                   [value]="password()" (input)="password.set($any($event.target).value)" />
+            <button type="button" class="btn-ghost small" (click)="regenerate()">Generar otra</button>
+          </div>
+        }
+
+        @case ('deactivate') {
+          <h2>{{ d.member.is_active ? '¿Dar de baja a ' : '¿Reactivar a ' }}{{ d.member.full_name || d.member.email }}?</h2>
+          <p class="sub">
+            @if (d.member.is_active) {
+              Dejará de poder entrar ahora mismo, aunque tenga la sesión abierta. Sus ventas y su historial se conservan.
+            } @else {
+              Volverá a poder entrar con su correo y su contraseña.
+            }
+          </p>
+        }
+      }
+
+      @if (formError(); as fe) { <p class="form-error" role="alert">{{ fe }}</p> }
+
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" [disabled]="saving()" (click)="closeDialog()">Cancelar</button>
+        @switch (d.kind) {
+          @case ('add')        { <button type="button" class="btn-primary" [disabled]="saving()" (click)="submitAdd()">{{ saving() ? 'Registrando…' : 'Registrar' }}</button> }
+          @case ('edit')       { <button type="button" class="btn-primary" [disabled]="saving()" (click)="submitEdit()">{{ saving() ? 'Guardando…' : 'Guardar' }}</button> }
+          @case ('password')   { <button type="button" class="btn-primary" [disabled]="saving()" (click)="submitPassword()">{{ saving() ? 'Guardando…' : 'Cambiar contraseña' }}</button> }
+          @case ('deactivate') { <button type="button" class="btn-danger" [disabled]="saving()" (click)="confirmToggleActive()">{{ saving() ? 'Guardando…' : (d.member.is_active ? 'Dar de baja' : 'Reactivar') }}</button> }
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ═══ Datos para entregar a la persona ═════════════════ -->
+  @if (justCreated(); as c) {
+    <div class="overlay" role="presentation"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="Datos de acceso">
+      <h2>Listo, {{ c.name }}</h2>
+      <p class="sub">Entrégale estos datos. La contraseña no se vuelve a mostrar.</p>
+      <dl class="creds">
+        <div><dt>Correo</dt><dd>{{ c.email }}</dd></div>
+        <div><dt>Contraseña</dt><dd class="mono">{{ c.password }}</dd></div>
+        @if (c.code) { <div><dt>Código de empleado</dt><dd class="mono">{{ c.code }}</dd></div> }
+      </dl>
+      <div class="dialog-actions">
+        <button type="button" class="btn-ghost" (click)="copyCredentials()">Copiar</button>
+        <button type="button" class="btn-primary" (click)="dismissCreated()">Entendido</button>
+      </div>
+    </div>
+  }
+</div>

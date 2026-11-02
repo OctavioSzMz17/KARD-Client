@@ -1,10 +1,13 @@
-import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ProductStore } from '../../core/store/product.store';
+import { PERM, Permission, positionLabel } from '../../core/permissions';
+import { DeviceService } from '../../core/services/device.service';
+import { IdleClock } from '../../core/device-logic';
 
 /** Lo que cada ruta del panel declara en su `data` para vestir la barra superior. */
 interface PageInfo {
@@ -32,25 +35,34 @@ const ROLE_LABEL: Record<string, string> = {
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.scss'
 })
-export class DashboardLayoutComponent {
+export class DashboardLayoutComponent implements OnInit, OnDestroy {
   private auth   = inject(AuthService);
   private store  = inject(ProductStore);
   private router = inject(Router);
+  private device = inject(DeviceService);
 
-  private session = this.auth.getSession();
-
-  navItems = [
-    { label: 'Dashboard', icon: 'home', route: '/dashboard', exact: true, enabled: true },
-    { label: 'Cobrar', icon: 'cart', route: '/dashboard/cobrar', exact: false, enabled: true },
-    { label: 'Caja', icon: 'cash', route: '/dashboard/caja', exact: false, enabled: true },
-    { label: 'Products', icon: 'box', route: '/dashboard/products', exact: false, enabled: true },
-    { label: 'Inventory', icon: 'archive', route: '/dashboard/inventory', exact: false, enabled: true },
-    { label: 'Ventas', icon: 'chart', route: '/dashboard/sales', exact: false, enabled: true },
-    { label: 'Personalización', icon: 'palette', route: '/dashboard/branding', exact: false, enabled: true },
-    { label: 'Suscripción', icon: 'card', route: '/dashboard/suscripcion', exact: false, enabled: true },
-    { label: 'Customers', icon: 'users', route: '/dashboard/customers', exact: false, enabled: false },
-    { label: 'Audit Log', icon: 'log', route: '/dashboard/audit', exact: false, enabled: false },
+  /**
+   * El menú completo; cada entrada declara el permiso que pide. Lo que la
+   * sesión no puede hacer no se muestra (el servidor lo impide de todos modos).
+   */
+  private navItems: { label: string; icon: string; route: string; exact: boolean; enabled: boolean; perm: Permission }[] = [
+    { label: 'Dashboard', icon: 'home', route: '/dashboard', exact: true, enabled: true, perm: PERM.dashboardView },
+    { label: 'Cobrar', icon: 'cart', route: '/dashboard/cobrar', exact: false, enabled: true, perm: PERM.posSell },
+    { label: 'Caja', icon: 'cash', route: '/dashboard/caja', exact: false, enabled: true, perm: PERM.cashManage },
+    { label: 'Escanear', icon: 'camera', route: '/dashboard/escanear', exact: false, enabled: true, perm: PERM.devicesUnlock },
+    { label: 'Products', icon: 'box', route: '/dashboard/products', exact: false, enabled: true, perm: PERM.productsRead },
+    { label: 'Inventory', icon: 'archive', route: '/dashboard/inventory', exact: false, enabled: true, perm: PERM.inventoryAdjust },
+    { label: 'Ventas', icon: 'chart', route: '/dashboard/sales', exact: false, enabled: true, perm: PERM.salesRead },
+    { label: 'Equipo', icon: 'users', route: '/dashboard/equipo', exact: false, enabled: true, perm: PERM.teamManage },
+    { label: 'Personalización', icon: 'palette', route: '/dashboard/branding', exact: false, enabled: true, perm: PERM.settingsManage },
+    { label: 'Suscripción', icon: 'card', route: '/dashboard/suscripcion', exact: false, enabled: true, perm: PERM.billingManage },
+    { label: 'Customers', icon: 'users', route: '/dashboard/customers', exact: false, enabled: false, perm: PERM.settingsManage },
+    { label: 'Audit Log', icon: 'log', route: '/dashboard/audit', exact: false, enabled: false, perm: PERM.settingsManage },
   ];
+
+  /** Solo las entradas que la sesión actual puede usar; se actualiza sola si cambia su puesto. */
+  readonly visibleNav = computed(() => this.navItems.filter(i => this.auth.can(i.perm)));
+
 
   /** Menú lateral abierto (solo cuenta en pantallas angostas, donde es un cajón). */
   menuOpen = signal(false);
@@ -86,10 +98,68 @@ export class DashboardLayoutComponent {
     };
   });
 
-  businessLabel = computed(() => BUSINESS_LABEL[this.session?.business_type ?? ''] ?? 'Negocio');
-  roleLabel = computed(() => ROLE_LABEL[this.session?.role ?? ''] ?? (this.session?.role ?? 'Equipo'));
+  /** Quién está en esta pantalla: su nombre y su puesto (o, sin nombre, el giro del negocio y su puesto). */
+  readonly chipLabel = computed(() => {
+    const p = this.auth.profile();
+    const puesto = p?.position_label || positionLabel(p?.position) || ROLE_LABEL[p?.role ?? ''] || 'Equipo';
+    return p?.full_name ? `${p.full_name} · ${puesto}` : `${BUSINESS_LABEL[p?.business_type ?? ''] ?? 'Negocio'} · ${puesto}`;
+  });
+
+  ngOnInit(): void {
+    // No se fía de lo que se guardó al iniciar sesión: pregunta quién es y qué puede hacer ahora.
+    // Una baja devuelve 401: se cierra la sesión.
+    this.auth.refreshProfile().subscribe({
+      error: err => { if (err?.status === 401) this.logout(); },
+    });
+
+    // Si este navegador cree ser una caja, se confirma con el servidor: pudieron retirarla
+    // o cerrarse la caja del día. Una caja que ya no vale se olvida; quien necesita una para
+    // cobrar vuelve a la pantalla de la caja registradora.
+    if (this.device.device()) {
+      this.device.verify().subscribe({
+        error: err => {
+          if (err?.status !== 403) return;
+          this.device.forget();
+          if (this.auth.needsDevice()) {
+            this.store.clear();
+            this.auth.lock();
+          }
+        },
+      });
+    }
+
+    this.idleTimer = setInterval(() => {
+      if (this.isRegister() && this.idle.shouldLock()) this.lock();
+    }, 15_000);
+  }
+
+  /** Este navegador es una caja registradora autorizada: se ofrece bloquear en vez de cerrar sesión. */
+  readonly isRegister = computed(() => !!this.device.device() && this.device.isAuthorized());
+
+  // ── Bloqueo por inactividad ───────────────────────────
+  // En una caja, quien se va sin bloquear deja su sesión abierta a la vista de
+  // cualquiera. Tras unos minutos sin tocar nada, la pantalla se bloquea sola.
+  private idle = new IdleClock();
+  private idleTimer: ReturnType<typeof setInterval> | null = null;
+
+  @HostListener('document:pointerdown')
+  @HostListener('document:keydown')
+  @HostListener('document:touchstart')
+  onActivity(): void { this.idle.touch(); }
+
+  ngOnDestroy(): void {
+    if (this.idleTimer) clearInterval(this.idleTimer);
+  }
+
+  /** Bloquea la caja: cierra la sesión de la persona, pero el equipo sigue autorizado. */
+  lock(): void {
+    this.store.clear();
+    this.auth.lock();
+  }
 
   logout(): void {
+    // En una caja autorizada se bloquea (el equipo sigue siendo la caja); fuera de una, se cierra la sesión.
+    if (this.isRegister()) return this.lock();
     this.store.clear();   // wipe tenant data before navigating away
     this.auth.logout();
   }

@@ -7,6 +7,7 @@ import { SnackbarService } from '../../core/services/snackbar.service';
 import { ImageService, ProductImage } from '../../core/services/image.service';
 import { RecipeService, RecipeItem } from '../../core/services/recipe.service';
 import { ProductStore, Product } from '../../core/store/product.store';
+import { PERM } from '../../core/permissions';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { printSheet } from '../pos/print';
 import { LabelSheetComponent, LabelItem } from './label-sheet.component';
@@ -75,6 +76,9 @@ export class ProductsComponent implements OnInit {
 
   // ── Local UI state ────────────────────────────────────
   saving        = signal(false);
+
+  /** Quien no puede editar ve el catálogo en solo lectura (el servidor lo impone igual). */
+  readonly canWrite = computed(() => this.auth.can(PERM.productsWrite));
 
   // Tamaño de las tarjetas (se recuerda entre visitas).
   cardSize = signal<CardSize>(savedSize());

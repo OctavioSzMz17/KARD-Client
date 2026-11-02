@@ -198,15 +198,21 @@
   @if (session() === null) {
     <div class="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title">
       <div class="gate-card">
-        <h2 id="gate-title">Abre la caja para empezar a cobrar</h2>
-        <p>Cuenta el efectivo que dejas en el cajón: ese es el fondo inicial. Al cerrar, el corte lo compara con lo que debería haber.</p>
-        <label for="pos-float">Fondo inicial</label>
-        <input id="pos-float" class="input" inputmode="decimal" placeholder="$0.00"
-               [value]="floatText()" (input)="floatText.set($any($event.target).value)"
-               (keydown.enter)="openCash()" />
-        <button class="charge-btn" [disabled]="opening()" (click)="openCash()">
-          {{ opening() ? 'Abriendo…' : 'Abrir caja' }}
-        </button>
+        @if (canOpenCash()) {
+          <h2 id="gate-title">Abre la caja para empezar a cobrar</h2>
+          <p>Cuenta el efectivo que dejas en el cajón: ese es el fondo inicial. Al cerrar, el corte lo compara con lo que debería haber.</p>
+          <label for="pos-float">Fondo inicial</label>
+          <input id="pos-float" class="input" inputmode="decimal" placeholder="$0.00"
+                 [value]="floatText()" (input)="floatText.set($any($event.target).value)"
+                 (keydown.enter)="openCash()" />
+          <button class="charge-btn" [disabled]="opening()" (click)="openCash()">
+            {{ opening() ? 'Abriendo…' : 'Abrir caja' }}
+          </button>
+        } @else {
+          <h2 id="gate-title">La caja está cerrada</h2>
+          <p>Pide a quien esté a cargo (gerente, subgerente o el dueño) que la abra para poder cobrar.</p>
+          <button class="charge-btn" (click)="refreshSession()">Ya la abrieron: revisar</button>
+        }
       </div>
     </div>
   }

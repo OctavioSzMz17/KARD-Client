@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
@@ -7,6 +7,7 @@ import {
   TenantRegisterRequest, TenantRegisterResponse,
 } from '../models/auth.models';
 import { environment } from '../../../environments/environment';
+import { PERM, Permission, fallbackPermissions, needsAuthorizedDevice, positionLabel } from '../permissions';
 
 const API_BASE = environment.apiUrl;
 const TOKEN_KEY = 'kard_token';
@@ -19,6 +20,26 @@ export interface UserSession {
   tenant_id: string;
   role: string;
   business_type: 'restaurant' | 'optician' | 'platform';
+  /** Puesto, nombre y permisos: los manda el servidor. Una sesión vieja no los trae. */
+  position?: string;
+  position_label?: string;
+  full_name?: string | null;
+  employee_code?: string | null;
+  permissions?: string[];
+}
+
+/** Respuesta de GET /auth/me. */
+export interface MeResponse {
+  user_id: string;
+  tenant_id: string;
+  business_type: UserSession['business_type'];
+  role: string;
+  email: string;
+  position: string;
+  position_label: string;
+  full_name: string | null;
+  employee_code: string | null;
+  permissions: string[];
 }
 
 /** Sesión consumer (cliente B2C) — token de /consumers/login */
@@ -31,6 +52,12 @@ export interface ConsumerSession {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+
+  /**
+   * La sesión de negocio como señal: la pantalla se actualiza sola cuando
+   * cambia el puesto o los permisos (por ejemplo, tras consultar `/auth/me`).
+   */
+  readonly profile = signal<UserSession | null>(this.getSession());
 
   login(data: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${API_BASE}/auth/login`, data).pipe(
@@ -64,15 +91,102 @@ export class AuthService {
     );
   }
 
+  /** Abre la sesión con la respuesta de un inicio de sesión por otra vía (QR o código de empleado en una caja). */
+  startBusinessSession(res: LoginResponse): void {
+    this.saveBusinessSession(res);
+  }
+
   private saveBusinessSession(res: LoginResponse | TenantRegisterResponse): void {
     localStorage.setItem(TOKEN_KEY, res.access_token);
-    localStorage.setItem(USER_KEY, JSON.stringify({
+    const session = {
       kind: 'b2b',
       user_id: res.user_id,
       tenant_id: res.tenant_id,
       role: res.role,
-      business_type: res.business_type as UserSession['business_type']
-    } satisfies UserSession));
+      business_type: res.business_type as UserSession['business_type'],
+      position: res.position,
+      position_label: res.position_label,
+      full_name: res.full_name,
+      employee_code: res.employee_code,
+      permissions: res.permissions,
+    } satisfies UserSession;
+    localStorage.setItem(USER_KEY, JSON.stringify(session));
+    this.profile.set(session);
+  }
+
+  /**
+   * Vuelve a leer quién soy y qué puedo hacer. La pantalla no se fía de lo que
+   * guardó al iniciar sesión: si cambiaron su puesto o la dieron de baja, se
+   * entera aquí. Una baja devuelve 401 y quien llama decide cerrar la sesión.
+   */
+  refreshProfile(): Observable<MeResponse> {
+    return this.http.get<MeResponse>(`${API_BASE}/auth/me`, { headers: this.getAuthHeaders() }).pipe(
+      tap(me => {
+        const session: UserSession = {
+          kind: 'b2b',
+          user_id: me.user_id,
+          tenant_id: me.tenant_id,
+          role: me.role,
+          business_type: me.business_type,
+          position: me.position,
+          position_label: me.position_label,
+          full_name: me.full_name,
+          employee_code: me.employee_code,
+          permissions: me.permissions,
+        };
+        localStorage.setItem(USER_KEY, JSON.stringify(session));
+        this.profile.set(session);
+      }),
+    );
+  }
+
+  /**
+   * ¿Puede la sesión actual hacer esto? Solo para mostrar u ocultar: el
+   * servidor lo vuelve a comprobar en cada petición.
+   */
+  can(permission: Permission): boolean {
+    const p = this.profile();
+    if (!p) return false;
+    return (p.permissions ?? fallbackPermissions(p.role)).includes(permission);
+  }
+
+  /**
+   * A dónde mandar a esta sesión cuando no puede entrar adonde pidió: la
+   * primera pantalla que sí le corresponde. Un empleado cae en Cobrar.
+   */
+  homeRoute(): string {
+    if (this.can(PERM.dashboardView)) return '/dashboard';
+    if (this.can(PERM.posSell)) return '/dashboard/cobrar';
+    if (this.can(PERM.productsRead)) return '/dashboard/products';
+    return '/login';
+  }
+
+  /**
+   * ¿La sesión actual solo puede cobrar desde un equipo autorizado? Sin puesto
+   * guardado (sesión antigua), el personal sí y el dueño no.
+   */
+  needsDevice(): boolean {
+    const p = this.profile();
+    if (!p) return false;
+    if (p.position) return needsAuthorizedDevice(p.position);
+    return p.role !== 'business_admin' && p.role !== 'saas_admin';
+  }
+
+  /**
+   * Cierra la sesión de la persona pero NO el equipo: la caja sigue autorizada
+   * y vuelve a la pantalla de bloqueo para que entre la siguiente persona.
+   */
+  lock(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    this.profile.set(null);
+    this.router.navigate(['/caja-registradora']);
+  }
+
+  /** Nombre para mostrar: el nombre de la persona o, si no lo tiene, su puesto. */
+  displayName(): string {
+    const p = this.profile();
+    return p?.full_name || positionLabel(p?.position) || 'Equipo';
   }
 
   private saveConsumerSession(res: ConsumerLoginResponse): void {
@@ -81,11 +195,13 @@ export class AuthService {
       kind: 'consumer',
       consumer_id: res.consumer_id
     } satisfies ConsumerSession));
+    this.profile.set(null);
   }
 
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    this.profile.set(null);
     this.router.navigate(['/login']);
   }
 

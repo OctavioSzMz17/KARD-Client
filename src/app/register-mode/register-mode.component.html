@@ -1,0 +1,101 @@
+<div class="reg">
+
+  <!-- Fondo: el mismo del panel y de la pantalla de acceso. -->
+  <div class="ambient" aria-hidden="true">
+    <i class="orb orb-1"></i><i class="orb orb-2"></i><i class="orb orb-3"></i><i class="slash"></i><div class="stars"></div>
+  </div>
+
+  <header class="brand">
+    <svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+      <rect width="40" height="40" rx="9" fill="white" fill-opacity="0.2"/>
+      <path d="M10 10H18L24 20L18 30H10L16 20L10 10Z" fill="white"/>
+      <path d="M20 10H28L22 20L28 30H20L14 20L20 10Z" fill="white" fill-opacity="0.6"/>
+    </svg>
+    KARD
+  </header>
+
+  <main class="stage">
+
+    @if (phase() === 'checking') {
+      <p class="checking">Revisando este equipo…</p>
+    }
+
+    <!-- ═══ Autorizar este equipo ═══════════════════════════ -->
+    @if (phase() === 'enroll') {
+      <section class="card enroll">
+        <span class="lamp wait"><i></i>Esperando autorización</span>
+        <h1>Autoriza este equipo</h1>
+        <p class="lead">Para empezar a cobrar, alguien de la gerencia tiene que autorizar esta computadora desde su celular.</p>
+
+        <ol class="steps">
+          <li>En tu celular, entra a KARD y abre <strong>Escanear</strong>.</li>
+          <li>Lee este código.</li>
+          <li>Escribe en el celular el número de abajo.</li>
+        </ol>
+
+        <div class="qr-row">
+          <div class="qr" [class.loading]="!qr()" aria-label="Código QR para autorizar este equipo" role="img">
+            @if (qr(); as q) { <div class="qr-art" [innerHTML]="q"></div> } @else { <span>Preparando…</span> }
+          </div>
+
+          <div class="verify">
+            <span class="label">Número de verificación</span>
+            <strong class="digits" aria-live="polite">{{ code() || '····' }}</strong>
+            <span class="timer">Se renueva solo · {{ countdown() }}</span>
+          </div>
+        </div>
+
+        @if (notice(); as n) { <p class="notice" role="status">{{ n }}</p> }
+
+        <p class="foot">
+          ¿Eres gerente o dueño? <a routerLink="/login" [queryParams]="{ tipo: 'negocio' }">Inicia sesión normal</a>
+        </p>
+      </section>
+    }
+
+    <!-- ═══ Pantalla de bloqueo: quién va a cobrar ════════ -->
+    @if (phase() === 'lock') {
+      <section class="card lock">
+        <span class="lamp ok"><i></i>{{ deviceName() }} · autorizada</span>
+        <h1>¿Quién va a cobrar?</h1>
+        <p class="lead">Entra con tu correo o tu código de empleado.</p>
+
+        <!-- (submit) con preventDefault: sin él el navegador envía el formulario por su cuenta y la contraseña queda en la dirección. -->
+        <form class="form" (submit)="onSubmit($event)" method="post" novalidate>
+          <label for="r-id">Correo o código de empleado</label>
+          <input id="r-id" class="input" name="identifier" autocomplete="username" inputmode="email" autocapitalize="none"
+                 [value]="identifier()" (input)="identifier.set($any($event.target).value)" />
+
+          <label for="r-pass">Contraseña</label>
+          <div class="pass">
+            <input id="r-pass" class="input" name="password" autocomplete="current-password"
+                   [type]="showPassword() ? 'text' : 'password'"
+                   [value]="password()" (input)="password.set($any($event.target).value)" />
+            <button type="button" class="eye" (click)="showPassword.set(!showPassword())"
+                    [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+              {{ showPassword() ? 'Ocultar' : 'Ver' }}
+            </button>
+          </div>
+
+          @if (loginError(); as e) { <p class="error" role="alert">{{ e }}</p> }
+
+          <button type="submit" class="go" [disabled]="entering()">{{ entering() ? 'Entrando…' : 'Entrar' }}</button>
+        </form>
+
+        <div class="or"><span>o</span></div>
+
+        <div class="qr-row compact">
+          <div class="qr small" [class.loading]="!qr()" aria-label="Código QR para entrar con tu celular" role="img">
+            @if (qr(); as q) { <div class="qr-art" [innerHTML]="q"></div> } @else { <span>…</span> }
+          </div>
+          <p class="qr-help">
+            <strong>Entra con tu celular.</strong>
+            Abre <em>Escanear</em> en KARD, lee este código y confirma. Se renueva solo ({{ countdown() }}).
+          </p>
+        </div>
+
+        @if (notice(); as n) { <p class="notice" role="status">{{ n }}</p> }
+      </section>
+    }
+  </main>
+</div>

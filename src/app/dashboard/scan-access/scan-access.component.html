@@ -1,0 +1,97 @@
+<div class="scan-page">
+
+  @if (done(); as ok) {
+    <section class="panel done" role="status">
+      <span class="tick" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </span>
+      <h2>{{ ok }}</h2>
+      <button type="button" class="btn-primary" (click)="openScanner()">Escanear otro</button>
+    </section>
+  } @else if (info(); as i) {
+
+    <!-- ═══ Aprobar ═══════════════════════════════════════ -->
+    <section class="panel">
+      @if (i.kind === 'enroll') {
+        <span class="kind">Autorizar un equipo</span>
+        <h2>{{ i.device_label }}</h2>
+        <p class="sub">Pide ser una caja registradora de tu negocio por hoy.</p>
+
+        @if (!canAuthorize()) {
+          <p class="warn" role="alert">Solo la gerencia puede autorizar un equipo. Avísale a quien esté a cargo.</p>
+          <button type="button" class="btn-ghost" (click)="cancel()">Cerrar</button>
+        } @else {
+          <label for="s-code">Número que se ve en la computadora</label>
+          <input id="s-code" class="input code-input" inputmode="numeric" maxlength="4" autocomplete="one-time-code" placeholder="0000"
+                 [value]="code()" (input)="code.set($any($event.target).value)" />
+
+          <label for="s-name">Nombre de la caja</label>
+          <input id="s-name" class="input" maxlength="60" [value]="deviceName()" (input)="deviceName.set($any($event.target).value)" />
+
+          @if (canOpenCash()) {
+            <label class="check">
+              <input type="checkbox" [checked]="openCash()" (change)="openCash.set($any($event.target).checked)" />
+              <span>Abrir la caja ahora con un fondo inicial</span>
+            </label>
+            @if (openCash()) {
+              <input class="input" inputmode="decimal" placeholder="$0.00" aria-label="Fondo inicial"
+                     [value]="floatText()" (input)="floatText.set($any($event.target).value)" />
+            }
+          }
+
+          @if (error(); as e) { <p class="error" role="alert">{{ e }}</p> }
+
+          <div class="actions">
+            <button type="button" class="btn-ghost" [disabled]="busy()" (click)="cancel()">Cancelar</button>
+            <button type="button" class="btn-primary" [disabled]="busy()" (click)="approve()">{{ busy() ? 'Autorizando…' : 'Autorizar equipo' }}</button>
+          </div>
+        }
+      } @else {
+        <span class="kind">Entrar en una caja</span>
+        <h2>{{ i.device_name || 'Caja' }}</h2>
+        <p class="sub">La caja abrirá sesión como <strong>{{ myName() }}</strong> y los tickets quedarán a tu nombre.</p>
+
+        @if (error(); as e) { <p class="error" role="alert">{{ e }}</p> }
+
+        <div class="actions">
+          <button type="button" class="btn-ghost" [disabled]="busy()" (click)="cancel()">Cancelar</button>
+          <button type="button" class="btn-primary" [disabled]="busy()" (click)="approve()">{{ busy() ? 'Entrando…' : 'Entrar en esta caja' }}</button>
+        </div>
+      }
+    </section>
+
+  } @else {
+
+    <!-- ═══ Leer un QR ════════════════════════════════════ -->
+    <section class="panel start">
+      <span class="icon" aria-hidden="true">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><rect x="8" y="8" width="3" height="3"/><rect x="13" y="8" width="3" height="3"/><rect x="8" y="13" width="3" height="3"/><path d="M13 13h3v3"/>
+        </svg>
+      </span>
+      <h2>Lee el código de la caja</h2>
+      <p class="sub">
+        @if (canAuthorize()) {
+          Si la caja muestra <strong>"Autoriza este equipo"</strong>, léelo para autorizarla por hoy.
+          Si pide <strong>"¿Quién va a cobrar?"</strong>, léelo para entrar a tu nombre.
+        } @else {
+          Cuando la caja pida <strong>"¿Quién va a cobrar?"</strong>, lee su código para entrar a tu nombre.
+        }
+      </p>
+
+      @if (loading()) { <p class="sub">Revisando el código…</p> }
+      @if (error(); as e) { <p class="error" role="alert">{{ e }}</p> }
+
+      @if (canScan) {
+        <button type="button" class="btn-primary big" [disabled]="loading()" (click)="openScanner()">Abrir la cámara</button>
+      } @else {
+        <p class="warn">Este navegador no puede usar la cámara. Abre KARD desde el celular, en una conexión segura (https).</p>
+      }
+    </section>
+  }
+
+  @if (scannerOpen()) {
+    <app-scanner [status]="scanStatus()" summary="Apunta al código de la caja"
+                 (scanned)="onScanned($event)" (closed)="closeScanner()" />
+  }
+</div>

@@ -1,6 +1,9 @@
 import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { PERM } from '../../core/permissions';
 import { CashService, CashSession } from '../../core/services/cash.service';
+import { DeviceService } from '../../core/services/device.service';
 import { PaymentMethod, PosFulfillment, PosSale, SalesService } from '../../core/services/sales.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { Product, ProductStore } from '../../core/store/product.store';
@@ -48,6 +51,9 @@ export class PosComponent implements OnInit {
   private cashSvc = inject(CashService);
   private sales = inject(SalesService);
   private snack = inject(SnackbarService);
+  private auth = inject(AuthService);
+  private device = inject(DeviceService);
+  private router = inject(Router);
 
   /** Panel del ticket: en celular queda debajo del catálogo y la barra flotante lleva a él. */
   private ticketPanel = viewChild<ElementRef<HTMLElement>>('ticketPanel');
@@ -60,6 +66,8 @@ export class PosComponent implements OnInit {
   // ── Caja ──────────────────────────────────────────────
   /** undefined = cargando, null = cerrada, objeto = turno abierto. */
   readonly session = signal<CashSession | null | undefined>(undefined);
+  /** Abrir la caja es de quien está a cargo; el resto espera a que la abran. */
+  readonly canOpenCash = computed(() => this.auth.can(PERM.cashManage));
   readonly floatText = signal('');
   readonly opening = signal(false);
 
@@ -374,6 +382,17 @@ export class PosComponent implements OnInit {
         this.charging.set(false);
         this.snack.error(this.explain(err));
         if (err.error?.code === 'CASH_CLOSED') this.session.set(null);
+
+        // El servidor ya no reconoce este equipo como caja (se cerró la caja del día o lo retiraron).
+        // Quien necesita un equipo para cobrar vuelve a la pantalla de la caja registradora.
+        if (err.error?.code === 'DEVICE_NOT_AUTHORIZED') {
+          this.device.forget();
+          if (this.auth.needsDevice()) {
+            this.auth.lock();
+          } else {
+            this.router.navigateByUrl('/caja-registradora');
+          }
+        }
       },
     });
   }

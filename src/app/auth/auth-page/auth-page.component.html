@@ -235,6 +235,12 @@
           ¿No tienes cuenta? <a routerLink="/register" [queryParams]="{ tipo: audience() }">Regístrate</a>
         }
       </p>
+
+      @if (esNegocio() && !esRegistro()) {
+        <p class="switch-auth">
+          ¿Es una caja registradora? <a routerLink="/caja-registradora">Modo caja</a>
+        </p>
+      }
     </div>
   </main>
 </div>
