@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { PERM } from '../../core/permissions';
 import { CashService, CashSession } from '../../core/services/cash.service';
@@ -53,7 +53,6 @@ export class PosComponent implements OnInit {
   private snack = inject(SnackbarService);
   private auth = inject(AuthService);
   private device = inject(DeviceService);
-  private router = inject(Router);
 
   /** Panel del ticket: en celular queda debajo del catálogo y la barra flotante lleva a él. */
   private ticketPanel = viewChild<ElementRef<HTMLElement>>('ticketPanel');
@@ -139,7 +138,17 @@ export class PosComponent implements OnInit {
   readonly quick = computed(() => quickAmounts(this.totals().total));
 
   /** Por qué todavía no se puede cobrar, o null si ya se puede. */
+  /**
+   * Encargados y empleados solo cobran desde una caja que la gerencia autorizó. Quien entró con
+   * el inicio de sesión normal ve la pantalla, pero no puede cobrar desde este equipo (el servidor
+   * también lo rechaza: esto solo se lo avisa antes de armar un ticket).
+   */
+  readonly notAuthorizedRegister = computed(() => this.auth.needsDevice() && !this.device.isAuthorized());
+
   readonly blocker = computed<string | null>(() => {
+    if (this.notAuthorizedRegister()) {
+      return 'Este equipo no es una caja autorizada. Cobra desde la caja que autorizó la gerencia.';
+    }
     if (!this.session()) return 'Abre la caja para cobrar';
     if (this.cart().length === 0) return 'Agrega productos al ticket';
     const t = this.totals();
@@ -383,15 +392,13 @@ export class PosComponent implements OnInit {
         this.snack.error(this.explain(err));
         if (err.error?.code === 'CASH_CLOSED') this.session.set(null);
 
-        // El servidor ya no reconoce este equipo como caja (se cerró la caja del día o lo retiraron).
-        // Quien necesita un equipo para cobrar vuelve a la pantalla de la caja registradora.
+        // El servidor ya no reconoce como caja a este navegador (se cerró la caja del día o lo retiraron).
+        // Si SÍ era una caja, quien necesita un equipo para cobrar vuelve a su pantalla de bloqueo.
+        // Si no lo era (inicio de sesión normal), basta el aviso de arriba: no se le saca de su sesión.
         if (err.error?.code === 'DEVICE_NOT_AUTHORIZED') {
+          const eraCaja = !!this.device.device();
           this.device.forget();
-          if (this.auth.needsDevice()) {
-            this.auth.lock();
-          } else {
-            this.router.navigateByUrl('/caja-registradora');
-          }
+          if (eraCaja && this.auth.needsDevice()) this.auth.lock();
         }
       },
     });
