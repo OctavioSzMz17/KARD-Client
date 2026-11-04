@@ -60,13 +60,3 @@ export function levelOf(position: string): number {
 export function positionLabel(position: string | undefined): string {
   return POSITION_LABELS[position as Position] ?? position ?? '';
 }
-
-/**
- * ¿Esta persona solo puede cobrar desde un equipo que la gerencia autorizó hoy?
- * Encargados de área y empleados, sí; dueño, gerente y subgerente cobran desde
- * cualquier lugar. (Espejo de `needs_authorized_device` del servidor, que es
- * quien lo impone.)
- */
-export function needsAuthorizedDevice(position: string | undefined): boolean {
-  return levelOf(position ?? 'empleado') >= levelOf('encargado_area');
-}

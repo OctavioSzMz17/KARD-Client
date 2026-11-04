@@ -7,8 +7,7 @@ import {
   TenantRegisterRequest, TenantRegisterResponse,
 } from '../models/auth.models';
 import { environment } from '../../../environments/environment';
-import { activeDeviceToken } from '../device-logic';
-import { PERM, Permission, fallbackPermissions, needsAuthorizedDevice, positionLabel } from '../permissions';
+import { PERM, Permission, fallbackPermissions, positionLabel } from '../permissions';
 
 const API_BASE = environment.apiUrl;
 const TOKEN_KEY = 'kard_token';
@@ -157,37 +156,15 @@ export class AuthService {
    */
   homeRoute(): string {
     if (this.can(PERM.dashboardView)) return '/dashboard';
-    // Cobrar solo es "casa" donde se puede cobrar: quien necesita una caja autorizada y entró desde
-    // otro equipo (su celular) empieza en Escanear, que es su sección para entrar a una caja.
-    if (this.can(PERM.posSell) && this.canChargeHere()) return '/dashboard/cobrar';
+    if (this.can(PERM.posSell)) return '/dashboard/cobrar';
     if (this.can(PERM.devicesUnlock)) return '/dashboard/escanear';
     if (this.can(PERM.productsRead)) return '/dashboard/products';
     return '/login';
   }
 
   /**
-   * ¿Se puede cobrar desde ESTE navegador? Dueño, gerente y subgerente, desde cualquiera;
-   * encargados y empleados, solo desde uno autorizado como caja. (El servidor es quien lo
-   * impone; esto decide qué pantalla ofrecer.)
-   */
-  canChargeHere(): boolean {
-    return !this.needsDevice() || activeDeviceToken() !== null;
-  }
-
-  /**
-   * ¿La sesión actual solo puede cobrar desde un equipo autorizado? Sin puesto
-   * guardado (sesión antigua), el personal sí y el dueño no.
-   */
-  needsDevice(): boolean {
-    const p = this.profile();
-    if (!p) return false;
-    if (p.position) return needsAuthorizedDevice(p.position);
-    return p.role !== 'business_admin' && p.role !== 'saas_admin';
-  }
-
-  /**
    * Cierra la sesión de la persona pero NO el equipo: la caja sigue autorizada
-   * y vuelve a la pantalla de bloqueo para que entre la siguiente persona.
+   * y vuelve a su pantalla de entrada para que entre la siguiente persona.
    */
   lock(): void {
     localStorage.removeItem(TOKEN_KEY);

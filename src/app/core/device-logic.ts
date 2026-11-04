@@ -112,32 +112,3 @@ export async function sha256Hex(text: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
 }
-
-// ── Bloqueo por inactividad ─────────────────────────────────────────
-
-/** Minutos sin tocar la caja antes de bloquearla. */
-export const IDLE_LOCK_MINUTES = 10;
-
-/**
- * Cuenta el tiempo sin actividad. Sin temporizadores propios: quien la usa
- * llama a `touch()` con cada gesto y consulta `shouldLock()` de vez en cuando,
- * así se prueba sin esperar.
- */
-export class IdleClock {
-  private last: number;
-
-  constructor(
-    private readonly limitMs = IDLE_LOCK_MINUTES * 60_000,
-    now: number = Date.now(),
-  ) {
-    this.last = now;
-  }
-
-  touch(now: number = Date.now()): void {
-    this.last = now;
-  }
-
-  shouldLock(now: number = Date.now()): boolean {
-    return now - this.last >= this.limitMs;
-  }
-}

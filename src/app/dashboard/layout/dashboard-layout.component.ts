@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
@@ -7,7 +7,6 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProductStore } from '../../core/store/product.store';
 import { PERM, Permission, positionLabel } from '../../core/permissions';
 import { DeviceService } from '../../core/services/device.service';
-import { IdleClock } from '../../core/device-logic';
 
 /** Lo que cada ruta del panel declara en su `data` para vestir la barra superior. */
 interface PageInfo {
@@ -35,7 +34,7 @@ const ROLE_LABEL: Record<string, string> = {
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.scss'
 })
-export class DashboardLayoutComponent implements OnInit, OnDestroy {
+export class DashboardLayoutComponent implements OnInit {
   private auth   = inject(AuthService);
   private store  = inject(ProductStore);
   private router = inject(Router);
@@ -61,15 +60,7 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
   ];
 
   /** Solo las entradas que la sesión actual puede usar; se actualiza sola si cambia su puesto. */
-  readonly visibleNav = computed(() =>
-    this.navItems.filter(i => {
-      if (!this.auth.can(i.perm)) return false;
-      // Cobrar solo se ofrece donde se puede cobrar: encargados y empleados lo ven en una caja
-      // autorizada, no en su celular ni en una computadora cualquiera.
-      if (i.perm === PERM.posSell && this.auth.needsDevice() && !this.isRegister()) return false;
-      return true;
-    }),
-  );
+  readonly visibleNav = computed(() => this.navItems.filter(i => this.auth.can(i.perm)));
 
 
   /** Menú lateral abierto (solo cuenta en pantallas angostas, donde es un cajón). */
@@ -121,54 +112,23 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
     });
 
     // Si este navegador cree ser una caja, se confirma con el servidor: pudieron retirarla
-    // o cerrarse la caja del día. Una caja que ya no vale se olvida; quien necesita una para
-    // cobrar vuelve a la pantalla de la caja registradora.
+    // o cerrarse la caja del día. Una caja que ya no vale se olvida; la sesión de quien está
+    // dentro sigue siendo suya y no se toca.
     if (this.device.device()) {
       this.device.verify().subscribe({
-        error: err => {
-          if (err?.status !== 403) return;
-          this.device.forget();
-          if (this.auth.needsDevice()) {
-            this.store.clear();
-            this.auth.lock();
-          }
-        },
+        error: err => { if (err?.status === 403) this.device.forget(); },
       });
     }
-
-    this.idleTimer = setInterval(() => {
-      if (this.isRegister() && this.idle.shouldLock()) this.lock();
-    }, 15_000);
   }
 
-  /** Este navegador es una caja registradora autorizada: se ofrece bloquear en vez de cerrar sesión. */
+  /** Este navegador es una caja registradora autorizada: al salir vuelve a su pantalla de entrada. */
   readonly isRegister = computed(() => !!this.device.device() && this.device.isAuthorized());
 
-  // ── Bloqueo por inactividad ───────────────────────────
-  // En una caja, quien se va sin bloquear deja su sesión abierta a la vista de
-  // cualquiera. Tras unos minutos sin tocar nada, la pantalla se bloquea sola.
-  private idle = new IdleClock();
-  private idleTimer: ReturnType<typeof setInterval> | null = null;
-
-  @HostListener('document:pointerdown')
-  @HostListener('document:keydown')
-  @HostListener('document:touchstart')
-  onActivity(): void { this.idle.touch(); }
-
-  ngOnDestroy(): void {
-    if (this.idleTimer) clearInterval(this.idleTimer);
-  }
-
-  /** Bloquea la caja: cierra la sesión de la persona, pero el equipo sigue autorizado. */
-  lock(): void {
-    this.store.clear();
-    this.auth.lock();
-  }
-
   logout(): void {
-    // En una caja autorizada se bloquea (el equipo sigue siendo la caja); fuera de una, se cierra la sesión.
-    if (this.isRegister()) return this.lock();
     this.store.clear();   // wipe tenant data before navigating away
+    // En una caja el equipo sigue autorizado: se cierra la sesión de la persona y la caja queda
+    // lista para la siguiente. En cualquier otro navegador, se vuelve al inicio de sesión.
+    if (this.isRegister()) return this.auth.lock();
     this.auth.logout();
   }
 }

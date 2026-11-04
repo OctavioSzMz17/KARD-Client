@@ -3,13 +3,12 @@
  *
  * El QR lo puede fotografiar cualquiera, y el escáner del celular lee de todo
  * (productos, códigos de terceros). Estas pruebas fijan qué se acepta como QR
- * de acceso, cuándo vence un equipo y cuándo se bloquea una caja inactiva.
+ * de acceso y cuándo vence un equipo.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
-  IdleClock,
   activeDeviceToken,
   approvalUrl,
   clearDevice,
@@ -143,27 +142,6 @@ describe('PC-11 · device-logic', () => {
       const hash = await sha256Hex(secreto);
       expect(hash).toMatch(/^[0-9a-f]{64}$/);
       expect(hash).not.toBe(secreto);
-    });
-  });
-
-  describe('bloqueo por inactividad', () => {
-    it('no bloquea mientras hay actividad', () => {
-      const idle = new IdleClock(60_000, 0);
-      idle.touch(50_000);
-      expect(idle.shouldLock(100_000)).toBe(false);
-    });
-
-    it('bloquea al cumplirse el límite sin actividad', () => {
-      const idle = new IdleClock(60_000, 0);
-      expect(idle.shouldLock(59_999)).toBe(false);
-      expect(idle.shouldLock(60_000)).toBe(true);
-    });
-
-    it('cualquier gesto reinicia la cuenta', () => {
-      const idle = new IdleClock(60_000, 0);
-      idle.touch(59_000);
-      expect(idle.shouldLock(118_000)).toBe(false);
-      expect(idle.shouldLock(119_000)).toBe(true);
     });
   });
 });

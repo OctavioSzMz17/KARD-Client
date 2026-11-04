@@ -76,8 +76,6 @@ export const routes: Routes = [
       {
         // `data` viste la barra superior del panel; `dark` marca las vistas ya rediseñadas.
         path: 'cobrar',
-        // Entrar a Cobrar no exige equipo autorizado: quien inició sesión normal ve la pantalla
-        // y un aviso. Solo el "Modo caja" (/caja-registradora) pide autorizar el equipo.
         canActivate: [permissionGuard(PERM.posSell)],
         data: { title: 'Cobrar', subtitle: 'Arma el ticket y cobra en el mostrador.', dark: true },
         loadComponent: () => import('./dashboard/pos/pos.component').then(m => m.PosComponent)

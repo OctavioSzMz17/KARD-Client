@@ -175,26 +175,6 @@
   &:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
 }
 
-.lock-btn {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  padding: 11px 14px;
-  border: 1px solid $line-strong;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-
-  &:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
-  &:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-}
-
 // ══ Área de trabajo ══════════════════════════════════════════════
 // Sin `z-index` a propósito: un nivel propio encerraría aquí a todo lo que se
 // abre encima (escáner, ventanas de cobro, diálogos) y el menú lateral, que
