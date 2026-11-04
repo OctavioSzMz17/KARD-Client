@@ -108,11 +108,17 @@ describe('PC-09 · Permisos en la pantalla', () => {
       expect(correr(PERM.productsWrite)).toBe(true);
     });
 
-    it('manda a un empleado a Cobrar cuando pide una pantalla de gestión', () => {
+    it('manda a un empleado a Escanear (su sección) cuando pide una pantalla de gestión desde su celular', () => {
       sesion('staff', EMPLEADO, 'empleado');
+      expect(destino(correr(PERM.teamManage))).toBe('/dashboard/escanear');
+      expect(destino(correr(PERM.cashManage))).toBe('/dashboard/escanear');
+      expect(destino(correr(PERM.billingManage))).toBe('/dashboard/escanear');
+    });
+
+    it('y a Cobrar si el navegador es una caja autorizada', () => {
+      sesion('staff', EMPLEADO, 'empleado');
+      localStorage.setItem('kard_device', JSON.stringify({ token: 't', name: 'Caja 1', expires_at: new Date(Date.now() + 3_600_000).toISOString() }));
       expect(destino(correr(PERM.teamManage))).toBe('/dashboard/cobrar');
-      expect(destino(correr(PERM.cashManage))).toBe('/dashboard/cobrar');
-      expect(destino(correr(PERM.billingManage))).toBe('/dashboard/cobrar');
     });
 
     it('un empleado sí entra a Cobrar y a Productos', () => {
@@ -121,9 +127,14 @@ describe('PC-09 · Permisos en la pantalla', () => {
       expect(correr(PERM.productsRead)).toBe(true);
     });
 
-    it('el panel de inicio es de quien supervisa: un empleado cae en Cobrar', () => {
+    it('el panel de inicio es de quien supervisa: un empleado cae en Escanear, no en una pantalla donde no puede cobrar', () => {
       sesion('staff', EMPLEADO, 'empleado');
-      expect(destino(correr(PERM.dashboardView))).toBe('/dashboard/cobrar');
+      expect(destino(correr(PERM.dashboardView))).toBe('/dashboard/escanear');
+    });
+
+    it('la gerencia cae en Cobrar desde cualquier lugar si no ve el panel de inicio', () => {
+      sesion('staff', EMPLEADO, 'gerente');
+      expect(destino(correr(PERM.teamManage))).toBe('/dashboard/cobrar');
     });
 
     it('un supervisor pide la suscripción y vuelve al panel de inicio, no a Cobrar', () => {

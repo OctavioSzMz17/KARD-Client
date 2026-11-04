@@ -61,7 +61,15 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
   ];
 
   /** Solo las entradas que la sesión actual puede usar; se actualiza sola si cambia su puesto. */
-  readonly visibleNav = computed(() => this.navItems.filter(i => this.auth.can(i.perm)));
+  readonly visibleNav = computed(() =>
+    this.navItems.filter(i => {
+      if (!this.auth.can(i.perm)) return false;
+      // Cobrar solo se ofrece donde se puede cobrar: encargados y empleados lo ven en una caja
+      // autorizada, no en su celular ni en una computadora cualquiera.
+      if (i.perm === PERM.posSell && this.auth.needsDevice() && !this.isRegister()) return false;
+      return true;
+    }),
+  );
 
 
   /** Menú lateral abierto (solo cuenta en pantallas angostas, donde es un cajón). */

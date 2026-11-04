@@ -7,6 +7,7 @@ import {
   TenantRegisterRequest, TenantRegisterResponse,
 } from '../models/auth.models';
 import { environment } from '../../../environments/environment';
+import { activeDeviceToken } from '../device-logic';
 import { PERM, Permission, fallbackPermissions, needsAuthorizedDevice, positionLabel } from '../permissions';
 
 const API_BASE = environment.apiUrl;
@@ -156,9 +157,21 @@ export class AuthService {
    */
   homeRoute(): string {
     if (this.can(PERM.dashboardView)) return '/dashboard';
-    if (this.can(PERM.posSell)) return '/dashboard/cobrar';
+    // Cobrar solo es "casa" donde se puede cobrar: quien necesita una caja autorizada y entró desde
+    // otro equipo (su celular) empieza en Escanear, que es su sección para entrar a una caja.
+    if (this.can(PERM.posSell) && this.canChargeHere()) return '/dashboard/cobrar';
+    if (this.can(PERM.devicesUnlock)) return '/dashboard/escanear';
     if (this.can(PERM.productsRead)) return '/dashboard/products';
     return '/login';
+  }
+
+  /**
+   * ¿Se puede cobrar desde ESTE navegador? Dueño, gerente y subgerente, desde cualquiera;
+   * encargados y empleados, solo desde uno autorizado como caja. (El servidor es quien lo
+   * impone; esto decide qué pantalla ofrecer.)
+   */
+  canChargeHere(): boolean {
+    return !this.needsDevice() || activeDeviceToken() !== null;
   }
 
   /**
