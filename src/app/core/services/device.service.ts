@@ -125,6 +125,14 @@ export class DeviceService {
     return this.http.get<AuthorizedDevice>(`${API}/current`);
   }
 
+  /**
+   * Cerrar sesión en la caja: ya nadie la opera y su ticket se vacía. Va ANTES de borrar la
+   * sesión, porque el servidor necesita saber quién es.
+   */
+  release(): Observable<void> {
+    return this.http.post<void>(`${API}/release`, null, { headers: this.userHeaders });
+  }
+
   // ── El celular (con sesión de una persona) ────────────
   challengeInfo(id: string): Observable<ChallengeInfo> {
     return this.http.get<ChallengeInfo>(`${API}/challenges/${id}`, { headers: this.userHeaders });

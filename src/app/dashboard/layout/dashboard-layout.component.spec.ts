@@ -8,7 +8,7 @@
 
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -81,17 +81,60 @@ describe('PC-14 · Menú y salida del panel', () => {
     expect(caja.textContent).toContain('Cerrar sesión');
   });
 
-  it('en una caja autorizada, "Cerrar sesión" deja la caja lista para la siguiente persona', () => {
-    localStorage.setItem('kard_device', JSON.stringify({ token: 't', name: 'Caja 1', expires_at: EN_UNA_HORA() }));
-    const fixture = abrir('empleado', EMPLEADO);
-    const auth = TestBed.inject(AuthService);
-    const lock = vi.spyOn(auth, 'lock').mockImplementation(() => {});
-    const logout = vi.spyOn(auth, 'logout').mockImplementation(() => {});
+  describe('cerrar sesión en una caja autorizada', () => {
+    const RELEASE = (r: { url: string }) => r.url.endsWith('/device-auth/release');
 
-    fixture.componentInstance.logout();
+    function enCaja() {
+      localStorage.setItem('kard_device', JSON.stringify({ token: 't', name: 'Caja 1', expires_at: EN_UNA_HORA() }));
+      const fixture = abrir('empleado', EMPLEADO);
+      const auth = TestBed.inject(AuthService);
+      return {
+        fixture,
+        http: TestBed.inject(HttpTestingController),
+        lock: vi.spyOn(auth, 'lock').mockImplementation(() => {}),
+        logout: vi.spyOn(auth, 'logout').mockImplementation(() => {}),
+      };
+    }
 
-    expect(lock).toHaveBeenCalledTimes(1);
-    expect(logout).not.toHaveBeenCalled();
+    it('primero le avisa al servidor que la caja quedó libre y después la deja lista para la siguiente persona', () => {
+      const { fixture, http, lock, logout } = enCaja();
+      fixture.componentInstance.logout();
+
+      expect(lock).not.toHaveBeenCalled();                          // espera la respuesta: el servidor necesita saber quién es
+      http.expectOne(RELEASE).flush(null, { status: 204, statusText: 'No Content' });
+
+      expect(lock).toHaveBeenCalledTimes(1);
+      expect(logout).not.toHaveBeenCalled();
+    });
+
+    it('si el servidor falla, la sesión se cierra igual', () => {
+      const { fixture, http, lock } = enCaja();
+      fixture.componentInstance.logout();
+      http.expectOne(RELEASE).flush({}, { status: 500, statusText: 'Server Error' });
+      expect(lock).toHaveBeenCalledTimes(1);
+    });
+
+    it('si no hay conexión, no se queda esperando: a los 3 segundos cierra igual', () => {
+      vi.useFakeTimers();
+      try {
+        const { fixture, http, lock } = enCaja();
+        fixture.componentInstance.logout();
+        http.expectOne(RELEASE);                                    // sin respuesta
+        vi.advanceTimersByTime(2999);
+        expect(lock).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(1);
+        expect(lock).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('cierra la sesión UNA sola vez aunque el servidor conteste tarde', () => {
+      const { fixture, http, lock } = enCaja();
+      fixture.componentInstance.logout();
+      http.expectOne(RELEASE).flush(null, { status: 204, statusText: 'No Content' });
+      expect(lock).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('fuera de una caja, "Cerrar sesión" vuelve al inicio de sesión', () => {

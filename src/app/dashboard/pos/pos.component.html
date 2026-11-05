@@ -35,6 +35,17 @@
       } @else if (session() === null) {
         <span class="cash-chip closed"><span class="dot"></span>Caja cerrada</span>
       }
+
+      @if (sync.register(); as reg) {
+        <span class="sync-chip" [class.off]="!sync.connected()" role="status"
+              title="El ticket es el mismo en la computadora de esta caja y en el celular de quien la opera">
+          <span class="dot"></span>
+          {{ reg.name }} ·
+          @if (!sync.connected()) { sin conexión{{ sync.pendingCount() ? ' (' + sync.pendingCount() + ' por enviar)' : '' }} }
+          @else if (sync.pendingCount()) { sincronizando… }
+          @else { sincronizada }
+        </span>
+      }
     </div>
 
     @if (categories().length > 1) {

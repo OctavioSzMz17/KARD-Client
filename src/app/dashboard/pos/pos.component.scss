@@ -84,6 +84,28 @@
   &.closed { color: $danger; }
 }
 
+// La lámpara del ticket compartido: verde si la caja y el celular están al día, ámbar si no hay conexión.
+.sync-chip {
+  @include glass;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: #6ee7b7;
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: $mint; animation: pulso 1.8s ease-out infinite; }
+
+  &.off {
+    color: #fcd34d;
+    .dot { background: #fbbf24; animation: none; }
+  }
+}
+
 // Botón para abrir la cámara: el mismo degradado de la acción principal.
 .scan-btn {
   @include action;
@@ -584,7 +606,7 @@
   .scan-btn { width: 100%; justify-content: center; height: 52px; }
   .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
   .search-row { min-width: 0; height: 52px; }
-  .cash-chip { width: 100%; justify-content: center; }
+  .cash-chip, .sync-chip { width: 100%; justify-content: center; }
   .ticket { padding: 16px; border-radius: 22px; }
 }
 

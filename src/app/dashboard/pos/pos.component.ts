@@ -1,10 +1,12 @@
-import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { PERM } from '../../core/permissions';
 import { CashService, CashSession } from '../../core/services/cash.service';
 import { PaymentMethod, PosFulfillment, PosSale, SalesService } from '../../core/services/sales.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
+import { TicketSyncService } from '../../core/services/ticket-sync.service';
+import { linesToCart, localTicketUid, ops } from '../../core/ticket-sync-logic';
 import { Product, ProductStore } from '../../core/store/product.store';
 import { ProductImage } from '../../core/services/image.service';
 import {
@@ -44,6 +46,8 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
   imports: [RouterLink, ReceiptComponent, ScannerComponent],
   templateUrl: './pos.component.html',
   styleUrl: './pos.component.scss',
+  // Una por pantalla de cobro: se detiene sola al salir.
+  providers: [TicketSyncService],
 })
 export class PosComponent implements OnInit {
   private store = inject(ProductStore);
@@ -51,6 +55,43 @@ export class PosComponent implements OnInit {
   private sales = inject(SalesService);
   private snack = inject(SnackbarService);
   private auth = inject(AuthService);
+
+  /**
+   * Ticket compartido: si esta sesión opera una caja, su ticket es el MISMO que ve la computadora
+   * de esa caja (y el celular de quien la opera). Si no opera ninguna, el ticket es solo de esta pantalla.
+   */
+  readonly sync = inject(TicketSyncService);
+
+  /** Identificador de un ticket que no está compartido; sirve de llave de idempotencia del cobro. */
+  private readonly localUid = signal(localTicketUid());
+
+  /** La llave de idempotencia de ESTE ticket: la misma para quien lo cobre, desde donde lo cobre. */
+  readonly ticketUid = computed(() => {
+    const shared = this.sync.ticket();
+    return this.sync.enabled() && shared ? shared.uid : this.localUid();
+  });
+
+  constructor() {
+    // Lo que dice el servidor (lo que escaneó el celular, lo que borró la laptop) se refleja en pantalla.
+    effect(() => {
+      const shared = this.sync.ticket();
+      const products = this.finals();
+      if (!this.sync.enabled() || !shared) return;
+      const next = linesToCart(shared.lines, products);
+      untracked(() => {
+        // Se vació desde otra pantalla (la cobraron o la vaciaron allá): se avisa, no desaparece sin más.
+        if (next.length === 0 && this.cart().length > 0 && !this.charging() && !this.receipt()) {
+          this.snack.info('El ticket se vació o se cobró desde otro dispositivo.');
+        }
+        this.cart.set(next);
+      });
+    });
+
+    effect(() => {
+      const aviso = this.sync.notice();
+      if (aviso) untracked(() => this.snack.warning(aviso.text));
+    });
+  }
 
   /** Panel del ticket: en celular queda debajo del catálogo y la barra flotante lleva a él. */
   private ticketPanel = viewChild<ElementRef<HTMLElement>>('ticketPanel');
@@ -153,6 +194,7 @@ export class PosComponent implements OnInit {
   ngOnInit(): void {
     this.store.load();
     this.refreshSession();
+    this.sync.start();
   }
 
   // ── Caja ──────────────────────────────────────────────
@@ -276,6 +318,8 @@ export class PosComponent implements OnInit {
   }
 
   // ── Ticket ────────────────────────────────────────────
+  // Cada cambio se ve al instante en esta pantalla y, si la caja es compartida, se manda al servidor
+  // para que la otra pantalla lo vea. El servidor tiene la última palabra.
   add(product: Product): void {
     this.cart.update(lines => {
       const found = lines.find(l => l.product.product_id === product.product_id);
@@ -283,6 +327,7 @@ export class PosComponent implements OnInit {
         ? lines.map(l => (l === found ? { ...l, quantity: l.quantity + 1 } : l))
         : [...lines, { product, quantity: 1 }];
     });
+    this.sync.send(ops.add(product.product_id));
   }
 
   step(line: CartItem, delta: number): void {
@@ -291,11 +336,14 @@ export class PosComponent implements OnInit {
       this.remove(line);
       return;
     }
-    this.cart.update(lines => lines.map(l => (l === line ? { ...l, quantity: Math.min(next, 999) } : l)));
+    const quantity = Math.min(next, 999);
+    this.cart.update(lines => lines.map(l => (l === line ? { ...l, quantity } : l)));
+    this.sync.send(ops.setQuantity(line.product.product_id, quantity));
   }
 
   remove(line: CartItem): void {
     this.cart.update(lines => lines.filter(l => l !== line));
+    this.sync.send(ops.remove(line.product.product_id));
   }
 
   lineTotal(line: CartItem): string {
@@ -333,6 +381,10 @@ export class PosComponent implements OnInit {
   }
 
   clearTicket(): void {
+    // Compartido: el servidor lo vacía y le estrena otro identificador. Solo si sigue siendo ESTE
+    // ticket, así un "vaciar" tardío no borra el siguiente. Local: se estrena otra llave de cobro.
+    if (this.sync.enabled()) this.sync.send(ops.clear(this.sync.ticket()?.uid));
+    else this.localUid.set(localTicketUid());
     this.cart.set([]);
     this.discountText.set('');
     this.tipText.set('');
@@ -366,7 +418,7 @@ export class PosComponent implements OnInit {
     };
 
     this.charging.set(true);
-    this.sales.charge(body).subscribe({
+    this.sales.charge(body, this.ticketUid()).subscribe({
       next: sale => {
         this.charging.set(false);
         this.receipt.set(sale);

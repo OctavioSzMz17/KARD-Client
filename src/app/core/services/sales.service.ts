@@ -135,9 +135,16 @@ export class SalesService {
     });
   }
 
-  /** Cobra una venta de mostrador. Exige un turno de caja abierto (409 CASH_CLOSED si no). */
-  charge(body: PosSaleRequest): Observable<PosSale> {
-    return this.http.post<PosSale>(`${API}/orders/business/sales`, body, { headers: this.headers });
+  /**
+   * Cobra una venta de mostrador. Exige un turno de caja abierto (409 CASH_CLOSED si no).
+   *
+   * `idempotencyKey` identifica este ticket: si el mismo cobro llega dos veces (doble clic, un
+   * reintento, o la laptop y el celular cobrando el mismo ticket) el servidor devuelve la venta
+   * ya hecha en vez de crear otra.
+   */
+  charge(body: PosSaleRequest, idempotencyKey?: string): Observable<PosSale> {
+    const headers = idempotencyKey ? this.headers.set('Idempotency-Key', idempotencyKey) : this.headers;
+    return this.http.post<PosSale>(`${API}/orders/business/sales`, body, { headers });
   }
 
   /** Cambia el estado de una venta. Devuelve la venta ya actualizada. */

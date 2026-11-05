@@ -2,7 +2,7 @@ import { Component, HostListener, OnInit, computed, inject, signal } from '@angu
 import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { filter, map, startWith } from 'rxjs';
+import { filter, map, startWith, timeout } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ProductStore } from '../../core/store/product.store';
 import { PERM, Permission, positionLabel } from '../../core/permissions';
@@ -127,8 +127,19 @@ export class DashboardLayoutComponent implements OnInit {
   logout(): void {
     this.store.clear();   // wipe tenant data before navigating away
     // En una caja el equipo sigue autorizado: se cierra la sesión de la persona y la caja queda
-    // lista para la siguiente. En cualquier otro navegador, se vuelve al inicio de sesión.
-    if (this.isRegister()) return this.auth.lock();
+    // lista para la siguiente (sin operador y con el ticket vacío). En cualquier otro navegador,
+    // se vuelve al inicio de sesión.
+    if (this.isRegister()) return this.releaseThenLock();
     this.auth.logout();
+  }
+
+  /**
+   * Avisa al servidor que la caja quedó libre y después cierra la sesión. Si no hay conexión no
+   * se espera de más: la sesión se cierra igual, y el ticket se vaciará cuando entre la siguiente persona.
+   */
+  private releaseThenLock(): void {
+    let locked = false;
+    const lock = () => { if (!locked) { locked = true; this.auth.lock(); } };
+    this.device.release().pipe(timeout(3000)).subscribe({ next: lock, complete: lock, error: lock });
   }
 }

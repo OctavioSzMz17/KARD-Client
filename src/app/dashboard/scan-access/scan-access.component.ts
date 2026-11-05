@@ -135,7 +135,7 @@ export class ScanAccessComponent implements OnInit {
         this.done.set(
           info.kind === 'enroll'
             ? `${body.device_name} quedó autorizada para hoy.` + (result.cash_opened ? ' La caja se abrió con el fondo inicial.' : '')
-            : `Listo: la caja abrió sesión a tu nombre.`,
+            : `Listo: la caja abrió sesión a tu nombre. Desde Cobrar, lo que escanees con tu celular aparece en el ticket de la caja.`,
         );
       },
       error: (err: HttpErrorResponse) => {
