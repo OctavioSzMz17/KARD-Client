@@ -45,18 +45,16 @@ export class DashboardLayoutComponent implements OnInit {
    * sesión no puede hacer no se muestra (el servidor lo impide de todos modos).
    */
   private navItems: { label: string; icon: string; route: string; exact: boolean; enabled: boolean; perm: Permission }[] = [
-    { label: 'Dashboard', icon: 'home', route: '/dashboard', exact: true, enabled: true, perm: PERM.dashboardView },
+    { label: 'Inicio', icon: 'home', route: '/dashboard', exact: true, enabled: true, perm: PERM.dashboardView },
     { label: 'Cobrar', icon: 'cart', route: '/dashboard/cobrar', exact: false, enabled: true, perm: PERM.posSell },
     { label: 'Caja', icon: 'cash', route: '/dashboard/caja', exact: false, enabled: true, perm: PERM.cashManage },
     { label: 'Escanear', icon: 'camera', route: '/dashboard/escanear', exact: false, enabled: true, perm: PERM.devicesUnlock },
-    { label: 'Products', icon: 'box', route: '/dashboard/products', exact: false, enabled: true, perm: PERM.productsRead },
-    { label: 'Inventory', icon: 'archive', route: '/dashboard/inventory', exact: false, enabled: true, perm: PERM.inventoryAdjust },
+    { label: 'Productos', icon: 'box', route: '/dashboard/products', exact: false, enabled: true, perm: PERM.productsRead },
+    { label: 'Inventario', icon: 'archive', route: '/dashboard/inventory', exact: false, enabled: true, perm: PERM.inventoryAdjust },
     { label: 'Ventas', icon: 'chart', route: '/dashboard/sales', exact: false, enabled: true, perm: PERM.salesRead },
     { label: 'Equipo', icon: 'users', route: '/dashboard/equipo', exact: false, enabled: true, perm: PERM.teamManage },
     { label: 'Personalización', icon: 'palette', route: '/dashboard/branding', exact: false, enabled: true, perm: PERM.settingsManage },
     { label: 'Suscripción', icon: 'card', route: '/dashboard/suscripcion', exact: false, enabled: true, perm: PERM.billingManage },
-    { label: 'Customers', icon: 'users', route: '/dashboard/customers', exact: false, enabled: false, perm: PERM.settingsManage },
-    { label: 'Audit Log', icon: 'log', route: '/dashboard/audit', exact: false, enabled: false, perm: PERM.settingsManage },
   ];
 
   /** Solo las entradas que la sesión actual puede usar; se actualiza sola si cambia su puesto. */

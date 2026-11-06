@@ -11,6 +11,17 @@ export interface MethodTotal {
   total: string;
 }
 
+/** Lo que cobró una persona en el turno. */
+export interface CashierTotal {
+  user_id: string | null;
+  /** Nombre completo. */
+  name: string;
+  /** Código de empleado. */
+  code: string | null;
+  count: number;
+  total: string;
+}
+
 /** Lo vendido en un turno, por método de pago. Los importes llegan como texto ("123.40"). */
 export interface CashSummary {
   sales_count: number;
@@ -25,6 +36,8 @@ export interface CashSummary {
   tips_cash: string;
   /** Ventas canceladas o reembolsadas: no cuentan en el corte. */
   excluded_count: number;
+  /** Lo cobrado por cada persona, de más a menos. Los cortes anteriores a esto no la traen. */
+  by_cashier?: CashierTotal[];
 }
 
 export interface CashSession {

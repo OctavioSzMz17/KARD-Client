@@ -218,6 +218,17 @@ describe('PC-02 · AuthPageComponent', () => {
 
       component.onSubmit();
       httpMock.expectOne(`${API}/consumers/register`)
+        .flush({ error: 'Ese correo ya está registrado' }, { status: 400, statusText: 'Bad Request' });
+
+      expect(component.error()).toContain('Ya existe una cuenta');
+    });
+
+    it('y sigue entendiendo el mensaje de un servidor que aún lo manda en inglés', () => {
+      crear('register', 'cliente');
+      llenar({ email: 'ana@correo.com', password: 'abc12345', confirmPassword: 'abc12345' });
+
+      component.onSubmit();
+      httpMock.expectOne(`${API}/consumers/register`)
         .flush({ error: 'Email is already registered' }, { status: 400, statusText: 'Bad Request' });
 
       expect(component.error()).toContain('Ya existe una cuenta');

@@ -142,6 +142,35 @@
   i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
 }
 
+// ── Ventas reales ─────────────────────────────────────────
+.sales-figures { display: flex; flex-direction: column; gap: 2px; margin-bottom: 4px; }
+.sales-big { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+.sales-sub { font-size: 12.5px; color: $text-soft; }
+
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: #9db0ff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { color: #fff; text-decoration: underline; }
+}
+
+.top-list { display: flex; flex-direction: column; gap: 14px; }
+.top-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.top-name { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top-units { font-size: 12px; color: $text-soft; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.top-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+
+  i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5b6ef5, #9db0ff); }
+}
+
 // ── Totales ───────────────────────────────────────────────
 .totals-grid { display: flex; gap: 12px; flex-wrap: wrap; }
 

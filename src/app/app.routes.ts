@@ -49,7 +49,7 @@ export const routes: Routes = [
       {
         path: '',
         canActivate: [permissionGuard(PERM.dashboardView)],
-        data: { title: 'Dashboard', subtitle: 'Resumen de tu inventario y de lo que pasa en tu negocio.', dark: true },
+        data: { title: 'Inicio', subtitle: 'Resumen de tu inventario y de lo que pasa en tu negocio.', dark: true },
         loadComponent: () => import('./dashboard/home/home.component').then(m => m.HomeComponent)
       },
       {

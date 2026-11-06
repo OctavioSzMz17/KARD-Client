@@ -474,7 +474,7 @@ export class AuthPageComponent {
     if (err.status === 401) return 'Correo o contraseña incorrectos.';
     if (err.status === 403) return 'Demasiados intentos fallidos. Tu cuenta quedó bloqueada unos minutos; intenta más tarde.';
     if (err.status === 422) return 'Revisa los datos: alguno no tiene el formato esperado.';
-    if (err.status === 400 && /already registered/i.test(err.error?.error ?? '')) {
+    if (err.status === 400 && /ya está registrado|already registered/i.test(err.error?.error ?? '')) {
       return 'Ya existe una cuenta con ese correo. Inicia sesión.';
     }
     if (err.status >= 500)  return 'Algo salió mal de nuestro lado. Intenta de nuevo en un momento.';

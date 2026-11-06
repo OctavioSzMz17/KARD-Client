@@ -53,6 +53,24 @@
         @if (s.summary.excluded_count > 0) {
           <p class="muted small">{{ s.summary.excluded_count }} venta(s) cancelada(s) no cuentan en el corte.</p>
         }
+
+        @if (s.summary.by_cashier?.length) {
+          <h3 class="sub">Ventas por cajero</h3>
+          <div class="table-wrap">
+            <table class="by-cashier">
+              <thead><tr><th>Cajero</th><th class="n">Ventas</th><th class="n">Importe</th></tr></thead>
+              <tbody>
+                @for (c of s.summary.by_cashier; track c.user_id ?? c.name) {
+                  <tr>
+                    <td>{{ c.name }} @if (c.code) { <small>#{{ c.code }}</small> }</td>
+                    <td class="n">{{ c.count }}</td>
+                    <td class="n">{{ money(c.total) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </section>
 
       <section class="panel">

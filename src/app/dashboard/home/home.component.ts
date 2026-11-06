@@ -4,6 +4,10 @@ import { AuthService } from '../../core/services/auth.service';
 import { Fulfillment, FulfillmentService } from '../../core/services/fulfillment.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { ProductStore, Product } from '../../core/store/product.store';
+import { PERM } from '../../core/permissions';
+import { SalesService, SalesStats } from '../../core/services/sales.service';
+import { formatMoney } from '../pos/pos-math';
+import { areaPath, barPercent, dayLabels, linePath } from './chart-math';
 
 /** Modo de entrega tal como se presenta en la configuración. */
 interface ModoEntrega {
@@ -25,6 +29,7 @@ export class HomeComponent implements OnInit {
   private auth    = inject(AuthService);
   private fulSvc  = inject(FulfillmentService);
   private snack   = inject(SnackbarService);
+  private sales   = inject(SalesService);
 
   // ── Loading state (shared with products page) ─────────
   readonly loading = this.store.loading;
@@ -45,9 +50,27 @@ export class HomeComponent implements OnInit {
   );
   readonly recentProducts  = computed(() => this.store.products().slice(0, 5));
 
-  // ── Chart data (generated once per component mount) ───
-  salesChartPoints = this.generateChartPoints(7, 200, 900);
-  stockChartPoints = this.generateChartPoints(10, 100, 500);
+  // ── Ventas reales de los últimos 7 días ───────────────
+  readonly money = formatMoney;
+
+  /** Las ventas son de quien puede verlas; el resto del inicio (inventario) no depende de eso. */
+  readonly canSeeSales = computed(() => this.auth.can(PERM.salesRead));
+  readonly stats = signal<SalesStats | null>(null);
+  readonly statsLoading = signal(false);
+  readonly statsError = signal(false);
+
+  private readonly revenueByDay = computed(() => (this.stats()?.days ?? []).map(d => Number(d.revenue)));
+  readonly salesLine = computed(() => linePath(this.revenueByDay(), 280, 100));
+  readonly salesArea = computed(() => areaPath(this.revenueByDay(), 280, 100));
+  readonly dayNames = computed(() => dayLabels((this.stats()?.days ?? []).map(d => d.date)));
+  readonly hasSales = computed(() => (this.stats()?.total_orders ?? 0) > 0);
+
+  /** Los más vendidos con el ancho de su barra respecto al primero. */
+  readonly topProducts = computed(() => {
+    const list = this.stats()?.top_products ?? [];
+    const max = Math.max(0, ...list.map(p => p.units));
+    return list.map(p => ({ ...p, percent: barPercent(p.units, max) }));
+  });
 
   // ── Configuración de la tienda ────────────────────────
   settingsOpen    = signal(false);
@@ -146,15 +169,16 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.store.load();   // no-op if cache is fresh; fetches only when stale/empty
+    if (this.canSeeSales()) this.loadStats();
   }
 
-  private generateChartPoints(count: number, min: number, max: number): string {
-    const w = 280, h = 80;
-    const pts = Array.from({ length: count }, (_, i) => ({
-      x: (i / (count - 1)) * w,
-      y: h - ((Math.random() * (max - min) + min) / max) * h
-    }));
-    return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  loadStats(): void {
+    this.statsLoading.set(true);
+    this.statsError.set(false);
+    this.sales.stats(7).subscribe({
+      next: s => { this.stats.set(s); this.statsLoading.set(false); },
+      error: () => { this.statsError.set(true); this.statsLoading.set(false); },
+    });
   }
 
   getStockColor(item: Product): string {

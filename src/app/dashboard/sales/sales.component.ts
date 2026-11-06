@@ -243,12 +243,14 @@ export class SalesComponent implements OnInit {
     this.exporting.set(false);
     if (!data) return;
 
-    const header = ['Folio', 'Fecha', 'Cliente', 'Correo', 'Estado', 'Artículos', 'Total'];
+    const header = ['Folio', 'Fecha', 'Cliente', 'Correo', 'Cajero', 'Caja', 'Estado', 'Artículos', 'Total'];
     const rows = data.items.map(s => [
       s.order_id,
       this.formatDateTime(s.created_at),
       s.customer_name,
       s.customer_email,
+      s.cashier_name ?? '',
+      s.register_name ?? '',
       this.statusLabel(s.status),
       String(s.item_count),
       s.total,

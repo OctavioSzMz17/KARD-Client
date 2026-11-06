@@ -35,6 +35,7 @@ const FULFILLMENT_LABEL: Record<string, string> = {
       <div class="r-meta">
         <span>{{ fulfillment() }}</span>
         @if (sale().customer_name) { <span>Cliente: {{ sale().customer_name }}</span> }
+        @if (sale().register_name) { <span>Caja: {{ sale().register_name }}</span> }
         @if (sale().cashier) { <span>Atendió: {{ sale().cashier }}</span> }
       </div>
 

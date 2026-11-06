@@ -49,23 +49,49 @@ describe('PC-14 · Menú y salida del panel', () => {
 
   it('un empleado ve sus ventanas: Cobrar, Escanear y Productos, y nada de gestión', () => {
     const items = menu('empleado', EMPLEADO);
-    expect(items).toEqual(['Cobrar', 'Escanear', 'Products']);
+    expect(items).toEqual(['Cobrar', 'Escanear', 'Productos']);
   });
 
   it('el empleado ve lo mismo si entra desde una caja autorizada', () => {
     localStorage.setItem('kard_device', JSON.stringify({ token: 't', name: 'Caja 1', expires_at: EN_UNA_HORA() }));
-    expect(menu('empleado', EMPLEADO)).toEqual(['Cobrar', 'Escanear', 'Products']);
+    expect(menu('empleado', EMPLEADO)).toEqual(['Cobrar', 'Escanear', 'Productos']);
   });
 
   it.each([['dueno', 'business_admin'], ['gerente', 'staff'], ['subgerente', 'staff']])(
     'la gerencia (%s) ve además el panel y la gestión',
     (puesto, rol) => {
       const items = menu(puesto, GERENCIA, rol);
-      expect(items).toContain('Dashboard');
+      expect(items).toContain('Inicio');
       expect(items).toContain('Cobrar');
       expect(items).toContain('Equipo');
     },
   );
+
+  describe('textos del menú', () => {
+    const TODO = Object.values(PERM);
+    const ESPERADO = ['Inicio', 'Cobrar', 'Caja', 'Escanear', 'Productos', 'Inventario', 'Ventas', 'Equipo', 'Personalización', 'Suscripción'];
+
+    it('el dueño ve todo el menú, en español y en este orden', () => {
+      expect(menu('dueno', TODO, 'business_admin')).toEqual(ESPERADO);
+    });
+
+    it('no hay ningún nombre en inglés', () => {
+      const ingles = ['Dashboard', 'Products', 'Inventory', 'Customers', 'Audit Log', 'Sales', 'Settings'];
+      expect(menu('dueno', TODO, 'business_admin').filter(l => ingles.includes(l))).toEqual([]);
+    });
+
+    it('no se ofrecen opciones que todavía no existen (Clientes y Bitácora)', () => {
+      const items = menu('dueno', TODO, 'business_admin');
+      expect(items).not.toContain('Customers');
+      expect(items).not.toContain('Audit Log');
+      expect(items).not.toContain('Clientes');
+    });
+
+    it('y no queda ningún "Pronto" en la pantalla', () => {
+      const f = abrir('dueno', TODO, 'business_admin');
+      expect((f.nativeElement as HTMLElement).textContent).not.toContain('Pronto');
+    });
+  });
 
   it('no existe la opción de bloquear la caja, ni en un navegador normal ni en una caja autorizada', () => {
     const normal = abrir('empleado', EMPLEADO).nativeElement as HTMLElement;

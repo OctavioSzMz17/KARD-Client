@@ -128,6 +128,7 @@
               <th>Folio</th>
               <th>Fecha</th>
               <th>Cliente</th>
+              <th>Cajero</th>
               <th>Estado</th>
               <th>Pago</th>
               <th class="num">Artículos</th>
@@ -142,6 +143,18 @@
                 <td>
                   <div class="customer">{{ sale.customer_name }}</div>
                   <div class="customer-mail">{{ sale.customer_email }}</div>
+                </td>
+                <td class="cashier-cell">
+                  @if (sale.cashier_name) {
+                    <div class="customer">{{ sale.cashier_name }}</div>
+                    <div class="customer-mail">
+                      @if (sale.cashier_code) { #{{ sale.cashier_code }} }
+                      @if (sale.cashier_code && sale.register_name) { · }
+                      @if (sale.register_name) { {{ sale.register_name }} }
+                    </div>
+                  } @else {
+                    <div class="customer-mail">—</div>
+                  }
                 </td>
                 <td>
                   <select

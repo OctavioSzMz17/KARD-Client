@@ -47,6 +47,24 @@ import { formatMoney, toCents } from '../pos/pos-math';
         </p>
       </section>
 
+      @if (session().summary.by_cashier?.length) {
+        <section>
+          <h3>Ventas por cajero</h3>
+          <table>
+            <thead><tr><th>Cajero</th><th class="n">Ventas</th><th class="n">Importe</th></tr></thead>
+            <tbody>
+              @for (c of session().summary.by_cashier; track c.user_id ?? c.name) {
+                <tr>
+                  <td>{{ c.name }} @if (c.code) { <span class="code">#{{ c.code }}</span> }</td>
+                  <td class="n">{{ c.count }}</td>
+                  <td class="n">{{ m(c.total) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </section>
+      }
+
       <section>
         <h3>Efectivo en caja</h3>
         <dl>
@@ -76,6 +94,7 @@ import { formatMoney, toCents } from '../pos/pos-math';
     th, td { padding: 5px 4px; border-bottom: 1px solid #ddd; text-align: left; }
     th { font-size: 11.5px; color: #555; font-weight: 600; }
     .n { text-align: right; font-variant-numeric: tabular-nums; }
+    .code { color: #777; font-size: 11.5px; margin-left: 4px; }
     tfoot td { font-weight: 700; border-top: 2px solid #111; border-bottom: 0; }
     dl { margin: 0; }
     dl div { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; }

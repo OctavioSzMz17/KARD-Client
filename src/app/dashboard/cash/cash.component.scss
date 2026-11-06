@@ -152,7 +152,7 @@ label { font-size: 12.5px; font-weight: 600; color: $text-soft; }
 // ── Historial ─────────────────────────────────────────────
 .table-wrap { overflow-x: auto; margin-top: 14px; }
 
-.history {
+.history, .by-cashier {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
@@ -163,6 +163,9 @@ label { font-size: 12.5px; font-weight: 600; color: $text-soft; }
   tbody tr:last-child td { border-bottom: 0; }
   .n { text-align: right; font-variant-numeric: tabular-nums; }
 }
+
+.sub { margin: 22px 0 0; font-size: 14px; font-weight: 700; letter-spacing: 0.01em; }
+.by-cashier small { margin-left: 6px; color: $text-faint; font-size: 12px; }
 
 .tag {
   display: inline-block;

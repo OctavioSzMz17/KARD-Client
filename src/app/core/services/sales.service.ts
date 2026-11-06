@@ -25,6 +25,10 @@ export interface Sale {
   tip_amount?: string;
   amount_received?: string | null;
   change_given?: string | null;
+  /** Quién cobró (nombre completo y código de empleado) y desde qué caja. Nulos en pedidos en línea. */
+  cashier_name?: string | null;
+  cashier_code?: string | null;
+  register_name?: string | null;
 }
 
 /** Totales del conjunto filtrado completo, no solo de la página visible. */
@@ -79,10 +83,35 @@ export interface PosSale {
   change_given: string | null;
   table_number: string | null;
   customer_name: string | null;
+  /** Lo que dice el ticket: quien cobró ("Eva P.") y desde qué caja ("Caja 1"). */
   cashier: string | null;
+  register_name: string | null;
   items: OrderItem[];
   created_at: string;
   business_name: string;
+}
+
+/** Lo vendido en un día del negocio (fecha local, `YYYY-MM-DD`). */
+export interface DayStat {
+  date: string;
+  revenue: string;
+  orders: number;
+}
+
+export interface TopProduct {
+  product_id: string;
+  name: string;
+  units: number;
+  revenue: string;
+}
+
+/** Ventas cobradas de los últimos días y lo más vendido, para el Dashboard. */
+export interface SalesStats {
+  days: DayStat[];
+  top_products: TopProduct[];
+  total_revenue: string;
+  total_orders: number;
+  average_ticket: string | null;
 }
 
 /** Filtros del reporte. Todos opcionales: sin ninguno devuelve el histórico. */
@@ -133,6 +162,16 @@ export class SalesService {
       headers: this.headers,
       params,
     });
+  }
+
+  /**
+   * Ventas cobradas de los últimos `days` días y lo más vendido. Los días son los del negocio: el
+   * navegador manda su desfase con UTC (`getTimezoneOffset`), así una venta de las 9 de la noche
+   * no cae en el día siguiente.
+   */
+  stats(days = 7): Observable<SalesStats> {
+    const params = new HttpParams().set('days', days).set('tz_offset', new Date().getTimezoneOffset());
+    return this.http.get<SalesStats>(`${API}/orders/business/stats`, { headers: this.headers, params });
   }
 
   /**
