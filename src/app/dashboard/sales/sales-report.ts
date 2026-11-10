@@ -20,7 +20,7 @@ import { BRAND_NAME } from '../../shared/brand';
 // separación bajo daltonismo y visión normal). El WARN de contraste de tres
 // de estos slots contra papel blanco se compensa con la regla de relieve:
 // cada serie lleva etiqueta visible y además existe la tabla de productos.
-const CATEGORICAL = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'];
+const CATEGORICAL = ['#0a0a0b', '#eb6834', '#1baf7a', '#eda100', '#0a0a0b', '#008300'];
 const OTHER_HUE = '#898781';
 
 // Tinta y cromo del documento.
@@ -29,13 +29,13 @@ const INK_SECONDARY = '#52514e';
 const INK_MUTED = '#898781';
 const GRIDLINE = '#e1e0d9';
 const BASELINE = '#c3c2b7';
-const SERIES_BLUE = '#2a78d6';
+const SERIES_BLUE = '#0a0a0b';
 
 // Estados: paleta reservada, nunca reutilizada como color de serie.
 const STATUS_HUES: Record<string, string> = {
   pending: '#fab219',    // warning
   paid: '#0ca30c',       // good
-  fulfilled: '#2a78d6',  // series blue
+  fulfilled: '#0a0a0b',  // series blue
   canceled: '#d03b3b',   // critical
 };
 

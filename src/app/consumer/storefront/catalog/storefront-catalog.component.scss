@@ -47,11 +47,11 @@
   gap: 8px;
   flex: 1;
   max-width: 400px;
-  background: #f8f9fc;
-  border: 1.5px solid #e8eaf0;
+  background: #fafafa;
+  border: 1.5px solid #e4e4e7;
   border-radius: 12px;
   padding: 0 14px;
-  color: #b0b4c8;
+  color: #a1a1aa;
   transition: border-color 0.15s, background 0.15s;
 
   &:focus-within { border-color: var(--sf-primary); background: white; }
@@ -62,11 +62,11 @@
     background: transparent;
     outline: none;
     font-size: 14px;
-    color: #1a1a2e;
+    color: #0a0a0b;
     padding: 12px 0;
     font-family: inherit;
 
-    &::placeholder { color: #b0b4c8; }
+    &::placeholder { color: #a1a1aa; }
   }
 }
 
@@ -185,7 +185,7 @@
   border-radius: 10px;
   border: none;
   background: rgba(255, 255, 255, 0.96);
-  color: #12122a;
+  color: #0a0a0b;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -212,7 +212,7 @@
     border-radius: 7px;
     border: none;
     background: rgba(255, 255, 255, 0.96);
-    color: #12122a;
+    color: #0a0a0b;
     font-size: 15px;
     font-weight: 700;
     line-height: 1;
@@ -220,7 +220,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 1px 4px rgba(60,40,160,0.1);
+    box-shadow: 0 1px 4px rgba(10, 10, 11, 0.1);
     transition: opacity 0.15s;
 
     &:hover:not(:disabled) { opacity: 0.85; }
@@ -248,7 +248,7 @@
   border-radius: 12px;
   border: none;
   background: rgba(255, 255, 255, 0.96);
-  color: #12122a;
+  color: #0a0a0b;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -444,13 +444,13 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  box-shadow: 0 8px 24px rgba(20, 15, 50, 0.26);
+  box-shadow: 0 8px 24px rgba(10, 10, 11, 0.26);
   transition: transform 0.16s ease, box-shadow 0.16s ease;
   z-index: 2;
 
   &:hover, &:focus-visible {
     transform: translate(-50%, -50%) scale(1.06);
-    box-shadow: 0 12px 30px rgba(20, 15, 50, 0.32);
+    box-shadow: 0 12px 30px rgba(10, 10, 11, 0.32);
   }
 
   &.hub-elegido {
@@ -494,7 +494,7 @@
   padding: 2px 9px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.96);
-  color: #12122a;
+  color: #0a0a0b;
   font-size: 11.5px;
   font-weight: 700;
 }
@@ -542,7 +542,7 @@
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 28px rgba(20, 15, 50, 0.3);
+  box-shadow: 0 10px 28px rgba(10, 10, 11, 0.3);
   animation: bebidasEntra 0.22s ease;
   transition: transform 0.16s ease;
 
@@ -551,7 +551,7 @@
 
 .flotante-icono { width: 20px; height: 20px; display: flex; }
 
-.bebidas-flotante-abierto { background: rgba(255, 255, 255, 0.96); color: #12122a; }
+.bebidas-flotante-abierto { background: rgba(255, 255, 255, 0.96); color: #0a0a0b; }
 
 // ── Mini menú de bebidas ──────────────────────────────────
 .bebidas-fuera {
@@ -571,7 +571,7 @@
   display: flex;
   flex-direction: column;
   // Mismo cristal oscuro que la barra y las cards.
-  background: rgba(10, 8, 30, 0.86);
+  background: rgba(10, 10, 11, 0.86);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 18px;

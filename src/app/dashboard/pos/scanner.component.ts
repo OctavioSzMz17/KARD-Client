@@ -163,7 +163,7 @@ function explain(error: unknown): string {
       color: #fff;
       cursor: pointer;
 
-      &.on { background: #fde68a; color: #1a1a2e; border-color: #fde68a; }
+      &.on { background: #fde68a; color: #27272a; border-color: #fde68a; }
       &:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
     }
 
@@ -196,8 +196,8 @@ function explain(error: unknown): string {
         right: 8%;
         height: 2px;
         top: 10%;
-        background: linear-gradient(90deg, transparent, #5b6ef5 20%, #a78bfa 50%, #5b6ef5 80%, transparent);
-        box-shadow: 0 0 14px #7c6fff;
+        background: linear-gradient(90deg, transparent, #ffffff 20%, #ffffff 50%, #ffffff 80%, transparent);
+        box-shadow: 0 0 14px #ffffff;
         animation: sweep 2.2s ease-in-out infinite alternate;
       }
     }
@@ -229,7 +229,7 @@ function explain(error: unknown): string {
       &.error {
         padding: 22px;
         border-radius: 22px;
-        background: rgba(20, 24, 58, 0.92);
+        background: rgba(10, 10, 11, 0.92);
         border: 1px solid rgba(255, 255, 255, 0.25);
         p { margin: 0 0 16px; }
       }
@@ -263,7 +263,7 @@ function explain(error: unknown): string {
       gap: 12px;
       padding: 10px 10px 10px 18px;
       border-radius: 20px;
-      background: rgba(20, 24, 58, 0.85);
+      background: rgba(10, 10, 11, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(12px);
       font-size: 15px;
@@ -276,8 +276,8 @@ function explain(error: unknown): string {
       padding: 12px 22px;
       border: 0;
       border-radius: 14px;
-      background: linear-gradient(135deg, #5b6ef5, #8b5cf6);
-      color: #fff;
+      background: linear-gradient(180deg, #ffffff, #dcdce0);
+      color: #0a0a0b;
       font: inherit;
       font-size: 15px;
       font-weight: 700;

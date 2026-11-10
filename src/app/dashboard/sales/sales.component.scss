@@ -1,11 +1,11 @@
 // Paleta alineada con el resto del dashboard.
-$accent:      #5b6ef5;
-$text:        #1a1d29;
+$accent:      #0a0a0b;
+$text:        #0a0a0b;
 $text-muted:  #6b7280;
-$text-faint:  #8b90a3;
-$border:      #e4e7f2;
+$text-faint:  #a1a1aa;
+$border:      #e4e4e7;
 $surface:     #ffffff;
-$surface-alt: #f6f7fb;
+$surface-alt: #fafafa;
 
 .sales-page {
   padding: 28px 32px 40px;
@@ -64,7 +64,7 @@ $surface-alt: #f6f7fb;
   background: $accent;
   color: #fff;
 
-  &:hover:not(:disabled) { background: #4a5ce0; }
+  &:hover:not(:disabled) { background: #0a0a0b; }
 }
 
 .btn-ghost {
@@ -114,7 +114,7 @@ $surface-alt: #f6f7fb;
     &:focus {
       outline: none;
       border-color: $accent;
-      box-shadow: 0 0 0 3px rgba(91, 110, 245, .14);
+      box-shadow: 0 0 0 3px rgba(10, 10, 11, .14);
     }
   }
 }
@@ -214,13 +214,13 @@ th {
 
 td {
   padding: 12px 14px;
-  border-bottom: 1px solid #f0f2f8;
+  border-bottom: 1px solid #f4f4f5;
   color: $text;
   vertical-align: top;
 }
 
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: #fafbff; }
+tbody tr:hover { background: #fafafa; }
 
 .num     { text-align: right; white-space: nowrap; }
 .nowrap  { white-space: nowrap; }
@@ -264,7 +264,7 @@ tbody tr:hover { background: #fafbff; }
   &:focus {
     outline: none;
     border-color: $accent;
-    box-shadow: 0 0 0 3px rgba(91, 110, 245, .14);
+    box-shadow: 0 0 0 3px rgba(10, 10, 11, .14);
   }
 
   &:disabled { opacity: .5; cursor: wait; }
@@ -273,7 +273,7 @@ tbody tr:hover { background: #fafbff; }
 }
 
 .badge-paid      { background: #dcfce7; color: #166534; }
-.badge-fulfilled { background: #dbeafe; color: #1e40af; }
+.badge-fulfilled { background: #e4e4e7; color: #0a0a0b; }
 .badge-pending   { background: #fef3c7; color: #92400e; }
 .badge-canceled  { background: #fee2e2; color: #991b1b; }
 
