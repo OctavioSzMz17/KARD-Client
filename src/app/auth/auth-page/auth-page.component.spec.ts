@@ -24,6 +24,7 @@ describe('PC-02 · AuthPageComponent', () => {
   let httpMock: HttpTestingController;
   let router: Router;
   let component: AuthPageComponent;
+  let fixture: ReturnType<typeof TestBed.createComponent<AuthPageComponent>>;
 
   const API = 'http://localhost:8000/api/v1';
 
@@ -45,7 +46,7 @@ describe('PC-02 · AuthPageComponent', () => {
     router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    const fixture = TestBed.createComponent(AuthPageComponent);
+    fixture = TestBed.createComponent(AuthPageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   }
@@ -283,6 +284,29 @@ describe('PC-02 · AuthPageComponent', () => {
       component.setAudience('negocio');
       expect(component.title()).toBe('Panel del negocio');
       expect(component.submitLabel()).toBe('Iniciar sesión');
+    });
+  });
+
+  // ── ¿Olvidaste tu contraseña? ───────────────────────────
+
+  describe('recuperar la contraseña', () => {
+    const enlace = () =>
+      Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a'))
+        .find(a => a.textContent?.includes('Olvidaste')) as HTMLAnchorElement | undefined;
+
+    it('el enlace lleva a /recuperar con el lado elegido', () => {
+      crear('login', 'negocio');
+      expect(enlace()?.getAttribute('href')).toBe('/recuperar?tipo=negocio');
+    });
+
+    it('en el lado cliente lleva el lado cliente', () => {
+      crear('login', 'cliente');
+      expect(enlace()?.getAttribute('href')).toBe('/recuperar?tipo=cliente');
+    });
+
+    it('en el registro no aparece', () => {
+      crear('register', 'negocio');
+      expect(enlace()).toBeUndefined();
     });
   });
 });

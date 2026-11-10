@@ -19,6 +19,18 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/auth-page/auth-page.component').then(m => m.AuthPageComponent)
   },
   {
+    // Recuperar la contraseña: pedir el enlace (/recuperar) y usarlo (/restablecer). Son públicas:
+    // las usa quien no puede iniciar sesión. El enlace del correo trae el token en el `#`.
+    path: 'recuperar',
+    data: { mode: 'ask' },
+    loadComponent: () => import('./auth/password-recovery/password-recovery.component').then(m => m.PasswordRecoveryComponent)
+  },
+  {
+    path: 'restablecer',
+    data: { mode: 'reset' },
+    loadComponent: () => import('./auth/password-recovery/password-recovery.component').then(m => m.PasswordRecoveryComponent)
+  },
+  {
     path: 'explore',
     canActivate: [consumerGuard],
     loadComponent: () => import('./consumer/explore/explore.component').then(m => m.ExploreComponent)

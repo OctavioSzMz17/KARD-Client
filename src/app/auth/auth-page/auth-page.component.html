@@ -215,7 +215,7 @@
 
         @if (!esRegistro()) {
           <div class="forgot">
-            <a href="#">¿Olvidaste tu contraseña?</a>
+            <a routerLink="/recuperar" [queryParams]="{ tipo: audience() }">¿Olvidaste tu contraseña?</a>
           </div>
         }
 

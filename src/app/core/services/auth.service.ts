@@ -91,6 +91,19 @@ export class AuthService {
     );
   }
 
+  /**
+   * Pide el enlace para crear una contraseña nueva. El servidor contesta lo mismo exista o no el
+   * correo (no revela quién está registrado), así que aquí tampoco hay forma de saberlo.
+   */
+  forgotPassword(email: string, audience: 'negocio' | 'cliente'): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${API_BASE}/auth/forgot-password`, { email, audience });
+  }
+
+  /** Cambia la contraseña con el enlace que llegó por correo. No inicia sesión: la persona entra con la nueva. */
+  resetPassword(token: string, password: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${API_BASE}/auth/reset-password`, { token, password });
+  }
+
   /** Abre la sesión con la respuesta de un inicio de sesión por otra vía (QR o código de empleado en una caja). */
   startBusinessSession(res: LoginResponse): void {
     this.saveBusinessSession(res);

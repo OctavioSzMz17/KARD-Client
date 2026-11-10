@@ -135,4 +135,29 @@ describe('PC-01 · AuthService', () => {
     expect(service.isConsumer()).toBe(true);
     expect(service.getSession()).toBeNull();
   });
+
+  describe('recuperar la contraseña', () => {
+    it('forgotPassword usa /auth/forgot-password con el correo y el lado, y no abre sesión', () => {
+      service.forgotPassword('eva@kard.mx', 'negocio').subscribe();
+
+      const req = httpMock.expectOne(`${API}/auth/forgot-password`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ email: 'eva@kard.mx', audience: 'negocio' });
+      req.flush({ message: 'ok' });
+
+      expect(service.isLoggedIn()).toBe(false);
+    });
+
+    it('resetPassword usa /auth/reset-password con el token y la contraseña, y no abre sesión', () => {
+      service.resetPassword('tok-abcdefghijklmnopqrstu', 'Clave12345').subscribe();
+
+      const req = httpMock.expectOne(`${API}/auth/reset-password`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ token: 'tok-abcdefghijklmnopqrstu', password: 'Clave12345' });
+      req.flush({ message: 'Listo' });
+
+      expect(service.isLoggedIn()).toBe(false);
+      expect(service.getToken()).toBeNull();
+    });
+  });
 });
