@@ -183,7 +183,7 @@
           @if (primary()) {
             <span class="contrast" [class]="'c-' + contrastLabel(primary()).level">{{ contrastLabel(primary()).text }}</span>
           } @else {
-            <span class="contrast c-default">Usando el default de KARD</span>
+            <span class="contrast c-default">Usando el default de {{ brand }}</span>
           }
         </div>
 
@@ -201,11 +201,11 @@
           @if (accent()) {
             <span class="contrast" [class]="'c-' + contrastLabel(accent()).level">{{ contrastLabel(accent()).text }}</span>
           } @else {
-            <span class="contrast c-default">Usando el default de KARD</span>
+            <span class="contrast c-default">Usando el default de {{ brand }}</span>
           }
         </div>
 
-        <button type="button" class="btn-reset" (click)="resetColors()">Restablecer colores de KARD</button>
+        <button type="button" class="btn-reset" (click)="resetColors()">Restablecer colores de {{ brand }}</button>
       </div>
 
     </aside>

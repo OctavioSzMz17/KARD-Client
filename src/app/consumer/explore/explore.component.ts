@@ -5,7 +5,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoryItem, ExploreService, ExploreStore } from '../../core/services/explore.service';
-import { BUBBLES } from '../../shared/brand-images';
+import { BUBBLES } from '../../shared/brand-images';
+import { BRAND_NAME } from '../../shared/brand';
 
 const CATEGORY_LABELS: Record<string, string> = {
   restaurant: 'Restaurantes',
@@ -32,6 +33,8 @@ const INTRO_SECONDS = 1.55;
   styleUrl: './explore.component.scss'
 })
 export class ExploreComponent implements OnInit {
+  /** Nombre del producto en pantalla (ver shared/brand.ts). */
+  readonly brand = BRAND_NAME;
   private auth       = inject(AuthService);
   private explore    = inject(ExploreService);
   private destroyRef = inject(DestroyRef);
@@ -151,7 +154,7 @@ export class ExploreComponent implements OnInit {
   }
 
   storeDescription(s: ExploreStore): string {
-    return s.tagline || TYPE_TAGLINES[s.business_type] || 'Tienda en KARD.';
+    return s.tagline || TYPE_TAGLINES[s.business_type] || `Tienda en ${BRAND_NAME}.`;
   }
 
   initial(s: ExploreStore): string {

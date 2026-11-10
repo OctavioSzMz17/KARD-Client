@@ -85,7 +85,7 @@
       @if (canScan) {
         <button type="button" class="btn-primary big" [disabled]="loading()" (click)="openScanner()">Abrir la cámara</button>
       } @else {
-        <p class="warn">Este navegador no puede usar la cámara. Abre KARD desde el celular, en una conexión segura (https).</p>
+        <p class="warn">Este navegador no puede usar la cámara. Abre {{ brand }} desde el celular, en una conexión segura (https).</p>
       }
     </section>
   }

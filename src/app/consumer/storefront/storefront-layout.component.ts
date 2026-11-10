@@ -3,7 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
-import { StorefrontStore } from '../../core/store/storefront.store';
+import { StorefrontStore } from '../../core/store/storefront.store';
+import { BRAND_NAME } from '../../shared/brand';
 
 const TYPE_LABELS: Record<string, string> = {
   restaurant: 'Restaurante',
@@ -17,6 +18,8 @@ const TYPE_LABELS: Record<string, string> = {
   styleUrl: './storefront-layout.component.scss'
 })
 export class StorefrontLayoutComponent implements OnInit {
+  /** Nombre del producto en pantalla (ver shared/brand.ts). */
+  readonly brand = BRAND_NAME;
   readonly sf = inject(StorefrontStore);
   private auth       = inject(AuthService);
   private route      = inject(ActivatedRoute);

@@ -6,6 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import {
   PASSWORD_HINT, PASSWORD_MIN, PASSWORD_RULE, recoveryErrorMessage, tokenFromFragment,
 } from './recovery-logic';
+import { BRAND_NAME } from '../../shared/brand';
 
 /** Qué pide la pantalla: el correo para recibir el enlace, o la contraseña nueva. Sale de la ruta. */
 export type RecoveryMode = 'ask' | 'reset';
@@ -31,6 +32,8 @@ function passwordsMatch(group: AbstractControl) {
   styleUrl: './password-recovery.component.scss',
 })
 export class PasswordRecoveryComponent {
+  /** Nombre del producto en pantalla (ver shared/brand.ts). */
+  readonly brand = BRAND_NAME;
   private fb    = inject(FormBuilder);
   private auth  = inject(AuthService);
   private route = inject(ActivatedRoute);

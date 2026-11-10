@@ -11,7 +11,7 @@
       <path d="M10 10H18L24 20L18 30H10L16 20L10 10Z" fill="white"/>
       <path d="M20 10H28L22 20L28 30H20L14 20L20 10Z" fill="white" fill-opacity="0.6"/>
     </svg>
-    KARD
+    {{ brand }}
   </header>
 
   <main class="stage">
@@ -28,7 +28,7 @@
         <p class="lead">Para empezar a cobrar, alguien de la gerencia tiene que autorizar esta computadora desde su celular.</p>
 
         <ol class="steps">
-          <li>En tu celular, entra a KARD y abre <strong>Escanear</strong>.</li>
+          <li>En tu celular, entra a {{ brand }} y abre <strong>Escanear</strong>.</li>
           <li>Lee este código.</li>
           <li>Escribe en el celular el número de abajo.</li>
         </ol>
@@ -90,7 +90,7 @@
           </div>
           <p class="qr-help">
             <strong>Entra con tu celular.</strong>
-            Abre <em>Escanear</em> en KARD, lee este código y confirma. Se renueva solo ({{ countdown() }}).
+            Abre <em>Escanear</em> en {{ brand }}, lee este código y confirma. Se renueva solo ({{ countdown() }}).
           </p>
         </div>
 

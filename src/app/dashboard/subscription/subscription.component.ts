@@ -3,6 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BillingService, Plan, PlanInfo } from '../../core/services/billing.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
+import { BRAND_NAME } from '../../shared/brand';
 
 /** Un plan tal como se presenta al negocio. */
 interface PlanCard {
@@ -21,6 +22,8 @@ interface PlanCard {
   styleUrl: './subscription.component.scss',
 })
 export class SubscriptionComponent implements OnInit {
+  /** Nombre del producto en pantalla (ver shared/brand.ts). */
+  readonly brand = BRAND_NAME;
   private billing = inject(BillingService);
   private snack   = inject(SnackbarService);
   private route   = inject(ActivatedRoute);

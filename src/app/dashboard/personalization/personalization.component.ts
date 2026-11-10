@@ -1,7 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { AuthService, UserSession } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
-import { Branding, BrandingService } from '../../core/services/branding.service';
+import { Branding, BrandingService } from '../../core/services/branding.service';
+import { BRAND_NAME } from '../../shared/brand';
 
 // Defaults de KARD (mismos que usa el storefront del cliente)
 const DEFAULT_PRIMARY = '#5b6ef5';
@@ -17,6 +18,8 @@ interface Preset { label: string; primary: string; accent: string; }
   styleUrl: './personalization.component.scss'
 })
 export class PersonalizationComponent implements OnInit {
+  /** Nombre del producto en pantalla (ver shared/brand.ts). */
+  readonly brand = BRAND_NAME;
   private auth     = inject(AuthService);
   private branding = inject(BrandingService);
   private snack    = inject(SnackbarService);

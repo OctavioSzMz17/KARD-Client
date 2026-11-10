@@ -7,6 +7,7 @@ import { parseChallengeId } from '../../core/device-logic';
 import { centsToApi, toCents } from '../pos/pos-math';
 import { ScanStatus } from '../pos/scan-logic';
 import { ScannerComponent } from '../pos/scanner.component';
+import { BRAND_NAME } from '../../shared/brand';
 
 /**
  * Escanear: desde el celular, aprobar el QR de una caja registradora.
@@ -28,6 +29,8 @@ import { ScannerComponent } from '../pos/scanner.component';
   styleUrl: './scan-access.component.scss',
 })
 export class ScanAccessComponent implements OnInit {
+  /** Nombre del producto en pantalla (ver shared/brand.ts). */
+  readonly brand = BRAND_NAME;
   private svc = inject(DeviceService);
   private auth = inject(AuthService);
 
@@ -75,7 +78,7 @@ export class ScanAccessComponent implements OnInit {
     const id = parseChallengeId(raw);
     if (!id) {
       // Un código de producto o de cualquier otra cosa: no se manda al servidor.
-      this.scanStatus.set({ n: ++this.scanCounter, ok: false, text: 'Este código no es de una caja de KARD.' });
+      this.scanStatus.set({ n: ++this.scanCounter, ok: false, text: `Este código no es de una caja de ${BRAND_NAME}.` });
       return;
     }
     this.closeScanner();

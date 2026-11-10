@@ -13,6 +13,7 @@
  */
 
 import { Sale, SalesReport } from '../../core/services/sales.service';
+import { BRAND_NAME } from '../../shared/brand';
 
 // ── Paleta ────────────────────────────────────────────────────────────
 // Slots categóricos validados (checks de banda de luminosidad, croma,
@@ -547,7 +548,7 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
     <div class="head-meta">
       <div><strong>Emitido</strong> ${esc(opts.formatDateTime(generated.toISOString()))}</div>
       <div>${data.items.length} de ${data.total} registros</div>
-      <div><strong>KARD</strong></div>
+      <div><strong>${esc(BRAND_NAME)}</strong></div>
     </div>
   </header>
 
@@ -600,7 +601,7 @@ export function buildSalesReportHtml(data: SalesReport, opts: ReportOptions): st
   }
 
   <footer>
-    <span>Generado por KARD · Documento interno · El desglose venta por venta está en la descarga CSV</span>
+    <span>Generado por ${esc(BRAND_NAME)} · Documento interno · El desglose venta por venta está en la descarga CSV</span>
     <span>${esc(data.business_name || '')}</span>
   </footer>
 

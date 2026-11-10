@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProductStore } from '../../core/store/product.store';
 import { PERM, Permission, positionLabel } from '../../core/permissions';
 import { DeviceService } from '../../core/services/device.service';
+import { BRAND_NAME } from '../../shared/brand';
 
 /** Lo que cada ruta del panel declara en su `data` para vestir la barra superior. */
 interface PageInfo {
@@ -35,6 +36,8 @@ const ROLE_LABEL: Record<string, string> = {
   styleUrl: './dashboard-layout.component.scss'
 })
 export class DashboardLayoutComponent implements OnInit {
+  /** Nombre del producto en pantalla (ver shared/brand.ts). */
+  readonly brand = BRAND_NAME;
   private auth   = inject(AuthService);
   private store  = inject(ProductStore);
   private router = inject(Router);

@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { BUBBLES, BUSINESS_PHOTO, CLIENT_PHOTO } from '../../shared/brand-images';
+import { BRAND_NAME } from '../../shared/brand';
 
 /** Qué pide la página: entrar o crear cuenta. Sale de la ruta (/login, /register). */
 export type AuthMode = 'login' | 'register';
@@ -51,6 +52,8 @@ function passwordMatchValidator(group: AbstractControl) {
   styleUrl: './auth-page.component.scss'
 })
 export class AuthPageComponent {
+  /** Nombre del producto en pantalla (ver shared/brand.ts). */
+  readonly brand = BRAND_NAME;
   private fb     = inject(FormBuilder);
   private auth   = inject(AuthService);
   private router = inject(Router);

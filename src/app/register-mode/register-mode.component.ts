@@ -6,6 +6,7 @@ import { AuthService } from '../core/services/auth.service';
 import { ChallengeCreated, DeviceService } from '../core/services/device.service';
 import { approvalUrl, clock, randomSecret, secondsLeft, sha256Hex } from '../core/device-logic';
 import { qrSvg } from '../dashboard/products/labels';
+import { BRAND_NAME } from '../shared/brand';
 
 /** Cada cuánto se pregunta al servidor si ya aprobaron el QR. */
 const POLL_MS = 1500;
@@ -33,6 +34,8 @@ type Phase = 'checking' | 'enroll' | 'lock';
   styleUrl: './register-mode.component.scss',
 })
 export class RegisterModeComponent implements OnInit, OnDestroy {
+  /** Nombre del producto en pantalla (ver shared/brand.ts). */
+  readonly brand = BRAND_NAME;
   private auth = inject(AuthService);
   private device = inject(DeviceService);
   private router = inject(Router);

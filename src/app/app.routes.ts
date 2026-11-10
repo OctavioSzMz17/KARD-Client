@@ -2,6 +2,7 @@ import { Routes, UrlMatcher } from '@angular/router';
 import { authGuard, consumerGuard, permissionGuard } from './core/guards/auth.guard';
 import { PERM } from './core/permissions';
 import { StorefrontStore } from './core/store/storefront.store';
+import { BRAND_NAME } from './shared/brand';
 
 /** Casa con /login y /register y entrega cuál de las dos fue como parámetro `mode`. */
 export const authMatcher: UrlMatcher = (segments) =>
@@ -105,7 +106,7 @@ export const routes: Routes = [
       {
         path: 'suscripcion',
         canActivate: [permissionGuard(PERM.billingManage)],
-        data: { title: 'Suscripción', subtitle: 'Tu plan de KARD y lo que incluye.', dark: true },
+        data: { title: 'Suscripción', subtitle: `Tu plan de ${BRAND_NAME} y lo que incluye.`, dark: true },
         loadComponent: () => import('./dashboard/subscription/subscription.component').then(m => m.SubscriptionComponent)
       }
     ]
