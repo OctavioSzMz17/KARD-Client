@@ -97,7 +97,7 @@
           </div>
           <div class="total-item">
             <span class="total-number">{{ totalInventory() }}</span>
-            <span class="total-label">Unidades en stock</span>
+            <span class="total-label">{{ hasUntracked() ? 'Insumos en stock' : 'Unidades en stock' }}</span>
           </div>
           <div class="total-item">
             <span class="total-number text-warning">{{ lowStockCount() }}</span>
@@ -143,10 +143,10 @@
           <div class="activity-list">
             @for (item of recentProducts(); track item.product_id) {
               <div class="activity-item">
-                <div class="activity-dot" [style.background]="getStockColor(item)"></div>
+                <div class="activity-dot" [style.background]="stockColor(item)"></div>
                 <div class="activity-text">
                   <span class="activity-name">{{ item.name }}</span>
-                  <span class="activity-meta">{{ item.inventory_count }} unidades en stock</span>
+                  <span class="activity-meta">{{ stockDetail(item) }}</span>
                 </div>
                 <span class="activity-price">${{ item.price }}</span>
               </div>
@@ -169,12 +169,12 @@
           <div class="alert-list">
             @for (item of lowStockItems(); track item.product_id) {
               <div class="alert-item">
-                <div class="alert-bar" [style.background]="getStockColor(item)"></div>
+                <div class="alert-bar" [style.background]="stockColor(item)"></div>
                 <div class="alert-info">
                   <span class="alert-name">{{ item.name }}</span>
                   <span class="alert-stock">{{ item.inventory_count }} / {{ item.low_stock_threshold }} unidades</span>
                 </div>
-                <span class="alert-tag" [style.color]="getStockColor(item)" [style.background]="getStockColor(item) + '20'">
+                <span class="alert-tag" [style.color]="stockColor(item)" [style.background]="stockColor(item) + '20'">
                   {{ item.inventory_count === 0 ? 'Sin stock' : 'Bajo' }}
                 </span>
               </div>

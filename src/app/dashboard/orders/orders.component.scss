@@ -1,0 +1,300 @@
+@use '../dark' as *;
+
+// El tablero de órdenes con la identidad oscura del panel: columnas de vidrio, una tarjeta por pedido.
+// El color se reserva para estados (ámbar = tarda o falta cobrar, verde = listo o pagado, rojo = cancelar).
+
+.orders-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: $text;
+}
+
+// ── Resumen ────────────────────────────────────────────
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.summary {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  color: $text-soft;
+  font-size: 14px;
+
+  strong { color: $text; font-size: 22px; font-weight: 800; margin-right: 4px; }
+  &.warn strong { color: $amber; }
+  &.faint { color: $text-faint; font-size: 12px; }
+}
+
+.ghost-btn {
+  @include ghost;
+  padding: 9px 16px;
+  font-size: 13px;
+
+  &.small { padding: 8px 12px; font-size: 12px; border-radius: 12px; }
+}
+
+.link-btn {
+  background: none;
+  border: 0;
+  color: $text-soft;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+
+  &:hover:not(:disabled) { color: $text; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &.muted { color: $text-faint; text-decoration: none; }
+  &.muted:hover:not(:disabled) { color: $danger; }
+}
+
+.primary-btn {
+  @include action;
+  padding: 10px 16px;
+  font-size: 14px;
+  flex: 1 1 auto;
+}
+
+.danger-btn {
+  border: 0;
+  border-radius: 12px;
+  background: $danger;
+  color: #1a0505;
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 12px;
+  cursor: pointer;
+
+  &:hover { filter: brightness(1.08); }
+}
+
+// ── Avisos y estados ───────────────────────────────────
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: $amber;
+  font-size: 14px;
+}
+
+.state-box {
+  @include glass;
+  border-radius: 20px;
+  padding: 48px 24px;
+  text-align: center;
+  color: $text-soft;
+
+  h2 { margin: 0 0 8px; color: $text; font-size: 20px; }
+  p { margin: 0 auto; max-width: 440px; line-height: 1.55; }
+  &.slim { padding: 28px 24px; }
+}
+
+.spinner { @include spinner(34px); display: inline-block; margin-bottom: 10px; }
+
+// ── Tablero ────────────────────────────────────────────
+.board {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.column {
+  @include glass;
+  border-radius: 20px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.col-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2px 4px 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $text-soft;
+}
+
+.column[data-state='ready'] .col-title { color: $mint; }
+
+.count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: $text;
+  font-size: 12px;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+.col-empty { margin: 4px; color: $text-faint; font-size: 13px; text-align: center; padding: 12px 0; }
+
+// ── Tarjeta de un pedido ───────────────────────────────
+.card {
+  @include glass-inset;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: opacity 0.2s, border-color 0.2s;
+
+  &.late { border-color: rgba(251, 191, 36, 0.6); }
+  &.busy { opacity: 0.55; pointer-events: none; }
+}
+
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.folio { font-weight: 800; letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+
+.mode {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.who {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  strong { font-size: 15px; }
+}
+
+.wait { color: $text-faint; font-size: 12px; &.late { color: $amber; font-weight: 700; } }
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 14px;
+  color: $text-soft;
+
+  .qty { color: $text; font-weight: 700; margin-right: 2px; }
+}
+
+.address {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px dashed $line-strong;
+  font-size: 13px;
+  line-height: 1.5;
+  color: $text-soft;
+
+  .phone { color: $text; font-weight: 600; margin-top: 2px; }
+  .note { color: $text-faint; font-style: italic; margin-top: 2px; }
+}
+
+.pay-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.total { font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; }
+
+.pay {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+
+  &.pending { background: rgba(251, 191, 36, 0.16); color: $amber; }
+  &.paid { background: rgba(52, 211, 153, 0.16); color: $mint; }
+}
+
+.actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.confirm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: $text-soft;
+}
+
+// ── Cerrados ───────────────────────────────────────────
+.closed { display: flex; flex-direction: column; gap: 10px; }
+
+.closed-toggle {
+  @include ghost;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.closed-list {
+  @include glass;
+  list-style: none;
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 18px;
+}
+
+.closed-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid $line;
+  font-size: 14px;
+
+  &:last-child { border-bottom: 0; }
+  .grow { flex: 1; min-width: 0; color: $text-soft; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+.tag {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+
+  &.done { background: rgba(52, 211, 153, 0.16); color: $mint; }
+  &.canceled { background: rgba(248, 113, 113, 0.16); color: $danger; }
+}
+
+// ── Pantallas angostas: las columnas pasan a una sola ──
+@media (max-width: 900px) {
+  .board { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 520px) {
+  .closed-row { flex-wrap: wrap; }
+  .closed-row .grow { flex-basis: 100%; order: 3; white-space: normal; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}

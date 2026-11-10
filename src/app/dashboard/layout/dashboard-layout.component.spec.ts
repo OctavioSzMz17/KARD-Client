@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DashboardLayoutComponent } from './dashboard-layout.component';
 import { AuthService } from '../../core/services/auth.service';
+import { OrdersBoardService } from '../../core/services/orders-board.service';
 import { PERM } from '../../core/permissions';
 
 const EN_UNA_HORA = () => new Date(Date.now() + 3_600_000).toISOString();
@@ -67,9 +68,53 @@ describe('PC-14 · Menú y salida del panel', () => {
     },
   );
 
+  describe('Órdenes: los pedidos que hacen los clientes', () => {
+    it('la gerencia lo ve, justo después de Cobrar', () => {
+      const items = menu('gerente', GERENCIA);
+      expect(items).toContain('Órdenes');
+      expect(items.indexOf('Órdenes')).toBe(items.indexOf('Cobrar') + 1);
+    });
+
+    it('un empleado de caja no lo ve (sigue el permiso de ventas)', () => {
+      expect(menu('empleado', EMPLEADO)).not.toContain('Órdenes');
+    });
+
+    it('el contador de pedidos nuevos aparece junto a Órdenes solo si hay alguno', () => {
+      const fixture = abrir('gerente', GERENCIA);
+      const board = TestBed.inject(OrdersBoardService);
+      const badge = () => (fixture.nativeElement as HTMLElement).querySelector('.nav-badge');
+
+      expect(badge()).toBeNull();
+
+      board.queue.set({ items: [], counts: { preparing: 3 }, awaiting_payment: 0 });
+      fixture.detectChanges();
+      expect(badge()?.textContent?.trim()).toBe('3');
+
+      board.queue.set({ items: [], counts: { preparing: 0, ready: 2 }, awaiting_payment: 0 });
+      fixture.detectChanges();
+      expect(badge()).toBeNull();
+    });
+
+    it('quien no puede ver ventas no consulta pedidos', () => {
+      const board = TestBed.inject(OrdersBoardService);
+      abrir('empleado', EMPLEADO);
+      expect(board.running).toBe(false);
+    });
+
+    it('al salir del panel se deja de consultar y no queda nada del negocio', () => {
+      const board = TestBed.inject(OrdersBoardService);
+      const fixture = abrir('gerente', GERENCIA);
+      expect(board.running).toBe(true);
+
+      fixture.destroy();
+      expect(board.running).toBe(false);
+      expect(board.queue()).toBeNull();
+    });
+  });
+
   describe('textos del menú', () => {
     const TODO = Object.values(PERM);
-    const ESPERADO = ['Inicio', 'Cobrar', 'Caja', 'Escanear', 'Productos', 'Inventario', 'Ventas', 'Equipo', 'Personalización', 'Suscripción'];
+    const ESPERADO = ['Inicio', 'Cobrar', 'Órdenes', 'Caja', 'Escanear', 'Productos', 'Inventario', 'Ventas', 'Equipo', 'Personalización', 'Suscripción'];
 
     it('el dueño ve todo el menú, en español y en este orden', () => {
       expect(menu('dueno', TODO, 'business_admin')).toEqual(ESPERADO);

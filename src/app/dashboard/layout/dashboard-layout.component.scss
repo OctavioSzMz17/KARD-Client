@@ -99,6 +99,19 @@
   flex: 1;
 }
 
+.nav-badge {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #fbbf24;
+  color: #1a1203;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .nav-item {
   display: flex;
   align-items: center;

@@ -15,6 +15,8 @@ export interface Product {
   price:               string;
   inventory_count:     number;
   low_stock_threshold: number;
+  /** `false` en los platillos de un restaurante: no llevan existencias, solo sus insumos. */
+  tracks_stock?:       boolean;
   product_type:        string;
   metadata:            Record<string, any>;
   images:              ProductImage[];

@@ -8,6 +8,7 @@ import { PERM } from '../../core/permissions';
 import { SalesService, SalesStats } from '../../core/services/sales.service';
 import { formatMoney } from '../pos/pos-math';
 import { areaPath, barPercent, dayLabels, linePath } from './chart-math';
+import { lowStock, outOfStock, stockColor, stockDetail, totalStock, tracksStock } from '../../core/stock-logic';
 
 /** Modo de entrega tal como se presenta en la configuración. */
 interface ModoEntrega {
@@ -36,18 +37,13 @@ export class HomeComponent implements OnInit {
 
   // ── Stats derived from the shared cache ───────────────
   readonly totalProducts   = computed(() => this.store.products().length);
-  readonly totalInventory  = computed(() => this.store.products().reduce((s, p) => s + p.inventory_count, 0));
-  readonly lowStockCount   = computed(() => this.store.products().filter(p =>
-    p.inventory_count > 0 && p.inventory_count < p.low_stock_threshold).length
-  );
-  readonly outOfStockCount = computed(() => this.store.products().filter(p =>
-    p.inventory_count === 0).length
-  );
-  readonly lowStockItems   = computed(() =>
-    this.store.products()
-      .filter(p => p.inventory_count > 0 && p.inventory_count < p.low_stock_threshold)
-      .slice(0, 3)
-  );
+  // Las existencias solo cuentan en lo que las lleva: en un restaurante, los insumos (no los platillos).
+  readonly totalInventory  = computed(() => totalStock(this.store.products()));
+  readonly lowStockCount   = computed(() => lowStock(this.store.products()).length);
+  readonly outOfStockCount = computed(() => outOfStock(this.store.products()).length);
+  readonly lowStockItems   = computed(() => lowStock(this.store.products()).slice(0, 3));
+  /** Hay productos sin existencias (platillos): el total que se muestra es solo de insumos. */
+  readonly hasUntracked    = computed(() => this.store.products().some(p => !tracksStock(p)));
   readonly recentProducts  = computed(() => this.store.products().slice(0, 5));
 
   // ── Ventas reales de los últimos 7 días ───────────────
@@ -181,9 +177,6 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  getStockColor(item: Product): string {
-    if (item.inventory_count === 0) return '#f87171';
-    if (item.inventory_count < item.low_stock_threshold) return '#fbbf24';
-    return '#34d399';
-  }
+  readonly stockColor  = stockColor;
+  readonly stockDetail = stockDetail;
 }

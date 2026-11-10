@@ -94,6 +94,12 @@ export const routes: Routes = [
         loadComponent: () => import('./dashboard/pos/pos.component').then(m => m.PosComponent)
       },
       {
+        path: 'ordenes',
+        canActivate: [permissionGuard(PERM.salesRead)],
+        data: { title: 'Órdenes', subtitle: 'Los pedidos que hacen tus clientes desde la tienda.', dark: true },
+        loadComponent: () => import('./dashboard/orders/orders.component').then(m => m.OrdersComponent)
+      },
+      {
         path: 'caja',
         canActivate: [permissionGuard(PERM.cashManage)],
         data: { title: 'Caja', subtitle: 'Abre el turno, sigue cómo va y ciérralo con el corte.', dark: true },

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProductStore } from '../../core/store/product.store';
 import { PERM, Permission, positionLabel } from '../../core/permissions';
 import { DeviceService } from '../../core/services/device.service';
+import { OrdersBoardService } from '../../core/services/orders-board.service';
 import { BRAND_NAME } from '../../shared/brand';
 
 /** Lo que cada ruta del panel declara en su `data` para vestir la barra superior. */
@@ -35,21 +36,26 @@ const ROLE_LABEL: Record<string, string> = {
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.scss'
 })
-export class DashboardLayoutComponent implements OnInit {
+export class DashboardLayoutComponent implements OnInit, OnDestroy {
   /** Nombre del producto en pantalla (ver shared/brand.ts). */
   readonly brand = BRAND_NAME;
   private auth   = inject(AuthService);
   private store  = inject(ProductStore);
   private router = inject(Router);
   private device = inject(DeviceService);
+  private orders = inject(OrdersBoardService);
+
+  /** Pedidos nuevos sin atender: el contador junto a "Órdenes". */
+  readonly ordersPending = this.orders.pending;
 
   /**
    * El menú completo; cada entrada declara el permiso que pide. Lo que la
    * sesión no puede hacer no se muestra (el servidor lo impide de todos modos).
    */
-  private navItems: { label: string; icon: string; route: string; exact: boolean; enabled: boolean; perm: Permission }[] = [
+  private navItems: { label: string; icon: string; route: string; exact: boolean; enabled: boolean; perm: Permission; badge?: boolean }[] = [
     { label: 'Inicio', icon: 'home', route: '/dashboard', exact: true, enabled: true, perm: PERM.dashboardView },
     { label: 'Cobrar', icon: 'cart', route: '/dashboard/cobrar', exact: false, enabled: true, perm: PERM.posSell },
+    { label: 'Órdenes', icon: 'orders', route: '/dashboard/ordenes', exact: false, enabled: true, perm: PERM.salesRead, badge: true },
     { label: 'Caja', icon: 'cash', route: '/dashboard/caja', exact: false, enabled: true, perm: PERM.cashManage },
     { label: 'Escanear', icon: 'camera', route: '/dashboard/escanear', exact: false, enabled: true, perm: PERM.devicesUnlock },
     { label: 'Productos', icon: 'box', route: '/dashboard/products', exact: false, enabled: true, perm: PERM.productsRead },
@@ -104,6 +110,19 @@ export class DashboardLayoutComponent implements OnInit {
     const puesto = p?.position_label || positionLabel(p?.position) || ROLE_LABEL[p?.role ?? ''] || 'Equipo';
     return p?.full_name ? `${p.full_name} · ${puesto}` : `${BUSINESS_LABEL[p?.business_type ?? ''] ?? 'Negocio'} · ${puesto}`;
   });
+
+  constructor() {
+    // Los pedidos de los clientes se vigilan mientras el panel esté abierto y el puesto pueda verlos:
+    // así el aviso y el contador del menú siguen vivos aunque se esté en otra sección.
+    effect(() => {
+      const puedeVerlos = this.auth.can(PERM.salesRead);
+      untracked(() => (puedeVerlos ? this.orders.start() : this.orders.stop()));
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.orders.stop();
+  }
 
   ngOnInit(): void {
     // No se fía de lo que se guardó al iniciar sesión: pregunta quién es y qué puede hacer ahora.

@@ -1,0 +1,150 @@
+<div class="orders-page">
+
+  <!-- Resumen y recarga -->
+  <header class="top">
+    <div class="summary">
+      <span class="stat"><strong>{{ activeCount() }}</strong> en marcha</span>
+      @if (awaitingPayment() > 0) {
+        <span class="stat warn"><strong>{{ awaitingPayment() }}</strong> sin cobrar</span>
+      }
+      <span class="stat faint">Se actualiza solo cada 15 s</span>
+    </div>
+    <button type="button" class="ghost-btn" (click)="reload()" aria-label="Actualizar ahora">Actualizar</button>
+  </header>
+
+  @if (failed()) {
+    <div class="banner" role="alert">
+      <span>No pudimos actualizar los pedidos{{ queue() ? ': se muestra lo último que se vio.' : '.' }}</span>
+      <button type="button" class="link-btn" (click)="reload()">Reintentar</button>
+    </div>
+  }
+
+  @if (firstLoad()) {
+    <div class="state-box"><span class="spinner" aria-hidden="true"></span><p>Cargando pedidos…</p></div>
+  } @else if (queue() && queue()!.items.length === 0) {
+    <div class="state-box empty">
+      <h2>Aún no hay pedidos en línea</h2>
+      <p>Cuando un cliente pida desde tu tienda, aparecerá aquí con un aviso. Las ventas del mostrador no pasan por este tablero.</p>
+    </div>
+  } @else if (queue()) {
+
+    <!-- Lo que sigue en marcha -->
+    @if (activeCount() === 0) {
+      <div class="state-box empty slim">
+        <h2>Todo al día</h2>
+        <p>No hay pedidos pendientes. Lo ya entregado está abajo.</p>
+      </div>
+    } @else {
+      <div class="board" [style.--cols]="activeColumns().length">
+        @for (state of activeColumns(); track state) {
+          <section class="column" [attr.data-state]="state">
+            <h2 class="col-title">
+              {{ labels[state] }}
+              <span class="count">{{ columns()[state].length }}</span>
+            </h2>
+
+            @for (sale of columns()[state]; track sale.order_id) {
+              <article class="card" [class.late]="late(sale)" [class.busy]="busy() === sale.order_id">
+                <div class="card-head">
+                  <span class="folio">#{{ folio(sale) }}</span>
+                  <span class="mode">{{ mode(sale) }}</span>
+                </div>
+
+                <div class="who">
+                  <strong>{{ sale.customer_name }}</strong>
+                  <span class="wait" [class.late]="late(sale)">{{ wait(sale) }}@if (late(sale)) { · tarda }</span>
+                </div>
+
+                <ul class="items">
+                  @for (it of sale.items; track it.product_name) {
+                    <li><span class="qty">{{ it.quantity }}×</span> {{ it.product_name }}</li>
+                  }
+                </ul>
+
+                @if (sale.fulfillment_type === 'delivery') {
+                  <div class="address">
+                    @for (line of address(sale); track line) { <div>{{ line }}</div> }
+                    @if (sale.shipping_address?.phone) {
+                      <div class="phone">Tel. {{ sale.shipping_address!.phone }}</div>
+                    }
+                    @if (sale.shipping_address?.notes) {
+                      <div class="note">“{{ sale.shipping_address!.notes }}”</div>
+                    }
+                  </div>
+                }
+
+                <div class="pay-row">
+                  <span class="total">{{ money(sale.total) }}</span>
+                  @if (needsPayment(sale)) {
+                    <span class="pay pending">Sin cobrar</span>
+                  } @else {
+                    <span class="pay paid">Pagado@if (paymentLabel(sale.payment_method); as m) { · {{ m }} }</span>
+                  }
+                </div>
+
+                @if (canManage()) {
+                  @if (confirming() === sale.order_id) {
+                    <div class="confirm">
+                      <span>¿Cancelar este pedido?</span>
+                      <button type="button" class="danger-btn" (click)="cancel(sale)">Sí, cancelar</button>
+                      <button type="button" class="link-btn" (click)="keep()">No</button>
+                    </div>
+                  } @else {
+                    <div class="actions">
+                      @if (step(sale); as paso) {
+                        <button type="button" class="primary-btn" [disabled]="busy() !== null" (click)="advance(sale)">{{ paso.label }}</button>
+                      }
+                      @if (needsPayment(sale)) {
+                        <button type="button" class="ghost-btn small" [disabled]="busy() !== null" (click)="markPaid(sale)">Marcar pagado</button>
+                      }
+                      <button type="button" class="link-btn muted" [disabled]="busy() !== null" (click)="askCancel(sale)">Cancelar</button>
+                    </div>
+                  }
+                }
+              </article>
+            } @empty {
+              <p class="col-empty">Sin pedidos</p>
+            }
+          </section>
+        }
+      </div>
+    }
+
+    <!-- Entregados y cancelados -->
+    @if (closedCount() > 0) {
+      <section class="closed">
+        <button type="button" class="closed-toggle" (click)="toggleClosed()" [attr.aria-expanded]="showClosed()">
+          <span>{{ showClosed() ? '▾' : '▸' }} Cerrados en las últimas 24 h</span>
+          <span class="count">{{ closedCount() }}</span>
+        </button>
+
+        @if (showClosed()) {
+          <ul class="closed-list">
+            @for (sale of columns().completed; track sale.order_id) {
+              <li class="closed-row">
+                <span class="folio">#{{ folio(sale) }}</span>
+                <span class="grow">{{ sale.customer_name }} · {{ sale.item_count }} {{ sale.item_count === 1 ? 'artículo' : 'artículos' }}</span>
+                <span class="tag done">Entregada</span>
+                <span class="total">{{ money(sale.total) }}</span>
+                @if (canManage()) {
+                  <button type="button" class="link-btn" [disabled]="busy() !== null" (click)="reopen(sale)">Reabrir</button>
+                }
+              </li>
+            }
+            @for (sale of columns().canceled; track sale.order_id) {
+              <li class="closed-row">
+                <span class="folio">#{{ folio(sale) }}</span>
+                <span class="grow">{{ sale.customer_name }} · {{ sale.item_count }} {{ sale.item_count === 1 ? 'artículo' : 'artículos' }}</span>
+                <span class="tag canceled">Cancelada</span>
+                <span class="total">{{ money(sale.total) }}</span>
+                @if (canManage()) {
+                  <button type="button" class="link-btn" [disabled]="busy() !== null" (click)="reopen(sale)">Reabrir</button>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</div>
