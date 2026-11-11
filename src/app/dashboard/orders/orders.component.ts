@@ -99,14 +99,12 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.send(sale, { status: 'canceled', fulfillment_status: 'canceled' }, 'No se pudo cancelar el pedido.');
   }
 
-  /** Deshace un cierre hecho por error: vuelve a "Nuevas". */
+  /**
+   * Deshace una entrega marcada por error: el pedido vuelve a "Nuevas". Solo para los entregados:
+   * un pedido cancelado ya devolvió su inventario y no se reabre (el servidor lo rechaza).
+   */
   reopen(sale: BoardSale): void {
-    const stillCanceled = sale.status === 'canceled';
-    this.send(
-      sale,
-      { fulfillment_status: 'preparing', ...(stillCanceled ? { status: 'pending' as const } : {}) },
-      'No se pudo reabrir el pedido.',
-    );
+    this.send(sale, { fulfillment_status: 'preparing' }, 'No se pudo reabrir el pedido.');
   }
 
   private send(sale: BoardSale, patch: OrderPatch, failure: string): void {
@@ -116,7 +114,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
       next: () => this.busy.set(null),
       error: err => {
         this.busy.set(null);
-        this.snack.error(err?.status === 403 ? 'Tu puesto no puede mover pedidos.' : failure);
+        this.snack.error(
+          err?.status === 403 ? 'Tu puesto no puede mover pedidos.' : (err?.error?.error ?? failure),
+        );
       },
     });
   }

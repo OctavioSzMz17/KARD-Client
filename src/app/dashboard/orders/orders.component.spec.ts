@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { OrdersComponent } from './orders.component';
 import { AuthService } from '../../core/services/auth.service';
 import { OrdersBoardService } from '../../core/services/orders-board.service';
+import { SnackbarService } from '../../core/services/snackbar.service';
 import { PERM } from '../../core/permissions';
 import { BoardSale, OrdersQueue } from '../../core/orders-board-logic';
 import { environment } from '../../../environments/environment';
@@ -255,16 +256,35 @@ describe('Pantalla de Órdenes', () => {
       http.expectOne(QUEUE).flush(queue(sale('ord_a1111')));
     });
 
-    it('reabrir un cancelado también quita la cancelación del pago', () => {
+    it('un pedido cancelado no se puede reabrir: no tiene botón', () => {
       abrir(MANEJA, [sale('ord_a1111', { status: 'canceled' })]);
       q('.closed-toggle')!.click();
       fixture.detectChanges();
-      boton('Reabrir')!.click();
 
-      const req = http.expectOne(STATUS('ord_a1111'));
-      expect(req.request.body).toEqual({ fulfillment_status: 'preparing', status: 'pending' });
-      req.flush(sale('ord_a1111'));
-      http.expectOne(QUEUE).flush(queue(sale('ord_a1111')));
+      expect(q('.closed-list')!.textContent).toContain('Cancelada');
+      expect(boton('Reabrir')).toBeUndefined();
+    });
+
+    it('al cancelar avisa que los insumos vuelven al inventario', () => {
+      abrir(MANEJA, [sale('ord_a1111')]);
+      boton('Cancelar')!.click();
+      fixture.detectChanges();
+      expect(el.textContent).toContain('Los insumos vuelven al inventario');
+    });
+
+    it('si el servidor rechaza el movimiento, muestra su mensaje', () => {
+      abrir(MANEJA, [sale('ord_a1111')]);
+      const snack = TestBed.inject(SnackbarService);
+      const errores: string[] = [];
+      snack.error = ((m: string) => errores.push(m)) as typeof snack.error;
+
+      boton('Marcar lista')!.click();
+      http.expectOne(STATUS('ord_a1111')).flush(
+        { code: 'ORDER_CANCELED', error: 'Un pedido cancelado no se puede reabrir: captura uno nuevo' },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+      expect(errores).toEqual(['Un pedido cancelado no se puede reabrir: captura uno nuevo']);
     });
 
     it('mientras se mueve un pedido no se puede pulsar otro botón', () => {
