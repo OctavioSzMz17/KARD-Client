@@ -2,11 +2,12 @@ import { Component, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterOutlet } from '@angular/router';
 import { SnackbarComponent } from './core/components/snackbar/snackbar.component';
+import { TestBannerComponent } from './core/components/test-banner/test-banner.component';
 import { BRAND_NAME } from './shared/brand';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, SnackbarComponent],
+  imports: [RouterOutlet, SnackbarComponent, TestBannerComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

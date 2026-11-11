@@ -13,7 +13,8 @@
 // pegada al borde y la barra queda dentro de la imagen.
 .sf-nav {
   position: fixed;
-  top: 0;
+  // Debajo del aviso de fase de pruebas mientras se ve; al bajar sube hasta el borde.
+  top: var(--aviso-visible, 0px);
   left: 0;
   right: 0;
   z-index: 50;
