@@ -103,7 +103,7 @@
   <!-- ── Product grid ──────────────────────────────────── -->
   @else {
     <div class="product-grid" [attr.data-size]="cardSize()" [class.selecting]="selecting()">
-      @for (p of filteredProducts(); track p.product_id) {
+      @for (p of filteredProducts(); track p.product_id; let i = $index) {
         <div class="product-card" [class.selected]="isSelected(p.product_id)"
              (click)="selecting() && toggleSelect(p.product_id)">
 
@@ -118,7 +118,7 @@
           <!-- Image -->
           <div class="card-image">
             @if (primaryImage(p.images); as img) {
-              <img [src]="img.url" [alt]="img.alt_text || p.name" loading="lazy"/>
+              <img [src]="img.url" [alt]="img.alt_text || p.name" [attr.loading]="i < 8 ? 'eager' : 'lazy'" [attr.fetchpriority]="i < 8 ? 'high' : null" decoding="async" width="400" height="300"/>
             } @else {
               <div class="card-image-placeholder">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

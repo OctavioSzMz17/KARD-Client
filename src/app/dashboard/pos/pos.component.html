@@ -69,7 +69,7 @@
           <button class="tile" [style.--i]="i < 14 ? i : 14" (click)="add(p)" [attr.aria-label]="'Agregar ' + p.name">
             <div class="tile-img">
               @if (primaryImage(p.images); as img) {
-                <img [src]="img.url" [alt]="img.alt_text || p.name" loading="lazy" />
+                <img [src]="img.url" [alt]="img.alt_text || p.name" [attr.loading]="i < 8 ? 'eager' : 'lazy'" [attr.fetchpriority]="i < 8 ? 'high' : null" decoding="async" width="400" height="300" />
               } @else {
                 <span class="tile-initial">{{ p.name.charAt(0).toUpperCase() }}</span>
               }
