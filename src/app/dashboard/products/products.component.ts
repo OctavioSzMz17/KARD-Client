@@ -12,6 +12,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { printSheet } from '../pos/print';
 import { LabelSheetComponent, LabelItem } from './label-sheet.component';
 import { LABEL_MODES, LabelMode, barcodeSvg, labelCode, qrSvg, usesFallbackId } from './labels';
+import { sizedImage } from '../../shared/image-url';
 
 export type { Product };
 
@@ -190,6 +191,9 @@ export class ProductsComponent implements OnInit {
 
   primaryImage = (images: ProductImage[]) =>
     images.find(i => i.sort_order === 0) ?? images[0] ?? null;
+
+  /** Foto de Cloudinary al tamaño de la tarjeta (ver shared/image-url.ts). */
+  readonly sized = sizedImage;
 
   categorias = ['entrada', 'plato_fuerte', 'postre', 'bebida', 'guarnicion'];
   alergenos  = ['gluten', 'lacteos', 'huevo', 'nueces', 'mariscos', 'soya'];

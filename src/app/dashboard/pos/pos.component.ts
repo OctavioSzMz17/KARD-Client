@@ -23,6 +23,7 @@ import { printSheet } from './print';
 import { ReceiptComponent } from './receipt.component';
 import { ScanStatus } from './scan-logic';
 import { ScannerComponent } from './scanner.component';
+import { sizedImage } from '../../shared/image-url';
 
 interface CartItem {
   product: Product;
@@ -235,6 +236,9 @@ export class PosComponent implements OnInit {
   primaryImage(images: ProductImage[]): ProductImage | null {
     return images.find(i => i.sort_order === 0) ?? images[0] ?? null;
   }
+
+  /** Foto de Cloudinary al tamaño de la tarjeta (ver shared/image-url.ts). */
+  readonly sized = sizedImage;
 
   onQuery(e: Event): void {
     this.query.set((e.target as HTMLInputElement).value);

@@ -118,7 +118,7 @@
           <!-- Image -->
           <div class="card-image">
             @if (primaryImage(p.images); as img) {
-              <img [src]="img.url" [alt]="img.alt_text || p.name" [attr.loading]="i < 8 ? 'eager' : 'lazy'" [attr.fetchpriority]="i < 8 ? 'high' : null" decoding="async" width="400" height="300"/>
+              <img [src]="sized(img.url, 800)" [alt]="img.alt_text || p.name" [attr.loading]="i < 8 ? 'eager' : 'lazy'" [attr.fetchpriority]="i < 8 ? 'high' : null" decoding="async" width="400" height="300"/>
             } @else {
               <div class="card-image-placeholder">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

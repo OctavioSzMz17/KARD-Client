@@ -8,6 +8,7 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { StorefrontProduct, StorefrontService } from '../../../core/services/storefront.service';
 import { ProductImage } from '../../../core/services/image.service';
 import { StorefrontStore } from '../../../core/store/storefront.store';
+import { sizedImage } from '../../../shared/image-url';
 
 // El hub muestra el menú completo agrupado, así que se pide de una vez en
 // lugar de paginar: una carta de restaurante rara vez pasa de esto, y
@@ -260,6 +261,9 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
   primaryImage(images: ProductImage[]): ProductImage | null {
     return images?.find(i => i.sort_order === 0) ?? images?.[0] ?? null;
   }
+
+  /** Foto de Cloudinary al tamaño de la tarjeta (ver shared/image-url.ts). */
+  readonly sized = sizedImage;
 
   /** Chips de metadata según el tipo de negocio. */
   metaChips(p: StorefrontProduct): string[] {
