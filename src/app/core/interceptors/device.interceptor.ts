@@ -4,7 +4,7 @@ import { activeDeviceToken } from '../device-logic';
 
 /**
  * Manda el token del equipo (`X-Device-Token`) en cada petición a la API de
- * KARD cuando este navegador es una caja autorizada.
+ * ZNVX BX cuando este navegador es una caja autorizada.
  *
  * Lee el almacenamiento directamente y no a través de un servicio: el servicio
  * usa HttpClient, y un interceptor que dependa de HttpClient es una

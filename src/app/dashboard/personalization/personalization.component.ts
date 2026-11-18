@@ -4,9 +4,9 @@ import { SnackbarService } from '../../core/services/snackbar.service';
 import { Branding, BrandingService } from '../../core/services/branding.service';
 import { BRAND_NAME } from '../../shared/brand';
 
-// Defaults de KARD (mismos que usa el storefront del cliente)
-const DEFAULT_PRIMARY = '#5b6ef5';
-const DEFAULT_ACCENT  = '#1e3a8a';
+// Defaults de ZNVX BX (mismos que usa el storefront del cliente)
+const DEFAULT_PRIMARY = '#f2c38b';
+const DEFAULT_ACCENT  = '#c8914a';
 
 interface SampleProduct { name: string; desc: string; price: string; chip: string; }
 interface Preset { label: string; primary: string; accent: string; }
@@ -49,7 +49,7 @@ export class PersonalizationComponent implements OnInit {
 
   // Paletas curadas (primary = acentos/botones · accent = precios/CTA). Contraste OK.
   presets: Preset[] = [
-    { label: 'Índigo',   primary: '#5b6ef5', accent: '#1e3a8a' },
+    { label: 'ZNVX Oro', primary: '#f2c38b', accent: '#c8914a' },
     { label: 'Océano',   primary: '#0ea5e9', accent: '#075985' },
     { label: 'Esmeralda',primary: '#059669', accent: '#064e3b' },
     { label: 'Vino',     primary: '#e11d48', accent: '#881337' },
@@ -61,7 +61,7 @@ export class PersonalizationComponent implements OnInit {
   isRestaurant = computed(() => this.session?.business_type === 'restaurant');
   isOptician   = computed(() => this.session?.business_type === 'optician');
 
-  /** CSS variables que alimentan el preview (con fallback a los defaults de KARD). */
+  /** CSS variables que alimentan el preview (con fallback a los defaults de ZNVX BX). */
   previewVars = computed(() => ({
     '--sf-primary': this.primary() || DEFAULT_PRIMARY,
     '--sf-accent':  this.accent()  || DEFAULT_ACCENT,

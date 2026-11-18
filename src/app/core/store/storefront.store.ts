@@ -11,9 +11,9 @@ import {
 } from '../services/order.service';
 import { SnackbarService } from '../services/snackbar.service';
 
-// Defaults de KARD cuando el negocio no definió tema
-const DEFAULT_PRIMARY = '#5b6ef5';
-const DEFAULT_ACCENT  = '#1e3a8a';
+// Defaults de ZNVX BX (oro) cuando el negocio no definió tema
+const DEFAULT_PRIMARY = '#f2c38b';
+const DEFAULT_ACCENT  = '#c8914a';
 
 /**
  * Estado compartido de una tienda: info del negocio, tema y carrito.
@@ -42,7 +42,7 @@ export class StorefrontStore {
   placedOrder   = signal<Order | null>(null);
   stockConflict = signal<StockConflict | null>(null);
 
-  /** CSS variables del tema del negocio (con fallback a KARD). */
+  /** CSS variables del tema del negocio (con fallback a ZNVX BX). */
   themeVars = computed(() => ({
     '--sf-primary': this.store()?.theme?.primary ?? DEFAULT_PRIMARY,
     '--sf-accent':  this.store()?.theme?.accent  ?? DEFAULT_ACCENT,

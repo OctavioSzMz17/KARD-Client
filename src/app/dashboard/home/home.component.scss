@@ -53,8 +53,8 @@
 
   &:hover {
     transform: translateY(-4px);
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 26px 60px rgba(0, 0, 0, 0.45), 0 0 40px rgba(255, 255, 255, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: rgba(244, 238, 230, 0.4);
+    box-shadow: 0 26px 60px rgba(0, 0, 0, 0.45), 0 0 40px rgba(244, 238, 230, 0.07), inset 0 1px 0 rgba(244, 238, 230, 0.2);
   }
 }
 
@@ -75,7 +75,7 @@
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  color: #d4d4d8;
+  color: #d2cac0;
   @include glass-inset;
 }
 
@@ -114,7 +114,7 @@
   width: 100%;
   height: 80px;
   border-radius: 6px;
-  filter: drop-shadow(0 4px 14px rgba(255, 255, 255, 0.14));
+  filter: drop-shadow(0 4px 14px rgba(244, 238, 230, 0.14));
 }
 
 .chart { height: 100px; }
@@ -151,11 +151,11 @@
   background: none;
   border: 0;
   padding: 0;
-  color: #d4d4d8;
+  color: #d2cac0;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-  &:hover { color: #fff; text-decoration: underline; }
+  &:hover { color: #fff8ee; text-decoration: underline; }
 }
 
 .top-list { display: flex; flex-direction: column; gap: 14px; }
@@ -165,10 +165,10 @@
 .top-bar {
   height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(244, 238, 230, 0.08);
   overflow: hidden;
 
-  i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ffffff, #d4d4d8); }
+  i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #fff8ee, #d2cac0); }
 }
 
 // ── Totales ───────────────────────────────────────────────
@@ -277,7 +277,7 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(10, 10, 11, 0.7);
+  background: rgba(7, 8, 12, 0.7);
   backdrop-filter: blur(6px);
   animation: aparece 0.3s ease backwards;
 }
@@ -295,8 +295,8 @@
   width: min(580px, calc(100vw - 32px));
   max-height: calc(100vh - 64px);
   border-radius: 28px;
-  background: rgba(10, 10, 11, 0.82);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  background: rgba(7, 8, 12, 0.82);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(244, 238, 230, 0.08), inset 0 1px 0 rgba(244, 238, 230, 0.18);
   color: $text;
 }
 
@@ -319,17 +319,17 @@
   height: 34px;
   border: 1px solid $line;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(244, 238, 230, 0.08);
   color: $text-soft;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 
-  &:hover:not(:disabled) { background: rgba(255, 255, 255, 0.18); color: #fff; }
+  &:hover:not(:disabled) { background: rgba(244, 238, 230, 0.18); color: #fff8ee; }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
-  &:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  &:focus-visible { outline: 2px solid #fff8ee; outline-offset: 2px; }
 }
 
-.set-body { flex: 1; overflow-y: auto; padding: 20px 26px 24px; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.25) transparent; }
+.set-body { flex: 1; overflow-y: auto; padding: 20px 26px 24px; scrollbar-width: thin; scrollbar-color: rgba(244, 238, 230, 0.25) transparent; }
 
 .set-loading {
   display: flex;
@@ -359,15 +359,15 @@
   @include glass-inset;
   transition: background 0.2s, border-color 0.2s, transform 0.2s;
 
-  &:hover:not(:disabled) { background: rgba(255, 255, 255, 0.11); transform: translateY(-1px); }
+  &:hover:not(:disabled) { background: rgba(244, 238, 230, 0.11); transform: translateY(-1px); }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
-  &:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  &:focus-visible { outline: 3px solid #fff8ee; outline-offset: 2px; }
 }
 
 .modo-on {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(244, 238, 230, 0.08);
   border-color: rgba(212, 212, 216, 0.65);
-  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(244, 238, 230, 0.1);
 }
 
 .modo-check {
@@ -379,11 +379,11 @@
   margin-top: 1px;
   border-radius: 7px;
   border: 1.5px solid $line-strong;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(244, 238, 230, 0.06);
   color: $ink;
   transition: background 0.2s, border-color 0.2s;
 
-  &.on { background: #fff; border-color: #fff; }
+  &.on { background: #fff8ee; border-color: #fff8ee; }
 }
 
 .modo-texto { display: flex; flex-direction: column; gap: 2px; }
@@ -429,10 +429,10 @@
   padding: 0 12px;
   border: 1px solid $line-strong;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(244, 238, 230, 0.07);
   transition: border-color 0.2s, box-shadow 0.25s;
 
-  &:focus-within { border-color: rgba(255, 255, 255, 0.7); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12); }
+  &:focus-within { border-color: rgba(244, 238, 230, 0.7); box-shadow: 0 0 0 4px rgba(244, 238, 230, 0.12); }
 
   span { font-size: 13px; color: $text-faint; }
 

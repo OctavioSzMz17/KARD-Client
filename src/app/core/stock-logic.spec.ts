@@ -55,7 +55,7 @@ describe('cómo se ve cada producto', () => {
   });
 
   it('el color de un platillo es neutro aunque tenga cero', () => {
-    expect(stockColor(platillo(0))).toBe('#818cf8');
+    expect(stockColor(platillo(0))).toBe('#ffe2bc');
     expect(stockColor(insumo(0))).toBe('#f87171');
     expect(stockColor(insumo(2))).toBe('#fbbf24');
     expect(stockColor(insumo(50))).toBe('#34d399');

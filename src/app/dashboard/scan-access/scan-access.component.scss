@@ -20,7 +20,7 @@
   animation: pop 0.45s $spring backwards;
 
   h2 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
-  .sub { margin: 0; font-size: 14.5px; line-height: 1.55; color: $text-soft; strong { color: #fff; } }
+  .sub { margin: 0; font-size: 14.5px; line-height: 1.55; color: $text-soft; strong { color: #fff8ee; } }
   label { margin-top: 6px; font-size: 12.5px; font-weight: 600; color: $text-soft; }
 
   &.start, &.done { align-items: center; text-align: center; }
@@ -33,7 +33,7 @@
   height: 76px;
   border-radius: 50%;
   @include glass-inset;
-  color: #d4d4d8;
+  color: #d2cac0;
 }
 
 .tick { width: 60px; height: 60px; color: #6ee7b7; border-color: rgba(52, 211, 153, 0.5); background: rgba(52, 211, 153, 0.14); }
@@ -46,7 +46,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #d4d4d8;
+  color: #d2cac0;
   @include glass-inset;
 }
 
@@ -67,7 +67,7 @@
   margin-top: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #fff;
+  color: #fff8ee;
   cursor: pointer;
 
   input { width: 20px; height: 20px; accent-color: $accent; }

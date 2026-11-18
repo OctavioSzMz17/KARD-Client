@@ -28,8 +28,8 @@ export interface CheckoutResponse {
 }
 
 /**
- * Suscripción del negocio hacia KARD — endpoints B2B.
- * El cobro ocurre en Stripe: KARD nunca toca datos de tarjeta.
+ * Suscripción del negocio hacia ZNVX BX — endpoints B2B.
+ * El cobro ocurre en Stripe: ZNVX BX nunca toca datos de tarjeta.
  */
 @Injectable({ providedIn: 'root' })
 export class BillingService {

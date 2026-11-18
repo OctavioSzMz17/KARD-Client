@@ -93,7 +93,7 @@ export function parseChallengeId(raw: string | null | undefined): string | null 
   }
   if (!CHALLENGE_ID.test(id)) return null;
 
-  // Si venía como dirección, tiene que ser la de aprobación de KARD.
+  // Si venía como dirección, tiene que ser la de aprobación de ZNVX BX.
   if (text.includes('#') && !/\/dashboard\/aprobar#/.test(text)) return null;
   return id;
 }

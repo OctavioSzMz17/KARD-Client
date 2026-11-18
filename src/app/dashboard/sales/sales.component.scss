@@ -1,11 +1,11 @@
 // Paleta alineada con el resto del dashboard.
-$accent:      #0a0a0b;
-$text:        #0a0a0b;
-$text-muted:  #6b7280;
-$text-faint:  #a1a1aa;
-$border:      #e4e4e7;
-$surface:     #ffffff;
-$surface-alt: #fafafa;
+$accent:      #07080c;
+$text:        #07080c;
+$text-muted:  #7c766f;
+$text-faint:  #a39c94;
+$border:      #e4ddd3;
+$surface:     #fff8ee;
+$surface-alt: #faf6f0;
 
 .sales-page {
   padding: 28px 32px 40px;
@@ -62,9 +62,9 @@ $surface-alt: #fafafa;
 
 .btn-primary {
   background: $accent;
-  color: #fff;
+  color: #fff8ee;
 
-  &:hover:not(:disabled) { background: #0a0a0b; }
+  &:hover:not(:disabled) { background: #07080c; }
 }
 
 .btn-ghost {
@@ -114,7 +114,7 @@ $surface-alt: #fafafa;
     &:focus {
       outline: none;
       border-color: $accent;
-      box-shadow: 0 0 0 3px rgba(10, 10, 11, .14);
+      box-shadow: 0 0 0 3px rgba(7, 8, 12, .14);
     }
   }
 }
@@ -214,13 +214,13 @@ th {
 
 td {
   padding: 12px 14px;
-  border-bottom: 1px solid #f4f4f5;
+  border-bottom: 1px solid #f4eee6;
   color: $text;
   vertical-align: top;
 }
 
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: #fafafa; }
+tbody tr:hover { background: #faf6f0; }
 
 .num     { text-align: right; white-space: nowrap; }
 .nowrap  { white-space: nowrap; }
@@ -264,16 +264,16 @@ tbody tr:hover { background: #fafafa; }
   &:focus {
     outline: none;
     border-color: $accent;
-    box-shadow: 0 0 0 3px rgba(10, 10, 11, .14);
+    box-shadow: 0 0 0 3px rgba(7, 8, 12, .14);
   }
 
   &:disabled { opacity: .5; cursor: wait; }
 
-  option { background: #fff; color: $text; font-weight: 500; }
+  option { background: #fff8ee; color: $text; font-weight: 500; }
 }
 
 .badge-paid      { background: #dcfce7; color: #166534; }
-.badge-fulfilled { background: #e4e4e7; color: #0a0a0b; }
+.badge-fulfilled { background: #e4ddd3; color: #07080c; }
 .badge-pending   { background: #fef3c7; color: #92400e; }
 .badge-canceled  { background: #fee2e2; color: #991b1b; }
 

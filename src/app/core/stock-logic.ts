@@ -66,7 +66,7 @@ export function stockDetail(p: StockItem): string {
 
 /** Color del indicador: el nivel de existencias, o un tono neutro si el producto no las lleva. */
 export function stockColor(p: StockItem): string {
-  if (!tracksStock(p)) return '#818cf8';
+  if (!tracksStock(p)) return '#ffe2bc';
   const level = stockLevel(p);
   return level === 'out' ? '#f87171' : level === 'low' ? '#fbbf24' : '#34d399';
 }

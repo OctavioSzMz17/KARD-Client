@@ -6,4 +6,4 @@
  * aplicación); las pantallas, los reportes y las pestañas lo toman de esta
  * constante. El mismo nombre en el servidor sale de `BRAND_NAME`.
  */
-export const BRAND_NAME = 'KARD';
+export const BRAND_NAME = 'ZNVX BX';

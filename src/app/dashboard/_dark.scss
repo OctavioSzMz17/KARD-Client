@@ -1,40 +1,43 @@
 // ══ Identidad oscura del panel ═══════════════════════════════════
-// Negro y blanco reluciente: fondo negro, vidrio, luces plateadas que derivan
-// y un degradado perlado en los títulos. Sin color de acento: la jerarquía sale
-// del contraste. El color queda solo para estados (verde, ámbar, rojo).
+// Paleta ZNVX: Tinta (#07080C) de fondo, Marfil/Crema para el texto y Oro
+// (#F2C38B) como único acento de marca; las luces que derivan son oro.
+// El color queda además para estados (verde, ámbar, rojo).
 // Se comparten aquí para que el panel y las vistas de cliente no se separen.
 
-$night:        #0a0a0b;
-$ink:          #0a0a0b;           // texto sobre la píldora blanca activa
-$accent:       #ffffff;           // luz principal (ya no es un color)
-$violet:       #a1a1aa;           // luz plateada
-$sky:          #d4d4d8;           // luz perla
+$night:        #07080c;           // Tinta
+$night-2:      #0b0b11;           // Tinta 2
+$ink:          #07080c;           // texto sobre la píldora crema y el botón oro
+$accent:       #f2c38b;           // Oro: acento de marca
+$accent-hover: #ffe2bc;           // Oro claro: al pasar el mouse
+$gold-metal:   #c8914a;           // Oro metálico
+$violet:       #c8914a;           // luz oro metálico (nombre heredado)
+$sky:          #ffe2bc;           // luz oro claro (nombre heredado)
 $mint:         #34d399;
 $danger:       #f87171;
 $amber:        #fbbf24;
 
-$text:         #ffffff;
-$text-soft:    rgba(255, 255, 255, 0.72);
-$text-faint:   rgba(255, 255, 255, 0.5);
-$line:         rgba(255, 255, 255, 0.14);
-$line-strong:  rgba(255, 255, 255, 0.28);
+$text:         #fff8ee;
+$text-soft:    rgba(244, 238, 230, 0.72);
+$text-faint:   rgba(244, 238, 230, 0.5);
+$line:         rgba(244, 238, 230, 0.14);
+$line-strong:  rgba(244, 238, 230, 0.28);
 
-$grad-title:   linear-gradient(135deg, #ffffff 0%, #a9a9b3 52%, #ffffff 100%);   // blanco -> plata -> blanco
-$grad-action:  linear-gradient(180deg, #ffffff, #dcdce0);
+$grad-title:   linear-gradient(135deg, #fff8ee 0%, #f2c38b 52%, #fff8ee 100%);   // crema -> oro -> crema
+$grad-action:  linear-gradient(180deg, #ffe2bc, #f2c38b);
 
 $spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
 @mixin glass {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(244, 238, 230, 0.08);
   backdrop-filter: blur(16px) saturate(160%);
   -webkit-backdrop-filter: blur(16px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(244, 238, 230, 0.2);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(244, 238, 230, 0.16);
 }
 
 // Vidrio más sutil para piezas pequeñas dentro de otro vidrio (no se apila el blur).
 @mixin glass-inset {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(244, 238, 230, 0.06);
   border: 1px solid $line;
 }
 
@@ -51,7 +54,7 @@ $spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   padding: 11px 14px;
   border: 1px solid $line-strong;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(244, 238, 230, 0.07);
   color: $text;
   font: inherit;
   font-size: 14px;
@@ -61,13 +64,13 @@ $spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   &:focus {
     outline: 0;
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.7);
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12);
+    background: rgba(244, 238, 230, 0.12);
+    border-color: rgba(242, 195, 139, 0.8);
+    box-shadow: 0 0 0 4px rgba(242, 195, 139, 0.16);
   }
 }
 
-// Botón principal: blanco perlado con resplandor, texto negro.
+// Botón principal: oro con resplandor, texto Tinta.
 @mixin action {
   border: 0;
   border-radius: 14px;
@@ -76,18 +79,18 @@ $spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px rgba(242, 195, 139, 0.2), inset 0 1px 0 rgba(255, 248, 238, 0.85);
   transition: transform 0.2s, box-shadow 0.25s, filter 0.2s, opacity 0.2s;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
     filter: brightness(1.08);
-    box-shadow: 0 14px 38px rgba(255, 255, 255, 0.26), inset 0 1px 0 #fff;
+    box-shadow: 0 14px 38px rgba(242, 195, 139, 0.32), inset 0 1px 0 #fff8ee;
   }
 
   &:active:not(:disabled) { transform: translateY(0); }
   &:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
-  &:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+  &:focus-visible { outline: 3px solid #f2c38b; outline-offset: 3px; }
 }
 
 // Botón de vidrio.
@@ -100,12 +103,12 @@ $spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   cursor: pointer;
   transition: background 0.2s, transform 0.15s, opacity 0.2s;
 
-  &:hover:not(:disabled) { background: rgba(255, 255, 255, 0.16); transform: translateY(-1px); }
+  &:hover:not(:disabled) { background: rgba(244, 238, 230, 0.16); transform: translateY(-1px); }
   &:disabled { opacity: 0.45; cursor: not-allowed; }
-  &:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+  &:focus-visible { outline: 3px solid #f2c38b; outline-offset: 3px; }
 }
 
-// Chip / píldora seleccionable: la activa es la píldora blanca del catálogo.
+// Chip / píldora seleccionable: la activa es la píldora crema del catálogo.
 @mixin pill {
   @include glass;
   display: inline-flex;
@@ -113,23 +116,23 @@ $spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   gap: 8px;
   padding: 8px 14px;
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 248, 238, 0.88);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.25s, color 0.25s, transform 0.25s $spring, border-color 0.25s;
 
-  &:hover { background: rgba(255, 255, 255, 0.16); transform: translateY(-2px); }
+  &:hover { background: rgba(244, 238, 230, 0.16); transform: translateY(-2px); }
 
   &.active {
-    background: rgba(255, 255, 255, 0.96);
-    border-color: #fff;
+    background: rgba(255, 248, 238, 0.96);
+    border-color: #fff8ee;
     color: $ink;
-    box-shadow: 0 10px 28px rgba(255, 255, 255, 0.18);
+    box-shadow: 0 10px 28px rgba(242, 195, 139, 0.2);
   }
 
-  &:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  &:focus-visible { outline: 3px solid #f2c38b; outline-offset: 2px; }
 }
 
 @keyframes aparece {
@@ -159,7 +162,7 @@ $spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   width: $size;
   height: $size;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.18);
-  border-top-color: #d4d4d8;
+  border: 3px solid rgba(244, 238, 230, 0.18);
+  border-top-color: #f2c38b;
   animation: gira 0.8s linear infinite;
 }

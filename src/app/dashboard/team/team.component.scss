@@ -19,7 +19,7 @@
   flex-wrap: wrap;
   animation: aparece 0.5s ease backwards;
 
-  .count { margin: 0; font-size: 14px; color: $text-soft; strong { color: #fff; font-size: 16px; } }
+  .count { margin: 0; font-size: 14px; color: $text-soft; strong { color: #fff8ee; font-size: 16px; } }
 }
 
 .btn-primary { @include action; display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; font-size: 14px; }
@@ -29,23 +29,23 @@
   padding: 12px 20px;
   font-size: 14px;
   background: linear-gradient(135deg, #ef4444, #f97316);
-  color: #fff;
-  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  color: #fff8ee;
+  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(244, 238, 230, 0.3);
 }
 
 .link {
   background: none;
   border: 0;
   padding: 4px 2px;
-  color: #d4d4d8;
+  color: #d2cac0;
   font: inherit;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 
-  &:hover { color: #fff; text-decoration: underline; }
+  &:hover { color: #fff8ee; text-decoration: underline; }
   &.danger { color: $danger; }
-  &:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 4px; }
+  &:focus-visible { outline: 2px solid #fff8ee; outline-offset: 3px; border-radius: 4px; }
 }
 
 .state { text-align: center; padding: 60px 0; color: $text-soft; &.error { color: #fca5a5; } }
@@ -72,17 +72,17 @@
   height: 48px;
   border-radius: 50%;
   background: $grad-action;
-  color: #fff;
+  color: #fff8ee;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  box-shadow: 0 8px 22px rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 22px rgba(244, 238, 230, 0.16);
 
-  &[data-pos='dueno']          { background: linear-gradient(135deg, #ffffff, #c4c4cc); color: #0a0a0b; }
-  &[data-pos='gerente']        { background: linear-gradient(135deg, #a1a1aa, #52525b); }
-  &[data-pos='subgerente']     { background: linear-gradient(135deg, #71717a, #3f3f46); }
-  &[data-pos='encargado_area'] { background: linear-gradient(135deg, #52525b, #27272a); }
-  &[data-pos='empleado']       { background: linear-gradient(135deg, #71717a, #a1a1aa); box-shadow: none; }
+  &[data-pos='dueno']          { background: linear-gradient(135deg, #fff8ee, #c4c4cc); color: #07080c; }
+  &[data-pos='gerente']        { background: linear-gradient(135deg, #a39c94, #5f5952); }
+  &[data-pos='subgerente']     { background: linear-gradient(135deg, #7c766f, #4a4540); }
+  &[data-pos='encargado_area'] { background: linear-gradient(135deg, #5f5952, #26232b); }
+  &[data-pos='empleado']       { background: linear-gradient(135deg, #7c766f, #a39c94); box-shadow: none; }
 }
 
 .who { flex: 1; min-width: 0; }
@@ -98,12 +98,12 @@
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(244, 238, 230, 0.12);
   border: 1px solid $line-strong;
 
   &[data-pos='dueno']          { background: rgba(251, 191, 36, 0.16); border-color: rgba(251, 191, 36, 0.5); color: #fcd34d; }
-  &[data-pos='gerente']        { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.22); color: #d4d4d8; }
-  &[data-pos='subgerente']     { background: rgba(255, 255, 255, 0.09); border-color: rgba(212, 212, 216, 0.55); color: #d4d4d8; }
+  &[data-pos='gerente']        { background: rgba(244, 238, 230, 0.09); border-color: rgba(244, 238, 230, 0.22); color: #d2cac0; }
+  &[data-pos='subgerente']     { background: rgba(244, 238, 230, 0.09); border-color: rgba(212, 212, 216, 0.55); color: #d2cac0; }
   &[data-pos='encargado_area'] { background: rgba(20, 184, 166, 0.2);  border-color: rgba(94, 234, 212, 0.5);  color: #5eead4; }
 }
 
@@ -125,7 +125,7 @@
   border-radius: 24px;
 
   h2 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.01em; }
-  .hint.left { margin: 0; text-align: left; line-height: 1.55; code { font-family: ui-monospace, monospace; color: #d4d4d8; word-break: break-all; } strong { color: #fff; } }
+  .hint.left { margin: 0; text-align: left; line-height: 1.55; code { font-family: ui-monospace, monospace; color: #d2cac0; word-break: break-all; } strong { color: #fff8ee; } }
   .empty { margin: 4px 0 0; font-size: 13.5px; color: $text-faint; }
 }
 
@@ -149,7 +149,7 @@
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(10, 10, 11, 0.7);
+  background: rgba(7, 8, 12, 0.7);
   backdrop-filter: blur(6px);
   animation: aparece 0.3s ease backwards;
 }
@@ -169,8 +169,8 @@
   gap: 10px;
   padding: 26px;
   border-radius: 28px;
-  background: rgba(10, 10, 11, 0.88);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(255, 255, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  background: rgba(7, 8, 12, 0.88);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(244, 238, 230, 0.08), inset 0 1px 0 rgba(244, 238, 230, 0.18);
 
   h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
   .sub { margin: 0 0 4px; font-size: 13.5px; color: $text-soft; line-height: 1.5; }
@@ -179,7 +179,7 @@
 }
 
 .input { @include field; &.mono { font-family: ui-monospace, monospace; letter-spacing: 0.04em; } }
-select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(135deg, #fff 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%; background-size: 5px 5px; background-repeat: no-repeat; option { color: #0a0a0b; } }
+select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #fff8ee 50%), linear-gradient(135deg, #fff8ee 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%; background-size: 5px 5px; background-repeat: no-repeat; option { color: #07080c; } }
 
 .pass-row { display: flex; gap: 8px; align-items: stretch; }
 
@@ -206,7 +206,7 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 
   div { display: flex; flex-direction: column; gap: 2px; }
   dt { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: $text-faint; }
-  dd { margin: 0; font-size: 15px; font-weight: 600; word-break: break-all; &.mono { font-family: ui-monospace, monospace; font-size: 17px; letter-spacing: 0.05em; color: #d4d4d8; } }
+  dd { margin: 0; font-size: 15px; font-weight: 600; word-break: break-all; &.mono { font-family: ui-monospace, monospace; font-size: 17px; letter-spacing: 0.05em; color: #d2cac0; } }
 }
 
 @media (max-width: 640px) {

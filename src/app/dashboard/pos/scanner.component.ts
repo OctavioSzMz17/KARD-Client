@@ -122,8 +122,8 @@ function explain(error: unknown): string {
       z-index: 90;
       display: flex;
       flex-direction: column;
-      background: #000;
-      color: #fff;
+      background: #07080c;
+      color: #fff8ee;
       font-family: 'Inter', system-ui, sans-serif;
       animation: in 0.25s ease backwards;
     }
@@ -156,15 +156,15 @@ function explain(error: unknown): string {
       place-items: center;
       width: 44px;
       height: 44px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(244, 238, 230, 0.3);
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.14);
+      background: rgba(244, 238, 230, 0.14);
       backdrop-filter: blur(8px);
-      color: #fff;
+      color: #fff8ee;
       cursor: pointer;
 
-      &.on { background: #fde68a; color: #27272a; border-color: #fde68a; }
-      &:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+      &.on { background: #fde68a; color: #26232b; border-color: #fde68a; }
+      &:focus-visible { outline: 3px solid #fff8ee; outline-offset: 2px; }
     }
 
     // El marco donde se debe poner el código.
@@ -181,7 +181,7 @@ function explain(error: unknown): string {
         position: absolute;
         width: 34px;
         height: 34px;
-        border: 4px solid #fff;
+        border: 4px solid #fff8ee;
         filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6));
 
         &:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; border-top-left-radius: 14px; }
@@ -196,8 +196,8 @@ function explain(error: unknown): string {
         right: 8%;
         height: 2px;
         top: 10%;
-        background: linear-gradient(90deg, transparent, #ffffff 20%, #ffffff 50%, #ffffff 80%, transparent);
-        box-shadow: 0 0 14px #ffffff;
+        background: linear-gradient(90deg, transparent, #fff8ee 20%, #fff8ee 50%, #fff8ee 80%, transparent);
+        box-shadow: 0 0 14px #fff8ee;
         animation: sweep 2.2s ease-in-out infinite alternate;
       }
     }
@@ -210,7 +210,7 @@ function explain(error: unknown): string {
       margin: 0;
       text-align: center;
       font-size: 13.5px;
-      color: rgba(255, 255, 255, 0.85);
+      color: rgba(255, 248, 238, 0.85);
       text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
       pointer-events: none;
     }
@@ -229,8 +229,8 @@ function explain(error: unknown): string {
       &.error {
         padding: 22px;
         border-radius: 22px;
-        background: rgba(10, 10, 11, 0.92);
-        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(7, 8, 12, 0.92);
+        border: 1px solid rgba(244, 238, 230, 0.25);
         p { margin: 0 0 16px; }
       }
     }
@@ -263,8 +263,8 @@ function explain(error: unknown): string {
       gap: 12px;
       padding: 10px 10px 10px 18px;
       border-radius: 20px;
-      background: rgba(10, 10, 11, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(7, 8, 12, 0.85);
+      border: 1px solid rgba(244, 238, 230, 0.2);
       backdrop-filter: blur(12px);
       font-size: 15px;
       font-weight: 600;
@@ -276,14 +276,14 @@ function explain(error: unknown): string {
       padding: 12px 22px;
       border: 0;
       border-radius: 14px;
-      background: linear-gradient(180deg, #ffffff, #dcdce0);
-      color: #0a0a0b;
+      background: linear-gradient(180deg, #ffe2bc, #f2c38b);
+      color: #07080c;
       font: inherit;
       font-size: 15px;
       font-weight: 700;
       cursor: pointer;
 
-      &:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+      &:focus-visible { outline: 3px solid #fff8ee; outline-offset: 2px; }
     }
 
     @keyframes in { from { opacity: 0; } to { opacity: 1; } }

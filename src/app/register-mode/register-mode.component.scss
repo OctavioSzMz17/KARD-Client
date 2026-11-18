@@ -1,6 +1,6 @@
 @use '../dashboard/dark' as *;
 
-// Pantalla de la caja registradora: la identidad oscura de KARD en pantalla
+// Pantalla de la caja registradora: la identidad oscura de ZNVX BX en pantalla
 // completa. Dos estados: autorizar el equipo y desbloquearlo.
 
 .reg {
@@ -35,18 +35,18 @@
   top: 17vh;
   height: 190px;
   transform: rotate(-9deg);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05) 28%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.05) 72%, transparent);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(90deg, transparent, rgba(244, 238, 230, 0.05) 28%, rgba(244, 238, 230, 0.09) 50%, rgba(244, 238, 230, 0.05) 72%, transparent);
+  border-top: 1px solid rgba(244, 238, 230, 0.12);
+  border-bottom: 1px solid rgba(244, 238, 230, 0.05);
 }
 
 .stars {
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1.6px);
+  background-image: radial-gradient(rgba(244, 238, 230, 0.55) 1px, transparent 1.6px);
   background-size: 56px 56px;
   opacity: 0.12;
-  mask-image: radial-gradient(circle at 50% 20%, #000, transparent 75%);
+  mask-image: radial-gradient(circle at 50% 20%, #07080c, transparent 75%);
 }
 
 .brand {
@@ -123,7 +123,7 @@
   color: $text-soft;
   line-height: 1.5;
 
-  strong { color: #fff; }
+  strong { color: #fff8ee; }
 }
 
 // ── QR ────────────────────────────────────────────────────
@@ -144,11 +144,11 @@
   height: 220px;
   padding: 14px;
   border-radius: 24px;
-  background: #fff;              // el QR necesita fondo claro para leerse
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), 0 0 50px rgba(255, 255, 255, 0.1);
+  background: #fff8ee;              // el QR necesita fondo claro para leerse
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), 0 0 50px rgba(244, 238, 230, 0.1);
 
   &.small { width: 124px; height: 124px; padding: 8px; border-radius: 16px; }
-  &.loading { background: rgba(255, 255, 255, 0.1); color: $text-faint; font-size: 13px; }
+  &.loading { background: rgba(244, 238, 230, 0.1); color: $text-faint; font-size: 13px; }
 
   .qr-art { width: 100%; height: 100%; }
   .qr-art ::ng-deep svg { display: block; width: 100%; height: 100%; }
@@ -168,7 +168,7 @@
 
 .timer { font-size: 12.5px; color: $text-faint; font-variant-numeric: tabular-nums; }
 
-.qr-help { margin: 0; font-size: 13.5px; line-height: 1.55; color: $text-soft; strong { display: block; color: #fff; } em { color: #fff; font-style: normal; font-weight: 600; } }
+.qr-help { margin: 0; font-size: 13.5px; line-height: 1.55; color: $text-soft; strong { display: block; color: #fff8ee; } em { color: #fff8ee; font-style: normal; font-weight: 600; } }
 
 .notice {
   margin: 0;
@@ -180,7 +180,7 @@
   font-size: 13.5px;
 }
 
-.foot { margin: 2px 0 0; font-size: 13px; color: $text-faint; a { color: #d4d4d8; font-weight: 600; } }
+.foot { margin: 2px 0 0; font-size: 13px; color: $text-faint; a { color: #d2cac0; font-weight: 600; } }
 
 // ── Formulario de entrada ─────────────────────────────────
 .form { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
@@ -197,14 +197,14 @@
   padding: 0 14px;
   border: 0;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(244, 238, 230, 0.1);
   color: $text-soft;
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
-  &:hover { background: rgba(255, 255, 255, 0.18); color: #fff; }
-  &:focus-visible { outline: 2px solid #fff; }
+  &:hover { background: rgba(244, 238, 230, 0.18); color: #fff8ee; }
+  &:focus-visible { outline: 2px solid #fff8ee; }
 }
 
 .error {

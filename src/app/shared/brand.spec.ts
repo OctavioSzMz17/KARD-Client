@@ -20,7 +20,7 @@ describe('marca', () => {
   it('ninguna pantalla escribe el nombre a mano: lo toma de BRAND_NAME', () => {
     const sueltos = plantillas(join(process.cwd(), 'src', 'app'))
       // Restos de las pantallas viejas de acceso (ya no se usan ni están en git).
-      .filter(ruta => !/[\/]auth[\/](login|register)[\/]/.test(ruta))
+      .filter(ruta => !/[\\/]auth[\\/](login|register)[\\/]/.test(ruta))
       .filter(ruta => readFileSync(ruta, 'utf-8').includes(BRAND_NAME));
     expect(sueltos, `Escribe {{ brand }} en vez del nombre: ${sueltos.join(', ')}`).toEqual([]);
   });

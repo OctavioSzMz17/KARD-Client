@@ -75,7 +75,7 @@ describe('PC-11 · device-logic', () => {
       expect(parseChallengeId('a'.repeat(80))).toBeNull();
     });
 
-    it('rechaza una dirección que NO es la de aprobación de KARD', () => {
+    it('rechaza una dirección que NO es la de aprobación de ZNVX BX', () => {
       expect(parseChallengeId(`https://sitio-ajeno.example/login#${ID}`)).toBeNull();
       expect(parseChallengeId(`https://kard.example.com/otra-cosa#${ID}`)).toBeNull();
     });
