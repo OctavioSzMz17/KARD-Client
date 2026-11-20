@@ -68,14 +68,14 @@ export const routes: Routes = [
       {
         // Escanear: aprobar un QR desde el celular (autorizar una caja o abrir sesión en ella).
         path: 'escanear',
-        canActivate: [permissionGuard(PERM.devicesUnlock)],
+        canActivate: [permissionGuard(PERM.devicesUnlock, 'pos')],
         data: { title: 'Escanear', subtitle: 'Autoriza una caja o entra en ella con tu cuenta.', dark: true },
         loadComponent: () => import('./dashboard/scan-access/scan-access.component').then(m => m.ScanAccessComponent)
       },
       {
         // Dirección que lleva el QR: abre directo la aprobación (la lee la cámara normal del celular).
         path: 'aprobar',
-        canActivate: [permissionGuard(PERM.devicesUnlock)],
+        canActivate: [permissionGuard(PERM.devicesUnlock, 'pos')],
         data: { title: 'Escanear', subtitle: 'Autoriza una caja o entra en ella con tu cuenta.', dark: true },
         loadComponent: () => import('./dashboard/scan-access/scan-access.component').then(m => m.ScanAccessComponent)
       },
@@ -88,20 +88,21 @@ export const routes: Routes = [
       },
       {
         // `data` viste la barra superior del panel; `dark` marca las vistas ya rediseñadas.
+        // El segundo argumento del guard es la mitad del plan que pide la pantalla ('pos' o 'store').
         path: 'cobrar',
-        canActivate: [permissionGuard(PERM.posSell)],
+        canActivate: [permissionGuard(PERM.posSell, 'pos')],
         data: { title: 'Cobrar', subtitle: 'Arma el ticket y cobra en el mostrador.', dark: true },
         loadComponent: () => import('./dashboard/pos/pos.component').then(m => m.PosComponent)
       },
       {
         path: 'ordenes',
-        canActivate: [permissionGuard(PERM.salesRead)],
+        canActivate: [permissionGuard(PERM.salesRead, 'store')],
         data: { title: 'Órdenes', subtitle: 'Los pedidos que hacen tus clientes desde la tienda.', dark: true },
         loadComponent: () => import('./dashboard/orders/orders.component').then(m => m.OrdersComponent)
       },
       {
         path: 'caja',
-        canActivate: [permissionGuard(PERM.cashManage)],
+        canActivate: [permissionGuard(PERM.cashManage, 'pos')],
         data: { title: 'Caja', subtitle: 'Abre el turno, sigue cómo va y ciérralo con el corte.', dark: true },
         loadComponent: () => import('./dashboard/cash/cash.component').then(m => m.CashComponent)
       },

@@ -9,8 +9,28 @@ import { PERM, Permission, positionLabel } from '../../core/permissions';
 import { DeviceService } from '../../core/services/device.service';
 import { OrdersBoardService } from '../../core/services/orders-board.service';
 import { BRAND_NAME } from '../../shared/brand';
+import { Channel } from '../../core/models/plan.models';
+import { PlanStore } from '../../core/store/plan.store';
+import { PlanNoticeService } from '../../core/services/plan-notice.service';
+import { lockedNotice } from '../../core/plan-notice.logic';
 
 /** Lo que cada ruta del panel declara en su `data` para vestir la barra superior. */
+/** Una entrada del menú: el permiso que pide y, si aplica, la mitad del plan. */
+interface NavItem {
+  label: string;
+  icon: string;
+  route: string;
+  exact: boolean;
+  enabled: boolean;
+  perm: Permission;
+  /** Mitad del plan que pide la pantalla. Sin ella: candado para el dueño, oculta para el equipo. */
+  channel?: Channel;
+  badge?: boolean;
+}
+
+/** Lo que se dibuja: la entrada y si va con candado. */
+type VisibleNavItem = NavItem & { locked: boolean };
+
 interface PageInfo {
   title: string;
   subtitle: string;
@@ -44,20 +64,23 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private device = inject(DeviceService);
   private orders = inject(OrdersBoardService);
+  private plan   = inject(PlanStore);
+  private notice = inject(PlanNoticeService);
 
   /** Pedidos nuevos sin atender: el contador junto a "Órdenes". */
   readonly ordersPending = this.orders.pending;
 
   /**
-   * El menú completo; cada entrada declara el permiso que pide. Lo que la
+   * El menú completo; cada entrada declara el permiso que pide y, si aplica, la
+   * mitad del plan (la misma que pide su ruta en `app.routes.ts`). Lo que la
    * sesión no puede hacer no se muestra (el servidor lo impide de todos modos).
    */
-  private navItems: { label: string; icon: string; route: string; exact: boolean; enabled: boolean; perm: Permission; badge?: boolean }[] = [
+  private navItems: NavItem[] = [
     { label: 'Inicio', icon: 'home', route: '/dashboard', exact: true, enabled: true, perm: PERM.dashboardView },
-    { label: 'Cobrar', icon: 'cart', route: '/dashboard/cobrar', exact: false, enabled: true, perm: PERM.posSell },
-    { label: 'Órdenes', icon: 'orders', route: '/dashboard/ordenes', exact: false, enabled: true, perm: PERM.salesRead, badge: true },
-    { label: 'Caja', icon: 'cash', route: '/dashboard/caja', exact: false, enabled: true, perm: PERM.cashManage },
-    { label: 'Escanear', icon: 'camera', route: '/dashboard/escanear', exact: false, enabled: true, perm: PERM.devicesUnlock },
+    { label: 'Cobrar', icon: 'cart', route: '/dashboard/cobrar', exact: false, enabled: true, perm: PERM.posSell, channel: 'pos' },
+    { label: 'Órdenes', icon: 'orders', route: '/dashboard/ordenes', exact: false, enabled: true, perm: PERM.salesRead, channel: 'store', badge: true },
+    { label: 'Caja', icon: 'cash', route: '/dashboard/caja', exact: false, enabled: true, perm: PERM.cashManage, channel: 'pos' },
+    { label: 'Escanear', icon: 'camera', route: '/dashboard/escanear', exact: false, enabled: true, perm: PERM.devicesUnlock, channel: 'pos' },
     { label: 'Productos', icon: 'box', route: '/dashboard/products', exact: false, enabled: true, perm: PERM.productsRead },
     { label: 'Inventario', icon: 'archive', route: '/dashboard/inventory', exact: false, enabled: true, perm: PERM.inventoryAdjust },
     { label: 'Ventas', icon: 'chart', route: '/dashboard/sales', exact: false, enabled: true, perm: PERM.salesRead },
@@ -66,8 +89,23 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
     { label: 'Suscripción', icon: 'card', route: '/dashboard/suscripcion', exact: false, enabled: true, perm: PERM.billingManage },
   ];
 
-  /** Solo las entradas que la sesión actual puede usar; se actualiza sola si cambia su puesto. */
-  readonly visibleNav = computed(() => this.navItems.filter(i => this.auth.can(i.perm)));
+  /**
+   * Las entradas que la sesión puede usar; se actualiza sola si cambia su
+   * puesto o su plan. Lo que su plan no incluye el dueño lo ve con candado
+   * (para que sepa que existe); el equipo no lo ve.
+   */
+  readonly visibleNav = computed<VisibleNavItem[]>(() => {
+    const owner = this.plan.isOwner();
+    return this.navItems
+      .filter(i => this.auth.can(i.perm))
+      .map(i => ({ ...i, locked: !!i.channel && !this.plan.has(i.channel) }))
+      .filter(i => !i.locked || owner);
+  });
+
+  /** Tocar una entrada con candado explica qué incluye Pro. */
+  openLocked(item: VisibleNavItem): void {
+    if (item.channel) this.notice.show(lockedNotice(item.channel, this.plan.isOwner()));
+  }
 
 
   /** Menú lateral abierto (solo cuenta en pantallas angostas, donde es un cajón). */

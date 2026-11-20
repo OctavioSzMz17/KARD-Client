@@ -8,6 +8,7 @@ import {
 } from '../models/auth.models';
 import { environment } from '../../../environments/environment';
 import { PERM, Permission, fallbackPermissions, positionLabel } from '../permissions';
+import { PlanAccess } from '../models/plan.models';
 
 const API_BASE = environment.apiUrl;
 const TOKEN_KEY = 'kard_token';
@@ -26,6 +27,11 @@ export interface UserSession {
   full_name?: string | null;
   employee_code?: string | null;
   permissions?: string[];
+  /**
+   * Qué incluye el plan del negocio, ya resuelto por el servidor (§2 del contrato).
+   * Llega en `/auth/me`; una sesión recién iniciada o vieja no lo trae hasta consultarlo.
+   */
+  plan?: PlanAccess | null;
 }
 
 /** Respuesta de GET /auth/me. */
@@ -40,6 +46,8 @@ export interface MeResponse {
   full_name: string | null;
   employee_code: string | null;
   permissions: string[];
+  /** Lo recibe todo el equipo, no solo el dueño. */
+  plan?: PlanAccess | null;
 }
 
 /** Sesión consumer (cliente B2C) — token de /consumers/login */
@@ -146,11 +154,25 @@ export class AuthService {
           full_name: me.full_name,
           employee_code: me.employee_code,
           permissions: me.permissions,
+          plan: me.plan ?? null,
         };
-        localStorage.setItem(USER_KEY, JSON.stringify(session));
-        this.profile.set(session);
+        this.saveProfile(session);
       }),
     );
+  }
+
+  /**
+   * Reemplaza el plan guardado sin volver a consultar `/auth/me`: por ejemplo,
+   * con el `access` que devuelve un cambio de plan, para redibujar el menú al instante.
+   */
+  setPlan(plan: PlanAccess | null): void {
+    const p = this.profile();
+    if (p) this.saveProfile({ ...p, plan });
+  }
+
+  private saveProfile(session: UserSession): void {
+    localStorage.setItem(USER_KEY, JSON.stringify(session));
+    this.profile.set(session);
   }
 
   /**

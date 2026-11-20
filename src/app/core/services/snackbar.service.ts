@@ -19,8 +19,16 @@ export class SnackbarService {
     setTimeout(() => this.dismiss(id), duration);
   }
 
+  /**
+   * Mientras un modal ya explica el error (p. ej. el aviso del plan), los
+   * toasts de error que dirían lo mismo no se muestran.
+   */
+  private errorsMuted = false;
+
+  muteErrors(muted: boolean): void { this.errorsMuted = muted; }
+
   success(message: string) { this.show(message, 'success'); }
-  error(message: string)   { this.show(message, 'error', 4500); }
+  error(message: string)   { if (!this.errorsMuted) this.show(message, 'error', 4500); }
   warning(message: string) { this.show(message, 'warning'); }
   info(message: string)    { this.show(message, 'info'); }
 

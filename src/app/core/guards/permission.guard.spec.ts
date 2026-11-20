@@ -17,6 +17,9 @@ import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 import { AuthService } from '../services/auth.service';
 import { PERM, fallbackPermissions, levelOf, positionLabel } from '../permissions';
 import { permissionGuard } from './auth.guard';
+import { DEV_PLAN_PRESETS } from '../plan-logic';
+import { PlanNoticeService } from '../services/plan-notice.service';
+import { Channel } from '../models/plan.models';
 
 const TOKEN_KEY = 'kard_token';
 const USER_KEY = 'kard_user';
@@ -24,17 +27,18 @@ const USER_KEY = 'kard_user';
 const EMPLEADO = ['cash:view', 'devices:unlock', 'pos:sell', 'products:read'];
 const SUPERVISOR = [...EMPLEADO, 'devices:authorize', 'products:write', 'inventory:adjust', 'cash:manage', 'sales:read', 'sales:manage', 'team:manage', 'dashboard:view'];
 
-function sesion(role: string, permissions?: string[], position?: string): void {
+function sesion(role: string, permissions?: string[], position?: string, plan?: string): void {
   localStorage.setItem(TOKEN_KEY, 'token');
   localStorage.setItem(USER_KEY, JSON.stringify({
     kind: 'b2b', user_id: 'u_1', tenant_id: 't_1', role, business_type: 'restaurant',
     ...(permissions ? { permissions } : {}),
     ...(position ? { position } : {}),
+    ...(plan ? { plan: DEV_PLAN_PRESETS[plan](Date.now()) } : {}),
   }));
 }
 
-function correr(permission: Parameters<typeof permissionGuard>[0]): boolean | UrlTree {
-  return TestBed.runInInjectionContext(() => permissionGuard(permission)({} as any, {} as any)) as boolean | UrlTree;
+function correr(permission: Parameters<typeof permissionGuard>[0], channel?: Channel): boolean | UrlTree {
+  return TestBed.runInInjectionContext(() => permissionGuard(permission, channel)({} as any, {} as any)) as boolean | UrlTree;
 }
 
 describe('PC-09 · Permisos en la pantalla', () => {
@@ -145,6 +149,44 @@ describe('PC-09 · Permisos en la pantalla', () => {
         const pedido = home === '/dashboard' ? PERM.dashboardView : home === '/dashboard/cobrar' ? PERM.posSell : PERM.productsRead;
         expect(correr(pedido)).toBe(true);
       }
+    });
+  });
+
+  describe('permissionGuard con la mitad del plan', () => {
+    const DUENO = Object.values(PERM);
+
+    it('con la mitad en su plan, pasa', () => {
+      sesion('staff', EMPLEADO, 'empleado', 'starter-pos');
+      expect(correr(PERM.posSell, 'pos')).toBe(true);
+    });
+
+    it('un empleado de un Starter de tienda no entra a Cobrar: cae en Productos, sin aviso', () => {
+      sesion('staff', EMPLEADO, 'empleado', 'starter-tienda');
+      expect(destino(correr(PERM.posSell, 'pos'))).toBe('/dashboard/products');
+      expect(TestBed.inject(PlanNoticeService).current()).toBeNull();
+    });
+
+    it('el dueño de un Starter de POS pide Órdenes: va al inicio y ve qué incluye Pro', () => {
+      sesion('business_admin', DUENO, 'dueno', 'starter-pos');
+      expect(destino(correr(PERM.salesRead, 'store'))).toBe('/dashboard');
+      expect(TestBed.inject(PlanNoticeService).current()?.title).toBe('La tienda en línea es parte de Pro');
+    });
+
+    it('en Pro tiene las dos mitades', () => {
+      sesion('business_admin', DUENO, 'dueno', 'pro');
+      expect(correr(PERM.posSell, 'pos')).toBe(true);
+      expect(correr(PERM.salesRead, 'store')).toBe(true);
+    });
+
+    it('en solo lectura no se cierra ninguna pantalla: el servidor rechaza los cambios', () => {
+      sesion('business_admin', DUENO, 'dueno', 'vencido');
+      expect(correr(PERM.posSell, 'pos')).toBe(true);
+      expect(correr(PERM.billingManage)).toBe(true);
+    });
+
+    it('sin el permiso del puesto no importa la mitad', () => {
+      sesion('staff', EMPLEADO, 'empleado', 'pro');
+      expect(destino(correr(PERM.cashManage, 'pos'))).toBe('/dashboard/cobrar');
     });
   });
 

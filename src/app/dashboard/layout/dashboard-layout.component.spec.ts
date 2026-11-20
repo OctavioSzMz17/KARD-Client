@@ -16,16 +16,19 @@ import { DashboardLayoutComponent } from './dashboard-layout.component';
 import { AuthService } from '../../core/services/auth.service';
 import { OrdersBoardService } from '../../core/services/orders-board.service';
 import { PERM } from '../../core/permissions';
+import { DEV_PLAN_PRESETS } from '../../core/plan-logic';
+import { PlanNoticeService } from '../../core/services/plan-notice.service';
 
 const EN_UNA_HORA = () => new Date(Date.now() + 3_600_000).toISOString();
 
 const EMPLEADO = [PERM.posSell, PERM.productsRead, PERM.cashView, PERM.devicesUnlock];
 const GERENCIA = [...EMPLEADO, PERM.devicesAuthorize, PERM.cashManage, PERM.dashboardView, PERM.salesRead, PERM.teamManage];
 
-function abrir(position: string, permissions: string[], role = 'staff') {
+function abrir(position: string, permissions: string[], role = 'staff', plan?: string) {
   TestBed.inject(AuthService).profile.set({
     kind: 'b2b', user_id: 'u_1', tenant_id: 't_1', role, business_type: 'restaurant',
     position, position_label: position, full_name: 'Eva Prueba', employee_code: '0004', permissions,
+    ...(plan ? { plan: DEV_PLAN_PRESETS[plan](Date.now()) } : {}),
   } as any);
   const fixture = TestBed.createComponent(DashboardLayoutComponent);
   fixture.detectChanges();
@@ -109,6 +112,45 @@ describe('PC-14 · Menú y salida del panel', () => {
       fixture.destroy();
       expect(board.running).toBe(false);
       expect(board.queue()).toBeNull();
+    });
+  });
+
+  describe('mitades del plan en el menú', () => {
+    const TODO = Object.values(PERM);
+    const conCandado = (f: ReturnType<typeof abrir>) => f.componentInstance.visibleNav().filter(i => i.locked).map(i => i.label);
+
+    it('el dueño de un Starter de POS ve Órdenes con candado y la etiqueta Pro', () => {
+      const f = abrir('dueno', TODO, 'business_admin', 'starter-pos');
+      expect(conCandado(f)).toEqual(['Órdenes']);
+      const lock = (f.nativeElement as HTMLElement).querySelector('.nav-item.locked');
+      expect(lock?.textContent).toContain('Órdenes');
+      expect(lock?.textContent).toContain('Pro');
+    });
+
+    it('el dueño de un Starter de tienda ve Cobrar, Caja y Escanear con candado', () => {
+      const f = abrir('dueno', TODO, 'business_admin', 'starter-tienda');
+      expect(conCandado(f)).toEqual(['Cobrar', 'Caja', 'Escanear']);
+    });
+
+    it('tocar el candado abre el aviso de Pro', () => {
+      const f = abrir('dueno', TODO, 'business_admin', 'starter-pos');
+      ((f.nativeElement as HTMLElement).querySelector('.nav-item.locked') as HTMLButtonElement).click();
+      expect(TestBed.inject(PlanNoticeService).current()?.title).toBe('La tienda en línea es parte de Pro');
+    });
+
+    it('el equipo no ve lo que el plan no incluye', () => {
+      const items = abrir('gerente', GERENCIA, 'staff', 'starter-pos').componentInstance.visibleNav().map(i => i.label);
+      expect(items).not.toContain('Órdenes');
+      expect(items).toContain('Cobrar');
+    });
+
+    it('un empleado de un Starter de tienda solo ve Productos', () => {
+      const items = abrir('empleado', EMPLEADO, 'staff', 'starter-tienda').componentInstance.visibleNav().map(i => i.label);
+      expect(items).toEqual(['Productos']);
+    });
+
+    it('en Pro no hay candados', () => {
+      expect(conCandado(abrir('dueno', TODO, 'business_admin', 'pro'))).toEqual([]);
     });
   });
 

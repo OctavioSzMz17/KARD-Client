@@ -1,7 +1,11 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { PlanNoticeService } from '../services/plan-notice.service';
+import { PlanStore } from '../store/plan.store';
+import { Channel } from '../models/plan.models';
 import { Permission } from '../permissions';
+import { lockedNotice } from '../plan-notice.logic';
 
 /** Rutas del dashboard B2B: exige sesión de negocio (no consumer). */
 export const authGuard: CanActivateFn = () => {
@@ -42,19 +46,23 @@ export const consumerGuard: CanActivateFn = () => {
 };
 
 /**
- * Pantalla del panel que exige un permiso. Quien no lo tiene no ve un error: lo
- * mandamos a la primera pantalla que sí le toca.
+ * Pantalla del panel que exige un permiso y, si se indica, una mitad del plan
+ * (Cobrar = `pos:sell` + `pos`). Quien no puede entrar no ve un error: lo
+ * mandamos a la primera pantalla que sí le toca. Si lo que falta es la mitad,
+ * el dueño además ve el aviso de qué incluye Pro; el equipo solo cambia de pantalla.
  *
  * Es comodidad, no seguridad: aunque alguien escribiera la dirección o
  * cambiara lo guardado en su navegador, el servidor rechaza cada operación que
- * su puesto no permite.
+ * su puesto (403) o su plan (402) no permite.
  */
-export const permissionGuard = (permission: Permission): CanActivateFn => () => {
+export const permissionGuard = (permission: Permission, channel?: Channel): CanActivateFn => () => {
   const auth = inject(AuthService);
+  const plan = inject(PlanStore);
   const router = inject(Router);
 
-  if (auth.can(permission)) return true;
+  if (!auth.can(permission)) return router.parseUrl(plan.homeRoute());
+  if (!channel || plan.has(channel)) return true;
 
-  const home = auth.homeRoute();
-  return router.parseUrl(home);
+  if (plan.isOwner()) inject(PlanNoticeService).show(lockedNotice(channel, true));
+  return router.parseUrl(plan.homeRoute());
 };

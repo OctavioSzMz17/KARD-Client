@@ -150,6 +150,30 @@
     cursor: not-allowed;
     pointer-events: none;
   }
+
+  // Mitad que el plan no incluye: se ve atenuada pero se puede tocar (abre el aviso de Pro).
+  &.locked {
+    width: 100%;
+    background: none;
+    font-family: inherit;
+    text-align: left;
+    color: $text-faint;
+  }
+}
+
+.nav-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 195, 139, 0.4);
+  background: rgba(242, 195, 139, 0.1);
+  color: $accent;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .nav-icon {
