@@ -90,6 +90,12 @@
   }
 </div>
 
+@if (downgradeCard(); as card) {
+  @if (info(); as current) {
+    <app-downgrade-dialog [card]="card" [info]="current" (closed)="downgradeCard.set(null)" />
+  }
+}
+
 @if (checkoutCard(); as card) {
   <app-checkout-dialog [card]="card" [initialChannel]="lastChannel()" (closed)="checkoutCard.set(null)" />
 }

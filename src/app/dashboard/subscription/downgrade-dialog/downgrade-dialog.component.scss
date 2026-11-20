@@ -1,0 +1,75 @@
+@use '../../dark' as *;
+@use '../dialog' as d;
+
+.scrim  { @include d.scrim; }
+.dialog { @include d.box(540px); }
+
+.lead { @include d.lead; }
+
+.mitades { @include d.mitades; }
+.mitad {
+  @include d.mitad;
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+.mitad-detalle { @include d.mitad-detalle; }
+
+.subtitle {
+  margin-top: 22px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $text-faint;
+}
+
+// Lo que pierde: viñeta neutra (un guion), sin alarma.
+.losses {
+  @include d.icon-list($text-faint);
+  margin-top: 10px;
+}
+
+// El dinero de una baja se lee, no se celebra: sin el oro del acento.
+.money {
+  @include d.money;
+  & { background: rgba(244, 238, 230, 0.05); border-color: $line-strong; }
+
+  strong { color: $text; }
+  .after { margin-top: 6px; color: $text-faint; font-size: 13px; }
+
+  &.error {
+    border-color: rgba(248, 113, 113, 0.45);
+    background: rgba(248, 113, 113, 0.08);
+  }
+}
+
+.link {
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: $accent;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.skeleton { @include d.skeleton; }
+
+.confirm-error {
+  margin-top: 14px;
+  color: $danger;
+  font-size: 13.5px;
+}
+
+.actions { @include d.actions; }
+
+.ghost { @include ghost; padding: 12px 20px; }
+
+// Confirmar va en color neutro: no se empuja la decisión de bajar.
+.neutral {
+  @include ghost;
+  padding: 12px 20px;
+  border-color: $line-strong;
+  background: rgba(244, 238, 230, 0.12);
+}

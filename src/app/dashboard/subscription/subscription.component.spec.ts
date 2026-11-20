@@ -48,10 +48,10 @@ describe('planButton (§14 C)', () => {
     expect(isCurrentPlan(STARTER, starter)).toBe(true);
   });
 
-  it('con suscripción, subir abre el flujo 15B; bajar (15C) aún no se puede usar', () => {
+  it('con suscripción, subir abre el flujo 15B y bajar el 15C', () => {
     const pro = info({ plan: 'pro', has_subscription: true, subscription_status: 'active' });
     expect(planButton(ENTERPRISE, pro)).toEqual({ label: 'Subir a Enterprise', action: 'upgrade', disabled: false });
-    expect(planButton(STARTER, pro)).toEqual({ label: 'Cambiar a Starter', action: 'downgrade', disabled: true });
+    expect(planButton(STARTER, pro)).toEqual({ label: 'Cambiar a Starter', action: 'downgrade', disabled: false });
   });
 });
 
@@ -188,6 +188,17 @@ describe('SubscriptionComponent', () => {
       f.detectChanges();
       expect(el(f).querySelector('.plan-actual h2')?.textContent).toBe('Pro');
     });
+  });
+
+  it('flujo 15C: "Cambiar a Starter" abre el modal de bajar de plan', () => {
+    const f = abrir();
+    planRequest().flush(info({ plan: 'pro', has_subscription: true, subscription_status: 'active', access: DEV_PLAN_PRESETS['pro-desde-pos'](Date.now()) }));
+    f.detectChanges();
+    const tarjeta = [...el(f).querySelectorAll('.plan')].find(p => p.querySelector('h2')?.textContent === 'Starter')!;
+    (tarjeta.querySelector('.plan-btn') as HTMLButtonElement).click();
+    f.detectChanges();
+    expect(el(f).querySelector('app-downgrade-dialog h2')?.textContent).toBe('Cambiar a Starter');
+    http.expectOne(r => r.url.endsWith('/change-plan/preview'));
   });
 
   describe('al volver de Stripe', () => {

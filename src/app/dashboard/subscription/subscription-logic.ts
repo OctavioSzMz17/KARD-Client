@@ -71,12 +71,46 @@ export function planButton(card: PlanCard, info: PlanInfo | null): PlanButton {
 
   if (info.plan === card.key) return { label: 'Tu plan', action: 'none', disabled: true };
 
-  // Subir es el flujo 15B. Bajar (15C) aún no existe: el botón se ve pero no se
-  // puede usar (checkout cobraría dos veces).
+  // Subir es el flujo 15B; bajar, el 15C. Los dos prorratean sobre la suscripción.
   const up = !info.plan || RANK[card.key] > RANK[info.plan];
   return up
     ? { label: `Subir a ${card.nombre}`, action: 'upgrade', disabled: false }
-    : { label: `Cambiar a ${card.nombre}`, action: 'downgrade', disabled: true };
+    : { label: `Cambiar a ${card.nombre}`, action: 'downgrade', disabled: false };
+}
+
+/** Topes de Starter, solo para explicar lo que cambia (los aplica el servidor). */
+const STARTER_MAX_PRODUCTS = 50;
+const STARTER_MAX_USERS = 2;
+
+/**
+ * Lo que pierde al bajar (§15C), concreto a su negocio: la mitad que deja, los
+ * topes contra lo que ya tiene (nada se borra ni se da de baja) y las funciones
+ * que se apagan. Para Starter, `channel` es la mitad que conservaría.
+ */
+export function downgradeLosses(target: Plan, channel: Channel | null, info: PlanInfo): string[] {
+  if (target !== 'starter') {
+    return target === 'pro' && info.plan === 'enterprise'
+      ? ['Varias sucursales', 'Soporte prioritario']
+      : [];
+  }
+
+  const losses: string[] = [];
+  if (channel === 'pos') losses.push('Tu tienda dejará de verse en línea y no recibirás pedidos');
+  if (channel === 'store') losses.push('El punto de venta deja de estar disponible; tus ventas y cortes no se borran');
+
+  const products = info.usage?.products ?? 0;
+  losses.push(products > STARTER_MAX_PRODUCTS
+    ? `No podrás agregar más de ${STARTER_MAX_PRODUCTS} productos (tienes ${products}; ninguno se borra)`
+    : `Hasta ${STARTER_MAX_PRODUCTS} productos`);
+
+  const users = info.usage?.users ?? 0;
+  losses.push(users > STARTER_MAX_USERS
+    ? `Tu equipo queda en ${STARTER_MAX_USERS} personas (tienes ${users}; nadie se da de baja, pero no podrás agregar ni reactivar)`
+    : `Hasta ${STARTER_MAX_USERS} personas en el equipo`);
+
+  losses.push('Se apagan los envíos a domicilio', 'Ya no podrás descargar el reporte de ventas');
+  if (info.plan === 'enterprise') losses.push('Varias sucursales', 'Soporte prioritario');
+  return losses;
 }
 
 export function planCard(plan: Plan): PlanCard {

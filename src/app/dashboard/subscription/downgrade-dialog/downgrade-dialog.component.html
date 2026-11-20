@@ -1,0 +1,72 @@
+<div class="scrim" (click)="close()" aria-hidden="true"></div>
+<section class="dialog" role="dialog" aria-modal="true" aria-labelledby="downgrade-title">
+
+  @if (paymentUrl()) {
+    <!-- Poco común al bajar, pero posible: el banco pidió verificar la factura. El plan NO cambió. -->
+    <h2 id="downgrade-title" #heading tabindex="-1">No pudimos aplicar el cambio</h2>
+    <p class="lead">Tu plan sigue igual. Revisa la factura en Stripe y el cambio se aplica solo en cuanto se confirme.</p>
+    <div class="actions">
+      <button type="button" class="ghost" (click)="close()">Cerrar</button>
+      <button type="button" class="neutral" (click)="payNow()">Revisar factura</button>
+    </div>
+  } @else {
+    <h2 id="downgrade-title" #heading tabindex="-1">Cambiar a {{ card().nombre }}</h2>
+
+    @if (needsChannel()) {
+      <p class="lead" id="downgrade-channel">Starter incluye una mitad. ¿Cuál conservas?</p>
+      <div class="mitades" role="radiogroup" aria-labelledby="downgrade-channel">
+        @for (c of channels; track c.key) {
+          <button type="button" class="mitad" role="radio"
+            [class.selected]="channel() === c.key" [attr.aria-checked]="channel() === c.key"
+            [disabled]="confirming()" (click)="pick(c.key)">
+            <strong>{{ c.nombre }}</strong>
+            <span class="mitad-detalle">{{ c.detalle }}</span>
+          </button>
+        }
+      </div>
+    }
+
+    @if (!needsChannel() || channel()) {
+      @if (losses().length) {
+        <p class="subtitle">Lo que cambia</p>
+        <ul class="losses">
+          @for (l of losses(); track l) {
+            <li>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              {{ l }}
+            </li>
+          }
+        </ul>
+      }
+
+      @if (loadingPreview()) {
+        <div class="skeleton" aria-label="Calculando el cambio"><i class="block"></i></div>
+      } @else if (previewError()) {
+        <div class="money error" role="alert">
+          <p>{{ previewError() }}</p>
+          <button type="button" class="link" (click)="retryPreview()">Intentar de nuevo</button>
+        </div>
+      } @else if (preview(); as p) {
+        <div class="money">
+          @if (p.charged_now) {
+            <p><strong>{{ amount() }} hoy</strong> por el cambio.</p>
+          } @else {
+            <p><strong>No se cobra nada hoy.</strong> Tu siguiente factura será de {{ amount() }}, con el abono de lo no usado de {{ currentName() }}.</p>
+          }
+          <p class="after">El cambio aplica en cuanto confirmes. Nada se borra.</p>
+        </div>
+      }
+    }
+
+    @if (confirmError()) {
+      <p class="confirm-error" role="alert">{{ confirmError() }}</p>
+    }
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="close()" [disabled]="confirming()">Mantener {{ currentName() }}</button>
+      <button type="button" class="neutral" (click)="confirm()" [disabled]="!canConfirm()">
+        {{ confirming() ? 'Cambiando…' : 'Cambiar a ' + card().nombre }}
+      </button>
+    </div>
+  }
+</section>

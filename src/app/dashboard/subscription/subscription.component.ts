@@ -9,6 +9,7 @@ import { PlanStore } from '../../core/store/plan.store';
 import { UpgradeService } from '../../core/services/upgrade.service';
 import { BRAND_NAME } from '../../shared/brand';
 import { CheckoutDialogComponent } from './checkout-dialog/checkout-dialog.component';
+import { DowngradeDialogComponent } from './downgrade-dialog/downgrade-dialog.component';
 import {
   ACTIVATION_POLL_MS, ACTIVATION_POLL_TRIES, PLAN_CARDS, PlanButton, PlanCard, isCurrentPlan, planButton,
 } from './subscription-logic';
@@ -21,7 +22,7 @@ type Activation = 'waiting' | 'slow' | null;
 
 @Component({
   selector: 'app-subscription',
-  imports: [DatePipe, TitleCasePipe, CheckoutDialogComponent],
+  imports: [DatePipe, TitleCasePipe, CheckoutDialogComponent, DowngradeDialogComponent],
   templateUrl: './subscription.component.html',
   styleUrl: './subscription.component.scss',
 })
@@ -42,6 +43,9 @@ export class SubscriptionComponent implements OnInit {
 
   /** El plan cuyo flujo de primer pago (15A) está abierto. */
   checkoutCard = signal<PlanCard | null>(null);
+
+  /** El plan al que quiere bajar (15C), con su modal abierto. */
+  downgradeCard = signal<PlanCard | null>(null);
 
   readonly planes = PLAN_CARDS;
 
@@ -112,12 +116,13 @@ export class SubscriptionComponent implements OnInit {
     return isCurrentPlan(card, this.info());
   }
 
-  /** El botón de una tarjeta: sin suscripción, primer pago (15A); con ella, subir (15B). */
+  /** El botón de una tarjeta: sin suscripción, primer pago (15A); con ella, subir (15B) o bajar (15C). */
   choose(card: PlanCard): void {
     const b = this.button(card);
     if (b.disabled) return;
     if (b.action === 'checkout') this.checkoutCard.set(card);
     if (b.action === 'upgrade') this.upgrades.open(card.key);
+    if (b.action === 'downgrade') this.downgradeCard.set(card);
   }
 
   /**
