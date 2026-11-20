@@ -479,9 +479,6 @@ h1 {
   background: linear-gradient(135deg, #4a4540, #0b0b11 58%, #07080c);
   // La portada se despliega de arriba hacia abajo, como la tapa del pan.
   animation: despliega 0.7s cubic-bezier(0.2, 0.7, 0.3, 1) calc(var(--base) + var(--i) * 0.12s + 0.4s) backwards;
-
-  &.cover-restaurant { background: linear-gradient(135deg, #4a4540, #1c1917 55%, #07080c); }
-  &.cover-optician   { background: linear-gradient(135deg, #3f4348, #0b0b11 55%, #07080c); }
 }
 
 @keyframes despliega {

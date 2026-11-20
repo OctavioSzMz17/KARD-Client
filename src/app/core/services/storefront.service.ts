@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { MemoCache } from '../utils/memo-cache';
 import { ProductImage } from './image.service';
 import { environment } from '../../../environments/environment';
+import type { BusinessType } from '../../shared/business-types';
 
 const BASE = environment.serverUrl;
 
@@ -50,7 +51,7 @@ export interface StorefrontFulfillment {
 export interface StorefrontInfo {
   slug: string;
   business_name: string;
-  business_type: 'restaurant' | 'optician';
+  business_type: BusinessType;
   // branding (ya implementado en el backend)
   logo_url?:   string | null;
   banner_url?: string | null;

@@ -9,6 +9,7 @@ import { PERM, Permission, positionLabel } from '../../core/permissions';
 import { DeviceService } from '../../core/services/device.service';
 import { OrdersBoardService } from '../../core/services/orders-board.service';
 import { BRAND_NAME } from '../../shared/brand';
+import { businessTypeInfo } from '../../shared/business-types';
 import { Channel } from '../../core/models/plan.models';
 import { PlanStore } from '../../core/store/plan.store';
 import { PlanNoticeService } from '../../core/services/plan-notice.service';
@@ -39,11 +40,8 @@ interface PageInfo {
   dark: boolean;
 }
 
-const BUSINESS_LABEL: Record<string, string> = {
-  restaurant: 'Restaurante',
-  optician: 'Óptica',
-  platform: 'Plataforma',
-};
+const businessLabel = (type: string | undefined): string =>
+  type === 'platform' ? 'Plataforma' : (businessTypeInfo(type)?.label ?? 'Negocio');
 
 const ROLE_LABEL: Record<string, string> = {
   business_admin: 'Administrador',
@@ -147,7 +145,7 @@ export class DashboardLayoutComponent implements OnInit, OnDestroy {
   readonly chipLabel = computed(() => {
     const p = this.auth.profile();
     const puesto = p?.position_label || positionLabel(p?.position) || ROLE_LABEL[p?.role ?? ''] || 'Equipo';
-    return p?.full_name ? `${p.full_name} · ${puesto}` : `${BUSINESS_LABEL[p?.business_type ?? ''] ?? 'Negocio'} · ${puesto}`;
+    return p?.full_name ? `${p.full_name} · ${puesto}` : `${businessLabel(p?.business_type)} · ${puesto}`;
   });
 
   constructor() {

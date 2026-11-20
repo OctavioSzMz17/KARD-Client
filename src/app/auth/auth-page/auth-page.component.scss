@@ -719,6 +719,8 @@
 .business-type-group { margin-bottom: 14px; }
 
 .type-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+// Con un número impar de giros, el último ocupa todo el ancho en vez de quedar suelto.
+.type-group > .type-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
 
 .type-card {
   position: relative;

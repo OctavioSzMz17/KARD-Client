@@ -9,6 +9,7 @@ import {
 import { environment } from '../../../environments/environment';
 import { PERM, Permission, fallbackPermissions, positionLabel } from '../permissions';
 import { PlanAccess } from '../models/plan.models';
+import type { BusinessType } from '../../shared/business-types';
 
 const API_BASE = environment.apiUrl;
 const TOKEN_KEY = 'kard_token';
@@ -20,7 +21,7 @@ export interface UserSession {
   user_id: string;
   tenant_id: string;
   role: string;
-  business_type: 'restaurant' | 'optician' | 'platform';
+  business_type: BusinessType | 'platform';
   /** Puesto, nombre y permisos: los manda el servidor. Una sesión vieja no los trae. */
   position?: string;
   position_label?: string;

@@ -5,11 +5,8 @@ import { filter } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { StorefrontStore } from '../../core/store/storefront.store';
 import { BRAND_NAME } from '../../shared/brand';
+import { businessTypeInfo } from '../../shared/business-types';
 
-const TYPE_LABELS: Record<string, string> = {
-  restaurant: 'Restaurante',
-  optician:   'Óptica',
-};
 
 @Component({
   selector: 'app-storefront-layout',
@@ -74,7 +71,7 @@ export class StorefrontLayoutComponent implements OnInit {
 
   typeLabel = computed(() => {
     const t = this.sf.store()?.business_type;
-    return t ? (TYPE_LABELS[t] ?? t) : '';
+    return t ? (businessTypeInfo(t)?.label ?? t) : '';
   });
 
   storeInitial = computed(() => this.sf.store()?.business_name?.charAt(0)?.toUpperCase() ?? '?');

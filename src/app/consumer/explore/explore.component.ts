@@ -7,17 +7,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { CategoryItem, ExploreService, ExploreStore } from '../../core/services/explore.service';
 import { BUBBLES } from '../../shared/brand-images';
 import { BRAND_NAME } from '../../shared/brand';
+import { businessTypeInfo } from '../../shared/business-types';
 
-const CATEGORY_LABELS: Record<string, string> = {
-  restaurant: 'Restaurantes',
-  optician:   'Ópticas',
-};
-
-// Descripción por defecto mientras el backend no envíe `description`
-const TYPE_TAGLINES: Record<string, string> = {
-  restaurant: 'Platillos preparados al momento para ti.',
-  optician:   'Lentes, armazones y salud visual.',
-};
 
 /**
  * Cuánto tarda en armarse la parte de arriba (encabezado, título, búsqueda,
@@ -149,12 +140,17 @@ export class ExploreComponent implements OnInit {
     for (const v of ['--rx', '--ry', '--px', '--py']) card.style.removeProperty(v);
   }
 
+  /** Trazos del icono de un giro; uno desconocido usa el de la tiendita. */
+  iconPaths(type: string): string[] {
+    return (businessTypeInfo(type) ?? businessTypeInfo('grocery')!).icon;
+  }
+
   categoryLabel(type: string): string {
-    return CATEGORY_LABELS[type] ?? type;
+    return businessTypeInfo(type)?.plural ?? type;
   }
 
   storeDescription(s: ExploreStore): string {
-    return s.tagline || TYPE_TAGLINES[s.business_type] || `Tienda en ${BRAND_NAME}.`;
+    return s.tagline || businessTypeInfo(s.business_type)?.summary || `Tienda en ${BRAND_NAME}.`;
   }
 
   initial(s: ExploreStore): string {

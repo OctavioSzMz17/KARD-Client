@@ -606,6 +606,43 @@
         </div>
       }
 
+      @if (isGeneral()) {
+        <div class="form-divider"><span>Datos del producto</span></div>
+        <div class="form-row">
+          <div class="form-section">
+            <label class="form-label">Unidad</label>
+            <select class="form-input" formControlName="unidad">
+              @for (u of unidades; track u) { <option [value]="u">{{ u }}</option> }
+            </select>
+          </div>
+          <div class="form-section">
+            <label class="form-label">Marca</label>
+            <input class="form-input" formControlName="marca" maxlength="100" placeholder="Opcional"/>
+          </div>
+        </div>
+        <div class="form-section">
+          <label class="form-label">Categoría</label>
+          <input class="form-input" formControlName="categoria_general" maxlength="60" placeholder="Ej. Lácteos, Cuadernos, Tornillería…"/>
+        </div>
+      }
+
+      @if (conStock()) {
+        <div class="form-divider"><span>Existencias</span></div>
+        @if (drawerMode() === 'edit') {
+          <p class="img-empty">Hoy hay {{ editingStock() }} en stock.</p>
+        }
+        <div class="form-row">
+          <div class="form-section">
+            <label class="form-label">{{ drawerMode() === 'add' ? 'Existencias iniciales' : 'Agregar existencias' }}</label>
+            <input class="form-input" type="number" formControlName="stock" min="0" step="1"/>
+          </div>
+          <div class="form-section">
+            <label class="form-label">Avisar si quedan menos de</label>
+            <input class="form-input" type="number" formControlName="low_stock_threshold" min="0" step="1"/>
+          </div>
+        </div>
+      }
+
       <div class="drawer-footer">
         <button type="button" class="btn-ghost-drawer" (click)="closeDrawer()">Cancelar</button>
         <button appWrite type="submit" class="btn-save" [appWriteDisabled]="saving()">

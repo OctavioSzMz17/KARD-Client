@@ -137,24 +137,16 @@
           <div class="business-type-group field-enter">
             <span class="field-label" id="reg-tipo">Tipo de negocio</span>
             <div class="type-group" role="radiogroup" aria-labelledby="reg-tipo">
-              <label class="type-card" [class.active]="typeControl?.value === 'restaurant'">
-                <input type="radio" formControlName="business_type" value="restaurant"/>
-                <svg class="type-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M6 3v7a2 2 0 0 0 2 2v9M10 3v7a2 2 0 0 1-2 2M8 3v5"/>
-                  <path d="M17 21V3c-2.2 1.2-3.5 3.6-3.5 6.5 0 1.6.9 2.5 2 2.5h1.5"/>
-                </svg>
-                <span class="type-text"><strong>Restaurante</strong><small>Comida y bebidas</small></span>
-              </label>
-              <label class="type-card" [class.active]="typeControl?.value === 'optician'">
-                <input type="radio" formControlName="business_type" value="optician"/>
-                <svg class="type-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="6.5" cy="14" r="3.5"/><circle cx="17.5" cy="14" r="3.5"/>
-                  <path d="M10 14h4M3 14 5 7M21 14l-2-7"/>
-                </svg>
-                <span class="type-text"><strong>Óptica</strong><small>Lentes y armazones</small></span>
-              </label>
+              @for (g of giros; track g.key) {
+                <label class="type-card" [class.active]="typeControl?.value === g.key">
+                  <input type="radio" formControlName="business_type" [value]="g.key"/>
+                  <svg class="type-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    @for (d of g.icon; track d) { <path [attr.d]="d"/> }
+                  </svg>
+                  <span class="type-text"><strong>{{ g.label }}</strong><small>{{ g.blurb }}</small></span>
+                </label>
+              }
             </div>
           </div>
 

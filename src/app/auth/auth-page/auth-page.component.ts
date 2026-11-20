@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { BUBBLES, BUSINESS_PHOTO, CLIENT_PHOTO } from '../../shared/brand-images';
 import { BRAND_NAME } from '../../shared/brand';
+import { BUSINESS_TYPES, BusinessType } from '../../shared/business-types';
 
 /** Qué pide la página: entrar o crear cuenta. Sale de la ruta (/login, /register). */
 export type AuthMode = 'login' | 'register';
@@ -54,6 +55,8 @@ function passwordMatchValidator(group: AbstractControl) {
 export class AuthPageComponent {
   /** Nombre del producto en pantalla (ver shared/brand.ts). */
   readonly brand = BRAND_NAME;
+  /** Los giros entre los que elige quien registra su negocio. */
+  readonly giros = BUSINESS_TYPES;
   private fb     = inject(FormBuilder);
   private auth   = inject(AuthService);
   private router = inject(Router);
@@ -71,7 +74,7 @@ export class AuthPageComponent {
     name:          [''],
     // solo registro de negocio
     business_name: [''],
-    business_type: ['restaurant' as 'restaurant' | 'optician'],
+    business_type: ['restaurant' as BusinessType],
     // siempre
     email:         ['', [Validators.required, Validators.email]],
     password:      ['', Validators.required],

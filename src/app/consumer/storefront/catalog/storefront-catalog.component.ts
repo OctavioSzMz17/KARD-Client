@@ -282,6 +282,10 @@ export class StorefrontCatalogComponent implements OnInit, OnDestroy {
       if (m['esfera'] !== undefined && m['cilindro'] !== undefined) chips.push(`${m['esfera']} / ${m['cilindro']}`);
       return chips;
     }
-    return [];
+    // Comercio general: la marca y la unidad de venta.
+    const chips: string[] = [];
+    if (m['marca'])  chips.push(m['marca']);
+    if (m['unidad'] && m['unidad'] !== 'pieza') chips.push(m['unidad']);
+    return chips;
   }
 }

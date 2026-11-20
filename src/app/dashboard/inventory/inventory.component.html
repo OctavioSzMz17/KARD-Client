@@ -338,6 +338,26 @@
         </div>
       }
 
+      @if (isGeneral()) {
+        <div class="form-divider"><span>Datos del producto</span></div>
+        <div class="form-row">
+          <div class="form-section">
+            <label class="form-label">Unidad</label>
+            <select class="form-input" formControlName="unidad">
+              @for (u of unidades; track u) { <option [value]="u">{{ u }}</option> }
+            </select>
+          </div>
+          <div class="form-section">
+            <label class="form-label">Marca</label>
+            <input class="form-input" formControlName="marca" maxlength="100" placeholder="Opcional"/>
+          </div>
+        </div>
+        <div class="form-section">
+          <label class="form-label">Categoría</label>
+          <input class="form-input" formControlName="categoria_general" maxlength="60" placeholder="Ej. Lácteos, Cuadernos, Tornillería…"/>
+        </div>
+      }
+
       <div class="drawer-footer">
         <button type="button" class="btn-ghost-drawer" (click)="closeDrawer()">Cancelar</button>
         <button appWrite type="submit" class="btn-save" [appWriteDisabled]="saving()">

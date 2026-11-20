@@ -14,6 +14,7 @@ import { printSheet } from '../pos/print';
 import { LabelSheetComponent, LabelItem } from './label-sheet.component';
 import { LABEL_MODES, LabelMode, barcodeSvg, labelCode, qrSvg, usesFallbackId } from './labels';
 import { sizedImage } from '../../shared/image-url';
+import { GENERAL_UNITS, generalMetadata, isGeneralCommerce } from '../../shared/business-types';
 
 export type { Product };
 
@@ -168,6 +169,13 @@ export class ProductsComponent implements OnInit {
     cilindro:               ['0.00'],
     eje:                    [0],
     material:               ['CR-39'],
+    // comercio general
+    unidad:                 ['pieza'],
+    marca:                  [''],
+    categoria_general:      [''],
+    // existencias (todo giro menos restaurante: ahí se agotan los insumos, no el platillo)
+    stock:                  [0, [Validators.min(0)]],
+    low_stock_threshold:    [5, [Validators.min(0)]],
   });
 
   // ── Computed ──────────────────────────────────────────
@@ -189,6 +197,12 @@ export class ProductsComponent implements OnInit {
 
   isRestaurant = computed(() => this.session?.business_type === 'restaurant');
   isOptician   = computed(() => this.session?.business_type === 'optician');
+  isGeneral    = computed(() => isGeneralCommerce(this.session?.business_type));
+  /** Existencias propias en el producto: en todo giro menos el restaurante. */
+  conStock     = computed(() => !this.isRestaurant());
+  readonly unidades = GENERAL_UNITS;
+  /** Existencias del producto que se edita (se cambian con "Agregar existencias"). */
+  editingStock = signal(0);
 
   primaryImage = (images: ProductImage[]) =>
     images.find(i => i.sort_order === 0) ?? images[0] ?? null;
@@ -232,7 +246,8 @@ export class ProductsComponent implements OnInit {
     this.form.reset({
       price: 0, sku: '', barcode: '',
       categoria: 'plato_fuerte', tiempo_preparacion_min: 15, picante: false,
-      esfera: '0.00', cilindro: '0.00', eje: 0, material: 'CR-39'
+      esfera: '0.00', cilindro: '0.00', eje: 0, material: 'CR-39',
+      unidad: 'pieza', marca: '', categoria_general: '', stock: 0, low_stock_threshold: 5
     });
     this.drawerOpen.set(true);
   }
@@ -240,6 +255,7 @@ export class ProductsComponent implements OnInit {
   openEdit(p: Product): void {
     this.drawerMode.set('edit');
     this.editingId.set(p.product_id);
+    this.editingStock.set(p.inventory_count);
     this.selectedAlergenos = p.metadata?.['alergenos'] ?? [];
     this.newImageUrl = '';
     this.newImageAlt = '';
@@ -266,6 +282,11 @@ export class ProductsComponent implements OnInit {
       cilindro:               p.metadata?.['cilindro']               ?? '0.00',
       eje:                    p.metadata?.['eje']                    ?? 0,
       material:               p.metadata?.['material']               ?? 'CR-39',
+      unidad:                 p.metadata?.['unidad']                 ?? 'pieza',
+      marca:                  p.metadata?.['marca']                  ?? '',
+      categoria_general:      p.metadata?.['categoria']              ?? '',
+      stock:                  0,
+      low_stock_threshold:    p.low_stock_threshold,
     });
     this.showDrawerLabel(p);
     this.drawerOpen.set(true);
@@ -415,25 +436,45 @@ export class ProductsComponent implements OnInit {
     const metadata = this.isRestaurant()
       ? { categoria: v.categoria, tiempo_preparacion_min: v.tiempo_preparacion_min, picante: v.picante,
           ...(this.selectedAlergenos.length ? { alergenos: this.selectedAlergenos } : {}) }
-      : { esfera: v.esfera, cilindro: v.cilindro, eje: v.eje, material: v.material };
+      : this.isOptician()
+        ? { esfera: v.esfera, cilindro: v.cilindro, eje: v.eje, material: v.material }
+        : generalMetadata({ unidad: v.unidad, marca: v.marca, categoria_general: v.categoria_general });
 
-    // Finished goods don't track their own stock count — restaurants/opticians
-    // can't sensibly say "I have 3 lasagna plates left". Stock tracking applies
-    // to insumos only (see Inventory page). Send neutral defaults.
+    // El platillo de un restaurante no lleva existencias (se acaban sus insumos, ver
+    // Inventario). En cualquier otro giro el producto es una pieza que se cuenta: al
+    // crearlo se captura cuántas hay; después solo se le agregan con "Agregar existencias".
+    const id = this.editingId();
+    const conStock = this.conStock();
     const body = { product_type: 'final', name: v.name, description: v.description || '',
-                   price: v.price, inventory_count: 0, low_stock_threshold: 1, metadata,
+                   price: v.price,
+                   inventory_count: conStock && !id ? (v.stock ?? 0) : 0,
+                   low_stock_threshold: conStock ? (v.low_stock_threshold ?? 1) : 1, metadata,
                    // Cadena vacía = sin código (en edición, la API la entiende como "quitar").
                    sku: (v.sku ?? '').trim(), barcode: (v.barcode ?? '').trim() };
-
-    const id = this.editingId();
 
     if (id) {
       // ── Edit ──
       this.store.update(id, body).subscribe({
         next: () => {
-          this.saving.set(false);
-          this.closeDrawer();
-          this.snack.success('Producto actualizado.');
+          const agregar = conStock ? Math.floor(Number(v.stock) || 0) : 0;
+          if (agregar <= 0) {
+            this.saving.set(false);
+            this.closeDrawer();
+            this.snack.success('Producto actualizado.');
+            return;
+          }
+          // Las existencias solo cambian por su propio endpoint, que deja la bitácora.
+          this.store.restock(id, agregar, 'Entrada desde el producto').subscribe({
+            next: () => {
+              this.saving.set(false);
+              this.closeDrawer();
+              this.snack.success(`Producto actualizado. Se agregaron ${agregar} al stock.`);
+            },
+            error: (err: any) => {
+              this.saving.set(false);
+              this.snack.error(err.error?.error ?? 'Se guardó el producto, pero no se pudo agregar el stock.');
+            }
+          });
         },
         error: (err: any) => {
           this.saving.set(false);
@@ -710,6 +751,6 @@ export class ProductsComponent implements OnInit {
   metaLabel(p: Product): string {
     if (this.isRestaurant()) return p.metadata?.['categoria'] ?? '';
     if (this.isOptician())   return `${p.metadata?.['esfera']} / ${p.metadata?.['cilindro']}`;
-    return '';
+    return p.metadata?.['marca'] ?? p.metadata?.['categoria'] ?? '';
   }
 }

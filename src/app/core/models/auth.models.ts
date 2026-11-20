@@ -1,3 +1,5 @@
+import type { BusinessType } from '../../shared/business-types';
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -27,7 +29,7 @@ export interface ConsumerLoginResponse {
 /** Auto-registro de un negocio (POST /auth/register-tenant). */
 export interface TenantRegisterRequest {
   business_name: string;
-  business_type: 'restaurant' | 'optician';
+  business_type: BusinessType;
   email: string;
   password: string;
 }

@@ -4,6 +4,7 @@ import { AuthService, UserSession } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { Branding, BrandingService } from '../../core/services/branding.service';
 import { BRAND_NAME } from '../../shared/brand';
+import { businessTypeInfo } from '../../shared/business-types';
 
 // Defaults de ZNVX BX (mismos que usa el storefront del cliente)
 const DEFAULT_PRIMARY = '#f2c38b';
@@ -11,6 +12,35 @@ const DEFAULT_ACCENT  = '#c8914a';
 
 interface SampleProduct { name: string; desc: string; price: string; chip: string; }
 interface Preset { label: string; primary: string; accent: string; }
+
+/** Productos de ejemplo de la vista previa para los giros de comercio general. */
+const GENERAL_SAMPLES: Record<string, SampleProduct[]> = {
+  grocery: [
+    { name: 'Leche entera 1 L',   desc: 'Lácteos del día',          price: '28.00', chip: 'Lácteos' },
+    { name: 'Galletas surtidas',  desc: 'Paquete familiar',         price: '35.00', chip: 'Botanas' },
+    { name: 'Refresco 600 ml',    desc: 'Bien frío',                price: '18.00', chip: 'Bebidas' },
+  ],
+  bakery: [
+    { name: 'Concha',             desc: 'Pan dulce recién horneado', price: '12.00', chip: 'Pan dulce' },
+    { name: 'Bolillo',            desc: 'Crujiente por fuera',       price: '4.00',  chip: 'Pan salado' },
+    { name: 'Pastel de chocolate', desc: 'Para 10 personas',         price: '320.00', chip: 'Pasteles' },
+  ],
+  clothing: [
+    { name: 'Playera básica',     desc: 'Algodón, varios colores',  price: '199.00', chip: 'Playeras' },
+    { name: 'Jeans clásicos',     desc: 'Corte recto',              price: '549.00', chip: 'Pantalones' },
+    { name: 'Gorra',              desc: 'Ajustable',                price: '149.00', chip: 'Accesorios' },
+  ],
+  stationery: [
+    { name: 'Cuaderno profesional', desc: '100 hojas, raya',        price: '42.00', chip: 'Cuadernos' },
+    { name: 'Pluma azul',         desc: 'Punto medio',              price: '8.00',  chip: 'Escritura' },
+    { name: 'Juego de geometría', desc: 'Regla, escuadras y transportador', price: '55.00', chip: 'Escolar' },
+  ],
+  hardware: [
+    { name: 'Martillo 16 oz',     desc: 'Mango de fibra de vidrio', price: '185.00', chip: 'Herramientas' },
+    { name: 'Cinta métrica 5 m',  desc: 'Con freno',                price: '68.00', chip: 'Medición' },
+    { name: 'Pintura vinílica 4 L', desc: 'Blanco',                 price: '420.00', chip: 'Pinturas' },
+  ],
+};
 
 @Component({
   selector: 'app-personalization',
@@ -77,8 +107,9 @@ export class PersonalizationComponent implements OnInit {
         || (this.accent()    || null) !== s.theme.accent;
   });
 
-  storeName = computed(() => this.isOptician() ? 'Tu Óptica' : this.isRestaurant() ? 'Tu Restaurante' : 'Tu Negocio');
-  typeLabel = computed(() => this.isOptician() ? 'Óptica' : this.isRestaurant() ? 'Restaurante' : 'Tienda');
+  private info = computed(() => businessTypeInfo(this.session?.business_type));
+  storeName = computed(() => this.info()?.storeName ?? 'Tu Negocio');
+  typeLabel = computed(() => this.info()?.label ?? 'Tienda');
 
   sampleProducts = computed<SampleProduct[]>(() => {
     if (this.isOptician()) return [
@@ -86,11 +117,12 @@ export class PersonalizationComponent implements OnInit {
       { name: 'Lente Antirreflejo', desc: 'Policarbonato con tratamiento',    price: '780.00', chip: 'Policarbonato' },
       { name: 'Armazón Clásico',    desc: 'Acetato, ligero y resistente',     price: '1200.00', chip: 'Acetato' },
     ];
-    return [
+    if (this.isRestaurant()) return [
       { name: 'Enchiladas Verdes', desc: 'Tortillas en salsa verde con crema', price: '8.50',  chip: 'Plato fuerte' },
       { name: 'Chilaquiles',       desc: 'Tortilla y salsa verde',             price: '20.00', chip: '15 min' },
       { name: 'Lasaña',            desc: 'Pasta al horno con carne',           price: '25.00', chip: 'Plato fuerte' },
     ];
+    return GENERAL_SAMPLES[this.session?.business_type ?? ''] ?? GENERAL_SAMPLES['grocery'];
   });
 
   // ── Ciclo de vida ─────────────────────────────────────

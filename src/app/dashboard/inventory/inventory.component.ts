@@ -5,6 +5,7 @@ import { AuthService, UserSession } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { ImageService, ProductImage } from '../../core/services/image.service';
 import { ProductStore, Product } from '../../core/store/product.store';
+import { GENERAL_UNITS, generalMetadata, isGeneralCommerce } from '../../shared/business-types';
 
 type FilterKey = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
 
@@ -66,6 +67,10 @@ export class InventoryComponent implements OnInit {
     cilindro: ['0.00'],
     eje:      [0],
     material: ['CR-39'],
+    // comercio general
+    unidad:            ['pieza'],
+    marca:             [''],
+    categoria_general: [''],
   });
 
   // ── Computed ──────────────────────────────────────────
@@ -99,6 +104,8 @@ export class InventoryComponent implements OnInit {
 
   isRestaurant = computed(() => this.session?.business_type === 'restaurant');
   isOptician   = computed(() => this.session?.business_type === 'optician');
+  isGeneral    = computed(() => isGeneralCommerce(this.session?.business_type));
+  readonly unidades = GENERAL_UNITS;
 
   primaryImage = (images: ProductImage[]) =>
     images.find(i => i.sort_order === 0) ?? images[0] ?? null;
@@ -128,7 +135,8 @@ export class InventoryComponent implements OnInit {
     this.form.reset({
       price: 0, inventory_count: 0, low_stock_threshold: 5,
       categoria: 'plato_fuerte', tiempo_preparacion_min: 15, picante: false,
-      esfera: '0.00', cilindro: '0.00', eje: 0, material: 'CR-39'
+      esfera: '0.00', cilindro: '0.00', eje: 0, material: 'CR-39',
+      unidad: 'pieza', marca: '', categoria_general: ''
     });
     this.drawerOpen.set(true);
   }
@@ -153,6 +161,9 @@ export class InventoryComponent implements OnInit {
       cilindro:               p.metadata?.['cilindro']               ?? '0.00',
       eje:                    p.metadata?.['eje']                    ?? 0,
       material:               p.metadata?.['material']               ?? 'CR-39',
+      unidad:                 p.metadata?.['unidad']                 ?? 'pieza',
+      marca:                  p.metadata?.['marca']                  ?? '',
+      categoria_general:      p.metadata?.['categoria']              ?? '',
     });
     this.drawerOpen.set(true);
   }
@@ -176,7 +187,9 @@ export class InventoryComponent implements OnInit {
     const metadata = this.isRestaurant()
       ? { categoria: v.categoria, tiempo_preparacion_min: v.tiempo_preparacion_min, picante: v.picante,
           ...(this.selectedAlergenos.length ? { alergenos: this.selectedAlergenos } : {}) }
-      : { esfera: v.esfera, cilindro: v.cilindro, eje: v.eje, material: v.material };
+      : this.isOptician()
+        ? { esfera: v.esfera, cilindro: v.cilindro, eje: v.eje, material: v.material }
+        : generalMetadata({ unidad: v.unidad, marca: v.marca, categoria_general: v.categoria_general });
 
     const body = {
       product_type: 'insumo',
