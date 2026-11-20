@@ -71,12 +71,46 @@ export function planButton(card: PlanCard, info: PlanInfo | null): PlanButton {
 
   if (info.plan === card.key) return { label: 'Tu plan', action: 'none', disabled: true };
 
-  // Subir y bajar con prorrateo son los flujos 15B y 15C: hasta que existan,
-  // el botón se ve pero no se puede usar (checkout cobraría dos veces).
+  // Subir es el flujo 15B. Bajar (15C) aún no existe: el botón se ve pero no se
+  // puede usar (checkout cobraría dos veces).
   const up = !info.plan || RANK[card.key] > RANK[info.plan];
   return up
-    ? { label: `Subir a ${card.nombre}`, action: 'upgrade', disabled: true }
+    ? { label: `Subir a ${card.nombre}`, action: 'upgrade', disabled: false }
     : { label: `Cambiar a ${card.nombre}`, action: 'downgrade', disabled: true };
+}
+
+export function planCard(plan: Plan): PlanCard {
+  return PLAN_CARDS.find(c => c.key === plan)!;
+}
+
+/**
+ * Lo que gana al subir (§15B), concreto a lo que tiene hoy: la mitad que le
+ * falta con su catálogo, los topes que se quitan y las funciones que se encienden.
+ */
+export function upgradeGains(target: Plan, info: PlanInfo): string[] {
+  const a = info.access;
+  const gains: string[] = [];
+  if (a && !a.store) {
+    const n = info.usage?.products ?? 0;
+    gains.push(n > 0
+      ? `Tu tienda en línea se activa con tu${n === 1 ? ' producto' : `s ${n} productos`}`
+      : 'Tu tienda en línea se activa con tu catálogo');
+  }
+  if (a && !a.pos) gains.push('Cobra en el mostrador con el mismo inventario');
+  if (a && (a.max_products !== null || a.max_users !== null)) gains.push('Productos y equipo sin límite');
+  if (a && !a.delivery) gains.push('Envíos a domicilio');
+  if (a && !a.sales_export) gains.push('Reporte de ventas descargable');
+  if (target === 'enterprise') gains.push('Varias sucursales', 'Soporte prioritario');
+  return gains;
+}
+
+/** "$180.00" (pesos con dos decimales). */
+export function formatMoney(amount: string | number, currency = 'mxn'): string {
+  const n = typeof amount === 'string' ? Number(amount) : amount;
+  if (!Number.isFinite(n)) return String(amount);
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency', currency: currency.toUpperCase(), currencyDisplay: 'narrowSymbol', minimumFractionDigits: 2,
+  }).format(n);
 }
 
 /** La tarjeta del plan vigente (solo con suscripción: en la prueba o vencido no hay "Tu plan"). */

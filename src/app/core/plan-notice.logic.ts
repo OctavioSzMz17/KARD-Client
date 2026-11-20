@@ -11,9 +11,8 @@ import {
 } from './models/plan.models';
 
 /**
- * Qué hace un botón del aviso. `upgrade` es "pasar a Pro": hoy lleva a
- * Suscripción; cuando exista el modal de mejora (flujo 15B) se abrirá ahí
- * mismo sin perder lo capturado.
+ * Qué hace un botón del aviso. `upgrade` es "pasar a Pro": abre el modal de
+ * mejora (flujo 15B) ahí mismo, sin perder lo capturado.
  */
 export type NoticeAction = 'plans' | 'upgrade' | 'products' | 'team' | 'close';
 

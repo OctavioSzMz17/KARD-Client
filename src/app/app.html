@@ -2,3 +2,6 @@
 <router-outlet />
 <app-snackbar />
 <app-plan-notice />
+@if (upgrade.target(); as plan) {
+  <app-upgrade-dialog [target]="plan" (closed)="upgrade.close()" />
+}

@@ -3,11 +3,10 @@ import { Router } from '@angular/router';
 import { NoticeAction, PlanApiError, PlanNotice, noticeFor } from '../plan-notice.logic';
 import { PlanStore } from '../store/plan.store';
 import { SnackbarService } from './snackbar.service';
+import { UpgradeService } from './upgrade.service';
 
 const ROUTE: Partial<Record<NoticeAction, string>> = {
   plans: '/dashboard/suscripcion',
-  // Hasta que exista el modal de mejora (flujo 15B), "Pasar a Pro" lleva a Suscripción.
-  upgrade: '/dashboard/suscripcion',
   products: '/dashboard/products',
   team: '/dashboard/equipo',
 };
@@ -21,6 +20,7 @@ export class PlanNoticeService {
   private router = inject(Router);
   private plan = inject(PlanStore);
   private snack = inject(SnackbarService);
+  private upgrades = inject(UpgradeService);
 
   readonly current = signal<PlanNotice | null>(null);
 
@@ -37,6 +37,8 @@ export class PlanNoticeService {
 
   run(action: NoticeAction): void {
     this.close();
+    // "Pasar a Pro" abre el modal de mejora encima de la pantalla: lo capturado no se pierde.
+    if (action === 'upgrade') return this.upgrades.open('pro');
     const route = ROUTE[action];
     if (route) this.router.navigateByUrl(route);
   }

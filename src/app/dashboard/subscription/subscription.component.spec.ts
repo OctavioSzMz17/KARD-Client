@@ -13,6 +13,7 @@ import { environment } from '../../../environments/environment';
 import { PlanInfo } from '../../core/models/plan.models';
 import { DEV_PLAN_PRESETS } from '../../core/plan-logic';
 import { SnackbarService } from '../../core/services/snackbar.service';
+import { UpgradeService } from '../../core/services/upgrade.service';
 import { CheckoutDialogComponent } from './checkout-dialog/checkout-dialog.component';
 import { SubscriptionComponent } from './subscription.component';
 import { PLAN_CARDS, isCurrentPlan, planButton } from './subscription-logic';
@@ -47,9 +48,9 @@ describe('planButton (§14 C)', () => {
     expect(isCurrentPlan(STARTER, starter)).toBe(true);
   });
 
-  it('con suscripción, subir y bajar aún no se pueden usar (flujos 15B y 15C)', () => {
+  it('con suscripción, subir abre el flujo 15B; bajar (15C) aún no se puede usar', () => {
     const pro = info({ plan: 'pro', has_subscription: true, subscription_status: 'active' });
-    expect(planButton(ENTERPRISE, pro)).toEqual({ label: 'Subir a Enterprise', action: 'upgrade', disabled: true });
+    expect(planButton(ENTERPRISE, pro)).toEqual({ label: 'Subir a Enterprise', action: 'upgrade', disabled: false });
     expect(planButton(STARTER, pro)).toEqual({ label: 'Cambiar a Starter', action: 'downgrade', disabled: true });
   });
 });
@@ -162,6 +163,30 @@ describe('SubscriptionComponent', () => {
       f.componentInstance.choose(STARTER);
       f.detectChanges();
       expect(el(f).querySelector('.mitad.selected')?.textContent).toContain('Punto de venta');
+    });
+  });
+
+  describe('flujo 15B desde Suscripción', () => {
+    it('"Subir a Pro" abre el modal de mejora con ese plan', () => {
+      const f = abrir();
+      planRequest().flush(info({ plan: 'starter', has_subscription: true, subscription_status: 'active', access: DEV_PLAN_PRESETS['starter-pos'](Date.now()) }));
+      f.detectChanges();
+      const tarjeta = [...el(f).querySelectorAll('.plan')].find(p => p.querySelector('h2')?.textContent === 'Pro')!;
+      const btn = tarjeta.querySelector('.plan-btn') as HTMLButtonElement;
+      expect(btn.textContent?.trim()).toBe('Subir a Pro');
+      btn.click();
+      expect(TestBed.inject(UpgradeService).target()).toBe('pro');
+    });
+
+    it('cuando el cambio se aplica, la pantalla se recarga para mostrar "Tu plan"', () => {
+      const f = abrir();
+      planRequest().flush(info({ plan: 'starter', has_subscription: true, subscription_status: 'active' }));
+      f.detectChanges();
+      TestBed.inject(UpgradeService).markApplied();
+      f.detectChanges();
+      planRequest().flush(info({ plan: 'pro', has_subscription: true, subscription_status: 'active' }));
+      f.detectChanges();
+      expect(el(f).querySelector('.plan-actual h2')?.textContent).toBe('Pro');
     });
   });
 

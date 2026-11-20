@@ -1,11 +1,12 @@
 import { DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY, Subscription, catchError, switchMap, take, takeWhile, timer } from 'rxjs';
+import { EMPTY, Subscription, catchError, skip, switchMap, take, takeWhile, timer } from 'rxjs';
 import { BillingService, PlanInfo } from '../../core/services/billing.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { PlanStore } from '../../core/store/plan.store';
+import { UpgradeService } from '../../core/services/upgrade.service';
 import { BRAND_NAME } from '../../shared/brand';
 import { CheckoutDialogComponent } from './checkout-dialog/checkout-dialog.component';
 import {
@@ -33,6 +34,7 @@ export class SubscriptionComponent implements OnInit {
   private route   = inject(ActivatedRoute);
   private router  = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private upgrades = inject(UpgradeService);
 
   info       = signal<PlanInfo | null>(null);
   loading    = signal(true);
@@ -72,6 +74,11 @@ export class SubscriptionComponent implements OnInit {
 
   private polling?: Subscription;
 
+  constructor() {
+    // Al aplicarse un cambio de plan (desde aquí o desde un aviso), la tarjeta "Tu plan" se pone al día.
+    toObservable(this.upgrades.applied).pipe(skip(1), takeUntilDestroyed()).subscribe(() => this.cargar());
+  }
+
   ngOnInit(): void {
     // Stripe devuelve al negocio con ?suscripcion=ok o =cancelada. El estado real lo confirma el
     // webhook, no este parámetro: la URL solo dice que hay que esperar, nunca da por buena la suscripción.
@@ -105,10 +112,12 @@ export class SubscriptionComponent implements OnInit {
     return isCurrentPlan(card, this.info());
   }
 
-  /** El botón de una tarjeta. Sin suscripción abre el primer pago (15A). */
+  /** El botón de una tarjeta: sin suscripción, primer pago (15A); con ella, subir (15B). */
   choose(card: PlanCard): void {
     const b = this.button(card);
-    if (!b.disabled && b.action === 'checkout') this.checkoutCard.set(card);
+    if (b.disabled) return;
+    if (b.action === 'checkout') this.checkoutCard.set(card);
+    if (b.action === 'upgrade') this.upgrades.open(card.key);
   }
 
   /**
