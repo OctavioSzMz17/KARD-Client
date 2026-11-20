@@ -571,12 +571,15 @@
 .field-icon {
   position: absolute;
   right: 14px;
-  top: 50%;
+  // Centrado en el cuadro de texto (no en todo el campo, que puede llevar etiqueta o ayuda).
+  top: 22px;
   transform: translateY(-50%);
   display: flex;
   align-items: center;
   color: rgba(244, 238, 230, 0.6);
   pointer-events: none;
+
+  &.has-label { top: 46px; }
 
   &.clickable {
     pointer-events: auto;
@@ -613,68 +616,145 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-// ── Tipo de negocio ───────────────────────────────────────────
-.business-type-group {
-  margin-bottom: 14px;
+// ── Registro de negocio: secciones, etiquetas y ayudas ────────
+.glass-card.is-wide { width: min(100%, 500px); }
 
-  .group-label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(244, 238, 230, 0.75);
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 4px 0 14px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(244, 238, 230, 0.78);
+
+  // La línea que acompaña al título y lo separa de lo que sigue.
+  &::after { content: ''; flex: 1; height: 1px; background: rgba(244, 238, 230, 0.18); }
+
+  b {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 248, 238, 0.95);
+    color: #07080c;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+
+  & + & { margin-top: 20px; }
+}
+
+.field-label {
+  display: block;
+  height: 18px;
+  margin: 0 0 6px 2px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(244, 238, 230, 0.85);
+}
+
+.field-ok {
+  display: block;
+  margin-top: 5px;
+  padding-left: 4px;
+  font-size: 12px;
+  color: #a9e6bf;
+}
+
+// Medidor de contraseña: tres tramos que se llenan según qué tan buena es.
+.pw-meter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-top: 9px;
+
+  i {
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(244, 238, 230, 0.16);
+    transition: background 0.25s;
+  }
+
+  &[data-level='1'] i:nth-child(-n+1) { background: #ff9a9a; }
+  &[data-level='2'] i:nth-child(-n+2) { background: #f2c38b; }
+  &[data-level='3'] i                 { background: #a9e6bf; }
+}
+
+.pw-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 8px 0 0;
+  padding: 0 0 0 2px;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: rgba(244, 238, 230, 0.58);
+    transition: color 0.2s;
+
+    svg { opacity: 0.35; transition: opacity 0.2s; }
+    &.ok { color: #a9e6bf; svg { opacity: 1; } }
   }
 }
 
-.radio-group { display: flex; gap: 10px; }
-
-.radio-option {
-  flex: 1;
+.trial-note {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  justify-content: center;
+  gap: 7px;
+  margin: -6px 0 16px;
+  font-size: 12px;
+  color: rgba(244, 238, 230, 0.7);
+}
+
+// ── Tipo de negocio ───────────────────────────────────────────
+.business-type-group { margin-bottom: 14px; }
+
+.type-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.type-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 14px;
   border: 1px solid rgba(244, 238, 230, 0.3);
-  border-radius: 12px;
+  border-radius: 14px;
   background: rgba(244, 238, 230, 0.07);
-  font-size: 14px;
-  color: rgba(255, 248, 238, 0.8);
+  color: rgba(255, 248, 238, 0.85);
   cursor: pointer;
   user-select: none;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 
-  input[type='radio'] { display: none; }
+  input[type='radio'] { position: absolute; opacity: 0; pointer-events: none; }
 
-  .radio-dot {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    border: 2px solid rgba(244, 238, 230, 0.5);
-    display: grid;
-    place-items: center;
-    transition: all 0.2s;
+  .type-icon { flex-shrink: 0; }
 
-    &::after {
-      content: '';
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #07080c;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
+  .type-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    line-height: 1.25;
+    strong { font-size: 14px; font-weight: 600; }
+    small  { font-size: 11.5px; opacity: 0.7; }
   }
 
   &:hover { background: rgba(244, 238, 230, 0.13); }
+  &:has(input:focus-visible) { outline: 2px solid #fff8ee; outline-offset: 2px; }
 
   &.active {
     background: rgba(255, 248, 238, 0.95);
     border-color: #fff8ee;
     color: #07080c;
-    font-weight: 600;
-
-    .radio-dot { border-color: #07080c; background: #fff8ee; &::after { opacity: 1; } }
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
   }
 }
 

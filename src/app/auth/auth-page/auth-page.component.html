@@ -97,7 +97,7 @@
 
   <!-- ══ Formulario de vidrio, sobre la diagonal ═════════════════ -->
   <main class="card-wrap">
-    <div class="glass-card">
+    <div class="glass-card" [class.is-wide]="esRegistro() && esNegocio()">
 
       <!-- Interruptor Cliente / Negocio -->
       <div class="audience-switch" role="tablist" aria-label="Tipo de cuenta">
@@ -118,32 +118,47 @@
       <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
 
         @if (esRegistro() && esNegocio()) {
+          <p class="section-title field-enter"><b>1</b>Tu negocio</p>
+
           <div class="field field-enter">
-            <input type="text" formControlName="business_name" placeholder="Nombre del negocio"
-              autocomplete="organization"
+            <label class="field-label" for="reg-negocio">Nombre del negocio</label>
+            <input id="reg-negocio" type="text" formControlName="business_name"
+              placeholder="Ej. Café La Esquina" autocomplete="organization" maxlength="255"
               [class.invalid]="businessControl?.invalid && businessControl?.touched"/>
             @if (businessControl?.invalid && businessControl?.touched) {
               <span class="field-error">
                 {{ businessControl?.errors?.['required'] ? 'El nombre del negocio es requerido' : 'Mínimo 2 caracteres' }}
               </span>
+            } @else {
+              <span class="field-hint">Así lo verán tus clientes en tu tienda.</span>
             }
           </div>
 
           <div class="business-type-group field-enter">
-            <span class="group-label">Tipo de negocio</span>
-            <div class="radio-group">
-              <label class="radio-option" [class.active]="typeControl?.value === 'restaurant'">
+            <span class="field-label" id="reg-tipo">Tipo de negocio</span>
+            <div class="type-group" role="radiogroup" aria-labelledby="reg-tipo">
+              <label class="type-card" [class.active]="typeControl?.value === 'restaurant'">
                 <input type="radio" formControlName="business_type" value="restaurant"/>
-                <span class="radio-dot"></span>
-                Restaurante
+                <svg class="type-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M6 3v7a2 2 0 0 0 2 2v9M10 3v7a2 2 0 0 1-2 2M8 3v5"/>
+                  <path d="M17 21V3c-2.2 1.2-3.5 3.6-3.5 6.5 0 1.6.9 2.5 2 2.5h1.5"/>
+                </svg>
+                <span class="type-text"><strong>Restaurante</strong><small>Comida y bebidas</small></span>
               </label>
-              <label class="radio-option" [class.active]="typeControl?.value === 'optician'">
+              <label class="type-card" [class.active]="typeControl?.value === 'optician'">
                 <input type="radio" formControlName="business_type" value="optician"/>
-                <span class="radio-dot"></span>
-                Óptica
+                <svg class="type-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="6.5" cy="14" r="3.5"/><circle cx="17.5" cy="14" r="3.5"/>
+                  <path d="M10 14h4M3 14 5 7M21 14l-2-7"/>
+                </svg>
+                <span class="type-text"><strong>Óptica</strong><small>Lentes y armazones</small></span>
               </label>
             </div>
           </div>
+
+          <p class="section-title field-enter"><b>2</b>Tu acceso</p>
         }
 
         @if (esRegistro() && !esNegocio()) {
@@ -154,9 +169,13 @@
         }
 
         <div class="field">
-          <input type="email" formControlName="email" placeholder="Correo electrónico" autocomplete="email"
+          @if (esRegistro() && esNegocio()) {
+            <label class="field-label" for="reg-email">Correo del responsable</label>
+          }
+          <input id="reg-email" type="email" formControlName="email"
+            [placeholder]="esRegistro() && esNegocio() ? 'tucorreo@ejemplo.com' : 'Correo electrónico'" autocomplete="email"
             [class.invalid]="emailControl?.invalid && emailControl?.touched"/>
-          <span class="field-icon">
+          <span class="field-icon" [class.has-label]="esRegistro() && esNegocio()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
               <polyline points="22,6 12,13 2,6"/>
@@ -166,14 +185,20 @@
             <span class="field-error">
               {{ emailControl?.errors?.['required'] ? 'El correo es requerido' : 'Correo inválido' }}
             </span>
+          } @else if (esRegistro() && esNegocio()) {
+            <span class="field-hint">Con este correo entras y recuperas tu contraseña. Usa uno al que tengas acceso.</span>
           }
         </div>
 
         <div class="field">
-          <input [type]="showPassword() ? 'text' : 'password'" formControlName="password"
-            placeholder="Contraseña" [attr.autocomplete]="esRegistro() ? 'new-password' : 'current-password'"
+          @if (esRegistro() && esNegocio()) {
+            <label class="field-label" for="reg-pass">Contraseña</label>
+          }
+          <input id="reg-pass" [type]="showPassword() ? 'text' : 'password'" formControlName="password"
+            [placeholder]="esRegistro() && esNegocio() ? 'Crea una contraseña' : 'Contraseña'"
+            [attr.autocomplete]="esRegistro() ? 'new-password' : 'current-password'"
             [class.invalid]="passwordControl?.invalid && passwordControl?.touched"/>
-          <button type="button" class="field-icon clickable"
+          <button type="button" class="field-icon clickable" [class.has-label]="esRegistro() && esNegocio()"
             [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
             (click)="showPassword.set(!showPassword())">
             @if (showPassword()) {
@@ -189,26 +214,42 @@
               </svg>
             }
           </button>
-          @if (passwordControl?.invalid && passwordControl?.touched) {
-            <span class="field-error">
-              {{ passwordControl?.errors?.['required']
-                  ? 'La contraseña es requerida'
-                  : 'Mínimo 8 caracteres, con letras y números' }}
-            </span>
-          } @else if (esRegistro()) {
-            <span class="field-hint">Mínimo 8 caracteres, con letras y números</span>
+          @if (esRegistro()) {
+            <!-- Medidor y requisitos en vivo: se ve qué falta antes de enviar. -->
+            <div class="pw-meter" [attr.data-level]="passwordStrength().level" aria-hidden="true">
+              <i></i><i></i><i></i>
+            </div>
+            <ul class="pw-checks" aria-label="Requisitos de la contraseña">
+              @for (c of passwordStrength().checks; track c.label) {
+                <li [class.ok]="c.ok">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <polyline points="4 12 10 18 20 6"/>
+                  </svg>
+                  {{ c.label }}
+                </li>
+              }
+            </ul>
+          }
+          @if (passwordControl?.touched && passwordControl?.errors?.['required']) {
+            <span class="field-error">La contraseña es requerida</span>
           }
         </div>
 
         @if (esRegistro()) {
           <div class="field field-enter">
-            <input [type]="showPassword() ? 'text' : 'password'" formControlName="confirmPassword"
-              placeholder="Confirmar contraseña" autocomplete="new-password"
+            @if (esNegocio()) {
+              <label class="field-label" for="reg-confirm">Confirmar contraseña</label>
+            }
+            <input id="reg-confirm" [type]="showPassword() ? 'text' : 'password'" formControlName="confirmPassword"
+              [placeholder]="esNegocio() ? 'Repite la contraseña' : 'Confirmar contraseña'" autocomplete="new-password"
               [class.invalid]="(confirmControl?.touched && confirmControl?.invalid) || (confirmControl?.touched && form.hasError('passwordMismatch'))"/>
             @if (confirmControl?.touched && confirmControl?.errors?.['required']) {
               <span class="field-error">Confirma tu contraseña</span>
             } @else if (confirmControl?.touched && form.hasError('passwordMismatch')) {
               <span class="field-error">Las contraseñas no coinciden</span>
+            } @else if (confirmControl?.value && !form.hasError('passwordMismatch')) {
+              <span class="field-ok">✓ Las contraseñas coinciden</span>
             }
           </div>
         }
@@ -227,6 +268,16 @@
           }
         </button>
       </form>
+
+      @if (esRegistro() && esNegocio()) {
+        <p class="trial-note">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3z"/><polyline points="9 12 11 14 15 10"/>
+          </svg>
+          30 días de prueba · sin tarjeta
+        </p>
+      }
 
       <p class="switch-auth">
         @if (esRegistro()) {

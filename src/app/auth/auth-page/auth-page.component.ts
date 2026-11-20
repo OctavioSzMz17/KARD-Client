@@ -501,6 +501,26 @@ export class AuthPageComponent {
     try { localStorage.setItem(AUDIENCE_KEY, audience); } catch { /* es solo una comodidad */ }
   }
 
+  /**
+   * Qué cumple la contraseña de las reglas del servidor (mínimo 8, una letra y
+   * un número) y qué tan fuerte es: 0 vacía, 1 débil, 2 aceptable, 3 buena.
+   * Solo guía a la persona; la validez la siguen dando los validadores.
+   */
+  passwordStrength(): { level: 0 | 1 | 2 | 3; checks: { label: string; ok: boolean }[] } {
+    const p: string = this.passwordControl?.value ?? '';
+    const checks = [
+      { label: '8 caracteres o más', ok: p.length >= 8 },
+      { label: 'Una letra',          ok: /[a-zA-Z]/.test(p) },
+      { label: 'Un número',          ok: /\d/.test(p) },
+    ];
+    if (!p) return { level: 0, checks };
+    const cumple = checks.filter(c => c.ok).length;
+    // Cumplir lo mínimo es "aceptable"; mezclar mayúsculas, símbolos o largo extra lo vuelve "buena".
+    const extra = [/[A-Z]/.test(p) && /[a-z]/.test(p), /[^a-zA-Z0-9]/.test(p), p.length >= 12].filter(Boolean).length;
+    const level = cumple < 3 ? 1 : extra >= 1 ? 3 : 2;
+    return { level, checks };
+  }
+
   get nameControl()     { return this.form.get('name'); }
   get businessControl() { return this.form.get('business_name'); }
   get typeControl()     { return this.form.get('business_type'); }
