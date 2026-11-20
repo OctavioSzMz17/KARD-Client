@@ -10,8 +10,12 @@ import { UpgradeService } from '../../core/services/upgrade.service';
 import { BRAND_NAME } from '../../shared/brand';
 import { CheckoutDialogComponent } from './checkout-dialog/checkout-dialog.component';
 import { DowngradeDialogComponent } from './downgrade-dialog/downgrade-dialog.component';
+import { ChannelDialogComponent } from './channel-dialog/channel-dialog.component';
+import { formatDay } from '../../core/plan-notice.logic';
+import { Channel } from '../../core/models/plan.models';
 import {
-  ACTIVATION_POLL_MS, ACTIVATION_POLL_TRIES, PLAN_CARDS, PlanButton, PlanCard, isCurrentPlan, planButton,
+  ACTIVATION_POLL_MS, ACTIVATION_POLL_TRIES, CHANNEL_OPTIONS, PLAN_CARDS, PlanButton, PlanCard,
+  channelName, channelSwitchCopy, isCurrentPlan, otherChannel, planButton,
 } from './subscription-logic';
 
 /**
@@ -22,7 +26,7 @@ type Activation = 'waiting' | 'slow' | null;
 
 @Component({
   selector: 'app-subscription',
-  imports: [DatePipe, TitleCasePipe, CheckoutDialogComponent, DowngradeDialogComponent],
+  imports: [DatePipe, TitleCasePipe, CheckoutDialogComponent, DowngradeDialogComponent, ChannelDialogComponent],
   templateUrl: './subscription.component.html',
   styleUrl: './subscription.component.scss',
 })
@@ -46,6 +50,28 @@ export class SubscriptionComponent implements OnInit {
 
   /** El plan al que quiere bajar (15C), con su modal abierto. */
   downgradeCard = signal<PlanCard | null>(null);
+
+  /** La mitad a la que quiere cambiar (15D), con su modal abierto. */
+  channelTarget = signal<Channel | null>(null);
+
+  readonly channelOptions = CHANNEL_OPTIONS;
+
+  /** "Tu mitad" solo existe en un Starter con suscripción (§14 D). */
+  readonly currentChannel = computed(() => {
+    const i = this.info();
+    return i?.has_subscription && i.plan === 'starter' ? i.access?.channel ?? null : null;
+  });
+
+  /** Fecha desde la que puede volver a cambiar de mitad; `null` = ya puede. */
+  readonly channelAvailableOn = computed(() => {
+    const at = this.info()?.channel_change_available_at;
+    return at ? formatDay(at) : null;
+  });
+
+  readonly channelSwitchLabel = computed(() => {
+    const c = this.currentChannel();
+    return c ? channelSwitchCopy(otherChannel(c)).action : '';
+  });
 
   readonly planes = PLAN_CARDS;
 
@@ -123,6 +149,20 @@ export class SubscriptionComponent implements OnInit {
     if (b.action === 'checkout') this.checkoutCard.set(card);
     if (b.action === 'upgrade') this.upgrades.open(card.key);
     if (b.action === 'downgrade') this.downgradeCard.set(card);
+  }
+
+  /** Abre la confirmación para cambiar a la otra mitad (15D). */
+  openChannelSwitch(): void {
+    const c = this.currentChannel();
+    if (c && !this.channelAvailableOn()) this.channelTarget.set(otherChannel(c));
+  }
+
+  /** La mitad cambió: la pantalla y el menú se ponen al día con la respuesta, sin otra petición. */
+  onChannelChanged(info: PlanInfo): void {
+    this.info.set(info);
+    if (info.access) this.plan.apply(info.access);
+    const c = info.access?.channel;
+    this.snack.success(c ? `Listo: tu mitad ahora es ${channelName(c)}` : 'Listo: cambiaste de mitad');
   }
 
   /**

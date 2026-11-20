@@ -43,6 +43,26 @@ export const CHANNEL_OPTIONS: { key: Channel; nombre: string; detalle: string }[
   { key: 'store', nombre: 'Tienda en línea', detalle: 'Recibe pedidos en tu tienda y aparece en Explorar.' },
 ];
 
+/** La otra mitad. */
+export function otherChannel(channel: Channel): Channel {
+  return channel === 'pos' ? 'store' : 'pos';
+}
+
+/**
+ * Textos para cambiar de mitad en Starter (§15D): qué deja de estar
+ * disponible, que nada se borra, y que solo se puede una vez cada 30 días.
+ */
+export function channelSwitchCopy(target: Channel): { title: string; body: string; action: string } {
+  const destino = channelName(target).toLowerCase();
+  return {
+    title: `¿Cambiar a ${destino}?`,
+    body: target === 'store'
+      ? 'Tu punto de venta dejará de estar disponible; tus ventas y cortes no se borran.'
+      : 'Tu tienda en línea dejará de verse y no recibirás pedidos; tus productos y pedidos anteriores no se borran.',
+    action: `Cambiar a ${destino}`,
+  };
+}
+
 export function channelName(channel: Channel): string {
   return CHANNEL_OPTIONS.find(c => c.key === channel)!.nombre;
 }

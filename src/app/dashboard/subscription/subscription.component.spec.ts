@@ -14,6 +14,7 @@ import { PlanInfo } from '../../core/models/plan.models';
 import { DEV_PLAN_PRESETS } from '../../core/plan-logic';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { UpgradeService } from '../../core/services/upgrade.service';
+import { PlanStore } from '../../core/store/plan.store';
 import { CheckoutDialogComponent } from './checkout-dialog/checkout-dialog.component';
 import { SubscriptionComponent } from './subscription.component';
 import { PLAN_CARDS, isCurrentPlan, planButton } from './subscription-logic';
@@ -199,6 +200,50 @@ describe('SubscriptionComponent', () => {
     f.detectChanges();
     expect(el(f).querySelector('app-downgrade-dialog h2')?.textContent).toBe('Cambiar a Starter');
     http.expectOne(r => r.url.endsWith('/change-plan/preview'));
+  });
+
+  describe('Tu mitad (flujo 15D)', () => {
+    const starter = (over: Partial<PlanInfo> = {}) => info({
+      plan: 'starter', has_subscription: true, subscription_status: 'active', access: DEV_PLAN_PRESETS['starter-pos'](Date.now()), ...over,
+    });
+
+    it('solo aparece en un Starter con suscripción', () => {
+      const f = abrir();
+      planRequest().flush(info());                         // prueba
+      f.detectChanges();
+      expect(el(f).querySelector('.mitad-card')).toBeNull();
+    });
+
+    it('marca su mitad y ofrece cambiar a la otra', () => {
+      const f = abrir();
+      planRequest().flush(starter());
+      f.detectChanges();
+      expect(el(f).querySelector('.mitad-opcion.actual')?.textContent).toContain('Punto de venta');
+      const btn = el(f).querySelector('.mitad-btn') as HTMLButtonElement;
+      expect(btn.textContent?.trim()).toBe('Cambiar a tienda en línea');
+      btn.click();
+      f.detectChanges();
+      expect(el(f).querySelector('app-channel-dialog h2')?.textContent).toBe('¿Cambiar a tienda en línea?');
+    });
+
+    it('si cambió hace poco, el botón espera y dice desde cuándo', () => {
+      const f = abrir();
+      planRequest().flush(starter({ channel_change_available_at: '2026-12-12T18:00:00+00:00' }));
+      f.detectChanges();
+      expect((el(f).querySelector('.mitad-btn') as HTMLButtonElement).disabled).toBe(true);
+      expect(el(f).querySelector('.mitad-espera')?.textContent).toContain('Podrás cambiar a partir del 12 de diciembre');
+    });
+
+    it('al cambiar, la pantalla y el menú se ponen al día con la respuesta', () => {
+      const f = abrir();
+      planRequest().flush(starter());
+      f.detectChanges();
+      f.componentInstance.onChannelChanged(starter({ access: DEV_PLAN_PRESETS['starter-tienda'](Date.now()) }));
+      f.detectChanges();
+      expect(el(f).querySelector('.mitad-opcion.actual')?.textContent).toContain('Tienda en línea');
+      expect(TestBed.inject(PlanStore).hasStore()).toBe(true);
+      expect(TestBed.inject(SnackbarService).messages()[0]?.message).toBe('Listo: tu mitad ahora es Tienda en línea');
+    });
   });
 
   describe('al volver de Stripe', () => {

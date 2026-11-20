@@ -67,9 +67,4 @@
 .ghost { @include ghost; padding: 12px 20px; }
 
 // Confirmar va en color neutro: no se empuja la decisión de bajar.
-.neutral {
-  @include ghost;
-  padding: 12px 20px;
-  border-color: $line-strong;
-  background: rgba(244, 238, 230, 0.12);
-}
+.neutral { @include d.neutral-button; }

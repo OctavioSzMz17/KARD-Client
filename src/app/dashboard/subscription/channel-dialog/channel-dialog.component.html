@@ -1,0 +1,17 @@
+<div class="scrim" (click)="close()" aria-hidden="true"></div>
+<section class="dialog" role="dialog" aria-modal="true" aria-labelledby="channel-title" aria-describedby="channel-body">
+  <h2 id="channel-title" #heading tabindex="-1">{{ copy().title }}</h2>
+  <p class="lead" id="channel-body">{{ copy().body }}</p>
+  <p class="nota">Solo puedes cambiar una vez cada 30 días. El precio de tu plan no cambia.</p>
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  <div class="actions">
+    <button type="button" class="ghost" (click)="close()" [disabled]="sending()">Cancelar</button>
+    <button type="button" class="neutral" (click)="confirm()" [disabled]="sending()">
+      {{ sending() ? 'Cambiando…' : copy().action }}
+    </button>
+  </div>
+</section>

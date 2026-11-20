@@ -44,6 +44,35 @@
       </p>
     }
 
+    <!-- Tu mitad (solo en Starter con suscripción) -->
+    @if (currentChannel(); as actual) {
+      <section class="mitad-card" aria-labelledby="mitad-title">
+        <div class="mitad-head">
+          <h2 id="mitad-title">Tu mitad</h2>
+          <p>Starter incluye una. Tu catálogo y tu inventario son los mismos en las dos.</p>
+        </div>
+
+        <div class="mitad-opciones">
+          @for (c of channelOptions; track c.key) {
+            <div class="mitad-opcion" [class.actual]="c.key === actual">
+              <strong>{{ c.nombre }}</strong>
+              <span>{{ c.detalle }}</span>
+              @if (c.key === actual) { <span class="mitad-tag">Tu mitad</span> }
+            </div>
+          }
+        </div>
+
+        <div class="mitad-pie">
+          @if (channelAvailableOn(); as fecha) {
+            <p class="mitad-espera">Podrás cambiar a partir del {{ fecha }}.</p>
+          }
+          <button type="button" class="mitad-btn" (click)="openChannelSwitch()" [disabled]="!!channelAvailableOn()">
+            {{ channelSwitchLabel() }}
+          </button>
+        </div>
+      </section>
+    }
+
     <!-- Planes -->
     <div class="planes">
       @for (p of planes; track p.key; let i = $index) {
@@ -89,6 +118,10 @@
     </p>
   }
 </div>
+
+@if (channelTarget(); as target) {
+  <app-channel-dialog [target]="target" (changed)="onChannelChanged($event)" (reload)="cargar()" (closed)="channelTarget.set(null)" />
+}
 
 @if (downgradeCard(); as card) {
   @if (info(); as current) {

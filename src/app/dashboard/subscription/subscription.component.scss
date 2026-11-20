@@ -79,6 +79,75 @@
   line-height: 1.55;
 }
 
+// ── Tu mitad (Starter) ────────────────────────────────────
+.mitad-card {
+  @include glass;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 28px;
+  border-radius: 26px;
+  animation: aparece 0.5s ease 0.05s backwards;
+}
+
+.mitad-head {
+  h2 { font-size: 18px; font-weight: 800; }
+  p { margin-top: 4px; color: $text-soft; font-size: 13.5px; }
+}
+
+.mitad-opciones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.mitad-opcion {
+  @include glass-inset;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 20px;
+  border-radius: 18px;
+  color: $text-faint;
+  font-size: 13px;
+  line-height: 1.45;
+
+  strong { color: $text-soft; font-size: 15px; font-weight: 700; }
+
+  &.actual {
+    background: rgba(242, 195, 139, 0.1);
+    border-color: $accent;
+    color: $text-soft;
+    strong { color: $text; }
+  }
+}
+
+.mitad-tag {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: $grad-action;
+  color: $ink;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.mitad-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px 16px;
+}
+
+.mitad-espera { margin: 0; color: $text-faint; font-size: 13px; }
+
+.mitad-btn { @include ghost; padding: 11px 18px; font-size: 13.5px; }
+
 // ── Planes ────────────────────────────────────────────────
 .planes {
   display: grid;
@@ -202,10 +271,11 @@
 
 @media (max-width: 1000px) {
   .planes { grid-template-columns: 1fr; gap: 28px; }
+  .mitad-opciones { grid-template-columns: 1fr; }
   .plan-resumen { min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .estado-card, .plan { animation: none; }
+  .estado-card, .plan, .mitad-card { animation: none; }
   .plan:hover { transform: none; }
 }

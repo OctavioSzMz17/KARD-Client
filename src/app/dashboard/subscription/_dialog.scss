@@ -165,6 +165,15 @@
   to   { background-position: -100% 0; }
 }
 
+// Confirmar algo que quita (bajar de plan, cambiar de mitad): color neutro,
+// no el dorado principal, para no empujar la decisión.
+@mixin neutral-button {
+  @include ghost;
+  padding: 12px 20px;
+  border-color: $line-strong;
+  background: rgba(244, 238, 230, 0.12);
+}
+
 @mixin actions {
   display: flex;
   flex-wrap: wrap;

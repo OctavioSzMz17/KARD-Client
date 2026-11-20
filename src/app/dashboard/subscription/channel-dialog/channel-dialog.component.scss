@@ -1,0 +1,20 @@
+@use '../../dark' as *;
+@use '../dialog' as d;
+
+.scrim  { @include d.scrim; }
+.dialog { @include d.box(460px); }
+
+.lead { @include d.lead; margin-top: 10px; }
+.nota { @include d.note; }
+
+.error {
+  margin-top: 14px;
+  color: $danger;
+  font-size: 13.5px;
+}
+
+.actions { @include d.actions; }
+
+.ghost { @include ghost; padding: 12px 20px; }
+
+.neutral { @include d.neutral-button; }
