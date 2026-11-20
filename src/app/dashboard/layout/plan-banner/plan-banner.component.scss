@@ -1,0 +1,68 @@
+@use '../../dark' as *;
+
+// Neutro para la prueba con días de sobra; ámbar para lo que pronto importa;
+// rojo para lo que ya impide operar. El oro queda para la acción.
+
+.plan-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px 11px 16px;
+  border-radius: 16px;
+  border: 1px solid $line;
+  background: rgba(244, 238, 230, 0.06);
+  color: $text-soft;
+  font-size: 13.5px;
+  line-height: 1.45;
+  animation: aparece 0.35s ease backwards;
+
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+}
+
+.tone-warning {
+  border-color: rgba(251, 191, 36, 0.45);
+  background: rgba(251, 191, 36, 0.1);
+  color: #fde68a;
+  .icon { color: $amber; }
+}
+
+.tone-danger {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(248, 113, 113, 0.1);
+  color: #fecaca;
+  .icon { color: $danger; }
+}
+
+.icon { display: inline-flex; flex: 0 0 auto; color: $text-faint; }
+
+.text { flex: 1; margin: 0; }
+
+.action {
+  @include action;
+  flex: 0 0 auto;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.close {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 6px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+
+  &:hover { opacity: 1; background: rgba(244, 238, 230, 0.1); }
+  &:focus-visible { outline: 2px solid $accent; outline-offset: 2px; }
+}
+
+@media (max-width: 640px) {
+  .plan-banner { flex-wrap: wrap; }
+  .text { flex-basis: calc(100% - 60px); }
+}

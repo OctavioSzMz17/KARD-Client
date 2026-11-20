@@ -13,6 +13,7 @@ import { Channel } from '../../core/models/plan.models';
 import { PlanStore } from '../../core/store/plan.store';
 import { PlanNoticeService } from '../../core/services/plan-notice.service';
 import { lockedNotice } from '../../core/plan-notice.logic';
+import { PlanBannerComponent } from './plan-banner/plan-banner.component';
 
 /** Lo que cada ruta del panel declara en su `data` para vestir la barra superior. */
 /** Una entrada del menú: el permiso que pide y, si aplica, la mitad del plan. */
@@ -52,7 +53,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 @Component({
   selector: 'app-dashboard-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet, PlanBannerComponent],
   templateUrl: './dashboard-layout.component.html',
   styleUrl: './dashboard-layout.component.scss'
 })

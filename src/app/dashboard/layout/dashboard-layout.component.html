@@ -124,6 +124,9 @@
       </div>
     </header>
 
+    <!-- Estado de la cuenta (prueba, vencida, pago atrasado): uno solo a la vez. -->
+    <app-plan-banner class="banner-slot" />
+
     <!-- Las vistas que aún no se rediseñan conservan su aspecto claro: `.light` las
          asienta sobre un lienzo propio. Un solo outlet, para no reconstruir la página al navegar. -->
     <main class="main-content" [class.light]="!page().dark">
