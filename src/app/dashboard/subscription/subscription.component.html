@@ -17,25 +17,53 @@
     <div class="sub-loading"><div class="spinner-lg"></div><p>Cargando tu suscripción…</p></div>
   } @else {
 
-    <!-- Estado actual -->
-    <div class="estado-card" [class.estado-aviso]="avisoPago()">
-      <div class="estado-main">
-        <span class="estado-label">Estado</span>
-        <span class="estado-valor">{{ estadoLabel() }}</span>
-      </div>
-      @if (planActual(); as p) {
+    <!-- A. Estado: el plan (o la prueba), el estado en palabras y la fecha que importa -->
+    @if (status(); as s) {
+      <div class="estado-card" [class]="'tone-' + s.tone">
         <div class="estado-main">
           <span class="estado-label">Plan</span>
-          <span class="estado-valor">{{ p | titlecase }}</span>
+          <span class="estado-valor">{{ s.plan }}</span>
+          @if (s.includes) {
+            <span class="estado-incluye">Incluye: <strong>{{ s.includes }}</strong></span>
+          }
         </div>
-      }
-      @if (info()?.current_period_end; as hasta) {
         <div class="estado-main">
-          <span class="estado-label">Pagado hasta</span>
-          <span class="estado-valor">{{ hasta | date:'d MMM y' }}</span>
+          <span class="estado-label">Estado</span>
+          <span class="estado-valor estado-texto">{{ s.state }}</span>
         </div>
-      }
-    </div>
+        @if (s.date) {
+          <div class="estado-main">
+            <span class="estado-label">{{ s.dateLabel }}</span>
+            <span class="estado-valor">{{ s.date }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- B. Uso: solo si su plan tiene topes -->
+    @if (bars().length) {
+      <section class="uso-card" aria-labelledby="uso-title">
+        <h2 id="uso-title">Uso de tu plan</h2>
+        @for (b of bars(); track b.label) {
+          <div class="uso" [class]="'uso tone-' + b.tone">
+            <div class="uso-head">
+              <span>{{ b.label }}</span>
+              <span class="uso-num">{{ b.used }} de {{ b.max }}</span>
+            </div>
+            <div class="uso-track" role="progressbar" [attr.aria-label]="b.label"
+              [attr.aria-valuenow]="b.used" aria-valuemin="0" [attr.aria-valuemax]="b.max">
+              <span class="uso-fill" [style.width.%]="b.percent"></span>
+            </div>
+          </div>
+        }
+        @if (nearLimit()) {
+          <div class="uso-pie">
+            <p>Pasa a Pro para quitar el límite.</p>
+            <button type="button" class="uso-btn" (click)="upgradeFromUsage()">Ver Pro</button>
+          </div>
+        }
+      </section>
+    }
 
     @if (avisoPago()) {
       <p class="aviso">

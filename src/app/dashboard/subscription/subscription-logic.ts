@@ -172,6 +172,105 @@ export function isCurrentPlan(card: PlanCard, info: PlanInfo | null): boolean {
   return !!info?.has_subscription && info.plan === card.key;
 }
 
+/** "1 de diciembre de 2026". */
+export function formatLongDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  active: 'Activa',
+  trialing: 'Activa',
+  past_due: 'Pago pendiente',
+  canceled: 'Cancelada',
+  unpaid: 'Sin pagar',
+  paused: 'En pausa',
+  incomplete: 'Pago incompleto',
+  incomplete_expired: 'Pago vencido',
+};
+
+/** La tarjeta de estado (§14 A): el plan, el estado en palabras y la fecha que importa. */
+export interface StatusCard {
+  plan: string;
+  state: string;
+  /** "Se renueva el", "Termina el"… o `null` si no hay fecha que mostrar. */
+  dateLabel: string | null;
+  date: string | null;
+  /** Solo en Starter: la mitad que incluye. */
+  includes: string | null;
+  /** Para pintar el estado: al día, prueba, o algo que atender. */
+  tone: 'ok' | 'trial' | 'warning' | 'danger';
+}
+
+export function statusCard(info: PlanInfo): StatusCard {
+  const a = info.access;
+  const planName = info.plan ? planCard(info.plan).nombre : null;
+  const includes = info.plan === 'starter' && a?.channel ? channelName(a.channel) : null;
+
+  if (a?.state === 'trial') {
+    const days = a.trial_days_left ?? 0;
+    return {
+      plan: 'Prueba gratis',
+      state: days <= 1 ? 'Termina hoy' : `Te quedan ${days} días`,
+      dateLabel: 'Termina el', date: a.trial_ends_at ? formatLongDate(a.trial_ends_at) : null,
+      includes: null, tone: days <= 7 ? 'warning' : 'trial',
+    };
+  }
+
+  if (a?.state === 'expired') {
+    return planName
+      ? { plan: planName, state: 'Suscripción no activa', dateLabel: null, date: null, includes, tone: 'danger' }
+      : {
+          plan: 'Prueba gratis', state: 'Terminó', includes: null, tone: 'danger',
+          dateLabel: a.trial_ends_at ? 'Terminó el' : null, date: a.trial_ends_at ? formatLongDate(a.trial_ends_at) : null,
+        };
+  }
+
+  const pastDue = info.subscription_status === 'past_due';
+  return {
+    plan: planName ?? 'Sin plan',
+    state: STATUS_LABEL[info.subscription_status] ?? info.subscription_status,
+    dateLabel: info.current_period_end ? (pastDue ? 'Pagado hasta' : 'Se renueva el') : null,
+    date: info.current_period_end ? formatLongDate(info.current_period_end) : null,
+    includes,
+    tone: pastDue ? 'warning' : 'ok',
+  };
+}
+
+/** Una barra de uso (§14 B): ámbar desde el 80 % y roja al llegar al tope. */
+export interface UsageBar {
+  label: string;
+  used: number;
+  max: number;
+  /** 0–100, para el ancho de la barra. */
+  percent: number;
+  tone: 'ok' | 'warning' | 'full';
+}
+
+const WARN_AT = 0.8;
+
+/** Las barras de los topes que tiene su plan; ninguna si no hay topes (prueba, Pro). */
+export function usageBars(info: PlanInfo): UsageBar[] {
+  const a = info.access;
+  const u = info.usage;
+  if (!a || !u) return [];
+  const bars: UsageBar[] = [];
+  const add = (label: string, used: number, max: number | null) => {
+    if (max === null || max <= 0) return;
+    const ratio = used / max;
+    bars.push({
+      label, used, max,
+      percent: Math.min(100, Math.round(ratio * 100)),
+      tone: used >= max ? 'full' : ratio >= WARN_AT ? 'warning' : 'ok',
+    });
+  };
+  add('Productos', u.products, a.max_products);
+  add('Equipo', u.users, a.max_users);
+  return bars;
+}
+
 /** Cada cuánto y cuántas veces se pregunta si ya llegó el pago (§15A paso 5). */
 export const ACTIVATION_POLL_MS = 2000;
 export const ACTIVATION_POLL_TRIES = 5;

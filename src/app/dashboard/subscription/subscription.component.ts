@@ -1,4 +1,3 @@
-import { DatePipe, TitleCasePipe } from '@angular/common';
 import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,7 +14,7 @@ import { formatDay } from '../../core/plan-notice.logic';
 import { Channel } from '../../core/models/plan.models';
 import {
   ACTIVATION_POLL_MS, ACTIVATION_POLL_TRIES, CHANNEL_OPTIONS, PLAN_CARDS, PlanButton, PlanCard,
-  channelName, channelSwitchCopy, isCurrentPlan, otherChannel, planButton,
+  channelName, channelSwitchCopy, isCurrentPlan, otherChannel, planButton, statusCard, usageBars,
 } from './subscription-logic';
 
 /**
@@ -26,7 +25,7 @@ type Activation = 'waiting' | 'slow' | null;
 
 @Component({
   selector: 'app-subscription',
-  imports: [DatePipe, TitleCasePipe, CheckoutDialogComponent, DowngradeDialogComponent, ChannelDialogComponent],
+  imports: [CheckoutDialogComponent, DowngradeDialogComponent, ChannelDialogComponent],
   templateUrl: './subscription.component.html',
   styleUrl: './subscription.component.scss',
 })
@@ -75,23 +74,20 @@ export class SubscriptionComponent implements OnInit {
 
   readonly planes = PLAN_CARDS;
 
-  /** Texto legible del estado que manda Stripe. */
-  readonly estadoLabel = computed(() => {
-    const s = this.info()?.subscription_status ?? 'none';
-    return {
-      none: 'Sin suscripción',
-      trialing: 'En periodo de prueba',
-      active: 'Activa',
-      past_due: 'Pago pendiente',
-      canceled: 'Cancelada',
-      unpaid: 'Sin pagar',
-      paused: 'En pausa',
-      incomplete: 'Incompleta',
-      incomplete_expired: 'Expirada',
-    }[s] ?? s;
+  /** A. La tarjeta de estado (§14 A). */
+  readonly status = computed(() => {
+    const info = this.info();
+    return info ? statusCard(info) : null;
   });
 
-  readonly planActual = computed(() => this.info()?.plan ?? null);
+  /** B. Las barras de uso, solo de los topes que tiene su plan (§14 B). */
+  readonly bars = computed(() => {
+    const info = this.info();
+    return info ? usageBars(info) : [];
+  });
+
+  /** Desde el 80 % de algún tope se ofrece quitar el límite. */
+  readonly nearLimit = computed(() => this.bars().some(b => b.tone !== 'ok'));
 
   /** La mitad que ya tenía (un Starter cancelado que vuelve): se marca de entrada en el flujo. */
   readonly lastChannel = computed(() => this.info()?.access?.channel ?? null);
@@ -149,6 +145,11 @@ export class SubscriptionComponent implements OnInit {
     if (b.action === 'checkout') this.checkoutCard.set(card);
     if (b.action === 'upgrade') this.upgrades.open(card.key);
     if (b.action === 'downgrade') this.downgradeCard.set(card);
+  }
+
+  /** "Pasa a Pro para quitar el límite": el modal de mejora (15B), o el primer pago si no tiene suscripción. */
+  upgradeFromUsage(): void {
+    this.upgrades.open('pro');
   }
 
   /** Abre la confirmación para cambiar a la otra mitad (15D). */

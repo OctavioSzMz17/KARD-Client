@@ -51,12 +51,92 @@
   animation: aparece 0.5s ease backwards;
 }
 
-.estado-aviso {
+// El estado se pinta según lo que pide atención: al día, prueba, por vencer o sin acceso.
+.estado-card.tone-ok .estado-texto { color: $mint; }
+.estado-card.tone-trial .estado-texto { color: $accent; }
+
+.estado-card.tone-warning {
   background: rgba(251, 191, 36, 0.12);
   border-color: rgba(251, 191, 36, 0.5);
+  .estado-texto { color: #fcd34d; }
+}
+
+.estado-card.tone-danger {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.5);
+  .estado-texto { color: #fca5a5; }
 }
 
 .estado-main { display: flex; flex-direction: column; gap: 4px; }
+
+.estado-incluye {
+  font-size: 13px;
+  color: $text-soft;
+  strong { color: $text; font-weight: 700; }
+}
+
+// ── B. Uso ────────────────────────────────────────────────
+.uso-card {
+  @include glass;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 28px;
+  border-radius: 26px;
+  animation: aparece 0.5s ease 0.04s backwards;
+
+  h2 { font-size: 18px; font-weight: 800; }
+}
+
+.uso { display: flex; flex-direction: column; gap: 8px; }
+
+.uso-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: $text-soft;
+}
+
+.uso-num { color: $text; font-variant-numeric: tabular-nums; }
+
+.uso-track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(244, 238, 230, 0.1);
+  overflow: hidden;
+}
+
+.uso-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: $mint;
+  transition: width 0.4s ease;
+}
+
+.uso.tone-warning {
+  .uso-fill { background: $amber; }
+  .uso-num { color: #fcd34d; }
+}
+
+.uso.tone-full {
+  .uso-fill { background: $danger; }
+  .uso-num { color: #fca5a5; }
+}
+
+.uso-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding-top: 4px;
+
+  p { margin: 0; color: $text-soft; font-size: 13.5px; }
+}
+
+.uso-btn { @include action; padding: 10px 18px; font-size: 13.5px; }
 
 .estado-label {
   font-size: 11.5px;
@@ -276,6 +356,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .estado-card, .plan, .mitad-card { animation: none; }
+  .estado-card, .plan, .mitad-card, .uso-card { animation: none; }
   .plan:hover { transform: none; }
 }
