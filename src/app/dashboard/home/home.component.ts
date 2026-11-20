@@ -6,6 +6,8 @@ import { Fulfillment, FulfillmentService } from '../../core/services/fulfillment
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { ProductStore, Product } from '../../core/store/product.store';
 import { PERM } from '../../core/permissions';
+import { PlanStore } from '../../core/store/plan.store';
+import { UpgradeService } from '../../core/services/upgrade.service';
 import { SalesService, SalesStats } from '../../core/services/sales.service';
 import { formatMoney } from '../pos/pos-math';
 import { areaPath, barPercent, dayLabels, linePath } from './chart-math';
@@ -32,6 +34,8 @@ export class HomeComponent implements OnInit {
   private fulSvc  = inject(FulfillmentService);
   private snack   = inject(SnackbarService);
   private sales   = inject(SalesService);
+  protected readonly plan = inject(PlanStore);
+  private upgrades = inject(UpgradeService);
 
   // ── Loading state (shared with products page) ─────────
   readonly loading = this.store.loading;
@@ -91,11 +95,27 @@ export class HomeComponent implements OnInit {
     return this.modos.filter(m => !m.soloPara || (giro ? m.soloPara.includes(giro) : false));
   });
 
+  /**
+   * El envío a domicilio no está en su plan (Starter): se ve con candado y la
+   * etiqueta "Pro" (15F). Lo que tenía guardado no cuenta como encendido.
+   */
+  readonly deliveryLocked = computed(() => !this.plan.delivery());
+
+  /** ¿El modo está encendido? El envío, solo si además su plan lo incluye. */
+  modoOn(f: Fulfillment, key: ModoEntrega['key']): boolean {
+    return f[key] && !(key === 'delivery' && this.deliveryLocked());
+  }
+
   /** Al menos un modo activo: un negocio sin ninguno no podría vender. */
   readonly algunModoActivo = computed(() => {
     const f = this.fulfillment();
-    return !!f && (f.dine_in || f.takeaway || f.pickup || f.delivery);
+    return !!f && (f.dine_in || f.takeaway || f.pickup || this.modoOn(f, 'delivery'));
   });
+
+  /** La etiqueta "Pro" del envío abre el modal de mejora (15B) encima de los ajustes. */
+  upgradeForDelivery(): void {
+    this.upgrades.open('pro');
+  }
 
   openSettings(): void {
     this.settingsOpen.set(true);
@@ -145,9 +165,11 @@ export class HomeComponent implements OnInit {
 
     // El backend rechaza cobrar envío con el envío apagado; se limpia aquí
     // para que el negocio no choque contra un 422 por un campo que ya no usa.
-    const payload: Fulfillment = f.delivery
+    // Sin envío en su plan se manda apagado: encenderlo respondería 402 y no
+    // dejaría guardar los demás modos.
+    const payload: Fulfillment = this.modoOn(f, 'delivery')
       ? f
-      : { ...f, shipping_flat_fee: 0, free_shipping_above: null };
+      : { ...f, delivery: false, shipping_flat_fee: 0, free_shipping_above: null };
 
     this.settingsSaving.set(true);
     this.fulSvc.update(payload).subscribe({

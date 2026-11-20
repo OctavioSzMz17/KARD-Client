@@ -37,7 +37,28 @@ $surface-alt: #faf6f0;
 
 .export-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+
+// 15F: la descarga es de Pro. La etiqueta abre el modal de mejora (dueño).
+.pro-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #c8914a;
+  background: rgba(242, 195, 139, 0.18);
+  color: #8a5a1f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+
+  &:is(button) { cursor: pointer; }
+  &:is(button):hover { background: rgba(242, 195, 139, 0.32); }
+  &:focus-visible { outline: 2px solid #c8914a; outline-offset: 2px; }
 }
 
 // ── Botones ───────────────────────────────────────────────

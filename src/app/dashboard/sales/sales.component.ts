@@ -7,6 +7,8 @@ import { BrandingService } from '../../core/services/branding.service';
 import { OrderStatus } from '../../core/services/order.service';
 import { Sale, SalesFilters, SalesReport, SalesService } from '../../core/services/sales.service';
 import { buildSalesReportHtml } from './sales-report';
+import { PlanStore } from '../../core/store/plan.store';
+import { UpgradeService } from '../../core/services/upgrade.service';
 
 /** Tamaño de página de la tabla en pantalla. */
 const PAGE_SIZE = 20;
@@ -39,6 +41,20 @@ interface StatusOption {
 export class SalesComponent implements OnInit {
   private salesService = inject(SalesService);
   private branding = inject(BrandingService);
+  protected readonly plan = inject(PlanStore);
+  private upgrades = inject(UpgradeService);
+
+  /**
+   * Descargar el reporte no está en su plan (Starter): los botones se ven con
+   * candado y la etiqueta "Pro" (15F). El reporte en pantalla se sigue viendo.
+   * El backend NO bloquea esto (la descarga se arma aquí), así que la pantalla
+   * es la que tiene que respetar `sales_export`.
+   */
+  readonly exportLocked = computed(() => !this.plan.salesExport());
+
+  upgradeForExport(): void {
+    this.upgrades.open('pro');
+  }
 
   // ── Estado ──────────────────────────────────────────────
   report = signal<SalesReport | null>(null);
@@ -239,6 +255,7 @@ export class SalesComponent implements OnInit {
   }
 
   async downloadCsv(): Promise<void> {
+    if (this.exportLocked()) return;
     this.exporting.set(true);
     const data = await this.fetchAllFiltered();
     this.exporting.set(false);
@@ -274,6 +291,7 @@ export class SalesComponent implements OnInit {
    * dependencia de generación de PDF al bundle.
    */
   async downloadPdf(): Promise<void> {
+    if (this.exportLocked()) return;
     this.exporting.set(true);
     const data = await this.fetchAllFiltered();
     this.exporting.set(false);

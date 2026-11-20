@@ -8,18 +8,30 @@
     </div>
 
     <div class="export-actions">
-      <button class="btn btn-ghost" (click)="downloadCsv()" [disabled]="exporting() || loading()">
+      <button class="btn btn-ghost" (click)="downloadCsv()" [disabled]="exporting() || loading() || exportLocked()"
+        [attr.title]="exportLocked() ? 'Disponible en el plan Pro' : null">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
         CSV
       </button>
-      <button class="btn btn-primary" (click)="downloadPdf()" [disabled]="exporting() || loading()">
+      <button class="btn btn-primary" (click)="downloadPdf()" [disabled]="exporting() || loading() || exportLocked()"
+        [attr.title]="exportLocked() ? 'Disponible en el plan Pro' : null">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
         </svg>
         {{ exporting() ? 'Generando…' : 'Reporte PDF' }}
       </button>
+      @if (exportLocked()) {
+        <!-- 15F: descargar es de Pro. El reporte en pantalla se sigue viendo. -->
+        @if (plan.isOwner()) {
+          <button type="button" class="pro-tag" (click)="upgradeForExport()" aria-label="Descargar el reporte: ver el plan Pro">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Pro
+          </button>
+        } @else {
+          <span class="pro-tag" title="Disponible en el plan Pro del negocio"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> Pro</span>
+        }
+      }
     </div>
   </header>
 

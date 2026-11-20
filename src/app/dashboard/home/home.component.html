@@ -216,10 +216,25 @@
 
         <div class="modo-list">
           @for (m of modosVisibles(); track m.key) {
-            <button type="button" class="modo" [class.modo-on]="f[m.key]"
+            @if (m.key === 'delivery' && deliveryLocked()) {
+              <!-- 15F: el envío es de Pro. Se ve (para saber que existe) pero no se enciende. -->
+              <div class="modo modo-locked" aria-disabled="true">
+                <span class="modo-check lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+                <span class="modo-texto">
+                  <span class="modo-titulo">{{ m.titulo }}</span>
+                  <span class="modo-detalle">Ofrece envíos con el plan Pro.</span>
+                </span>
+                @if (plan.isOwner()) {
+                  <button type="button" class="pro-tag" (click)="upgradeForDelivery()" aria-label="Envío a domicilio: ver el plan Pro">Pro</button>
+                } @else {
+                  <span class="pro-tag" title="Disponible en el plan Pro del negocio">Pro</span>
+                }
+              </div>
+            } @else {
+            <button type="button" class="modo" [class.modo-on]="modoOn(f, m.key)"
               (click)="toggleModo(m.key)" [disabled]="settingsSaving()">
-              <span class="modo-check" [class.on]="f[m.key]">
-                @if (f[m.key]) {
+              <span class="modo-check" [class.on]="modoOn(f, m.key)">
+                @if (modoOn(f, m.key)) {
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
@@ -230,6 +245,7 @@
                 <span class="modo-detalle">{{ m.detalle }}</span>
               </span>
             </button>
+            }
           }
         </div>
 
@@ -237,7 +253,7 @@
           <p class="set-warn">Activa al menos un modo: sin ninguno, el negocio no podría vender.</p>
         }
 
-        @if (f.delivery) {
+        @if (modoOn(f, 'delivery')) {
           <div class="envio-box">
             <h3>Cobro del envío</h3>
             <div class="envio-fields">
