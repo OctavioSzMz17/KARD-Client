@@ -1,23 +1,26 @@
 import { DatePipe, TitleCasePipe } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { BillingService, Plan, PlanInfo } from '../../core/services/billing.service';
+import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
+import { EMPTY, Subscription, catchError, switchMap, take, takeWhile, timer } from 'rxjs';
+import { BillingService, PlanInfo } from '../../core/services/billing.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
+import { PlanStore } from '../../core/store/plan.store';
 import { BRAND_NAME } from '../../shared/brand';
+import { CheckoutDialogComponent } from './checkout-dialog/checkout-dialog.component';
+import {
+  ACTIVATION_POLL_MS, ACTIVATION_POLL_TRIES, PLAN_CARDS, PlanButton, PlanCard, isCurrentPlan, planButton,
+} from './subscription-logic';
 
-/** Un plan tal como se presenta al negocio. */
-interface PlanCard {
-  key: Plan;
-  nombre: string;
-  precio: number;
-  resumen: string;
-  incluye: string[];
-  destacado?: boolean;
-}
+/**
+ * Al volver de Stripe: `waiting` mientras se pregunta si ya llegó el pago,
+ * `slow` si el aviso de Stripe aún no llega tras varios intentos.
+ */
+type Activation = 'waiting' | 'slow' | null;
 
 @Component({
   selector: 'app-subscription',
-  imports: [DatePipe, TitleCasePipe],
+  imports: [DatePipe, TitleCasePipe, CheckoutDialogComponent],
   templateUrl: './subscription.component.html',
   styleUrl: './subscription.component.scss',
 })
@@ -25,36 +28,20 @@ export class SubscriptionComponent implements OnInit {
   /** Nombre del producto en pantalla (ver shared/brand.ts). */
   readonly brand = BRAND_NAME;
   private billing = inject(BillingService);
+  private plan    = inject(PlanStore);
   private snack   = inject(SnackbarService);
   private route   = inject(ActivatedRoute);
+  private router  = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
-  info      = signal<PlanInfo | null>(null);
-  loading   = signal(true);
-  // Qué plan se está contratando; sirve para poner solo ese botón en espera.
-  enviando  = signal<Plan | null>(null);
+  info       = signal<PlanInfo | null>(null);
+  loading    = signal(true);
+  activation = signal<Activation>(null);
 
-  /**
-   * Los precios se repiten aquí solo para mostrarlos. El importe que de
-   * verdad se cobra es el del precio configurado en Stripe — si cambias uno
-   * allá, esto es solo texto y hay que actualizarlo a mano.
-   */
-  readonly planes: PlanCard[] = [
-    {
-      key: 'starter', nombre: 'Starter', precio: 299,
-      resumen: 'Para negocios que empiezan.',
-      incluye: ['Hasta 50 productos', 'Tienda pública con tu marca', 'Inventario y alertas de stock bajo', 'Punto de venta'],
-    },
-    {
-      key: 'pro', nombre: 'Pro', precio: 599, destacado: true,
-      resumen: 'Para quien ya vende todos los días.',
-      incluye: ['Productos ilimitados', 'Recetas con descuento en cascada', 'Reporte de ventas descargable', 'Envíos a domicilio', 'Varios usuarios'],
-    },
-    {
-      key: 'enterprise', nombre: 'Enterprise', precio: 1199,
-      resumen: 'Para cadenas con varias sucursales.',
-      incluye: ['Todo lo de Pro', 'Varias sucursales', 'Soporte prioritario', 'Acceso anticipado a nuevas funciones'],
-    },
-  ];
+  /** El plan cuyo flujo de primer pago (15A) está abierto. */
+  checkoutCard = signal<PlanCard | null>(null);
+
+  readonly planes = PLAN_CARDS;
 
   /** Texto legible del estado que manda Stripe. */
   readonly estadoLabel = computed(() => {
@@ -74,20 +61,28 @@ export class SubscriptionComponent implements OnInit {
 
   readonly planActual = computed(() => this.info()?.plan ?? null);
 
+  /** La mitad que ya tenía (un Starter cancelado que vuelve): se marca de entrada en el flujo. */
+  readonly lastChannel = computed(() => this.info()?.access?.channel ?? null);
+
   /**
    * `past_due` merece aviso pero no alarma: el periodo anterior está pagado
    * y Stripe sigue reintentando el cobro.
    */
   readonly avisoPago = computed(() => this.info()?.subscription_status === 'past_due');
 
-  ngOnInit(): void {
-    // Stripe devuelve al negocio con ?suscripcion=ok tras pagar. El estado
-    // real lo confirma el webhook, no este parámetro: la URL solo sirve para
-    // avisar, nunca para dar por buena una suscripción.
-    const r = this.route.snapshot.queryParamMap.get('suscripcion');
-    if (r === 'ok')        this.snack.success('Pago recibido. La suscripción se activa en unos segundos.');
-    if (r === 'cancelada') this.snack.info('Pago cancelado. No se te cobró nada.');
+  private polling?: Subscription;
 
+  ngOnInit(): void {
+    // Stripe devuelve al negocio con ?suscripcion=ok o =cancelada. El estado real lo confirma el
+    // webhook, no este parámetro: la URL solo dice que hay que esperar, nunca da por buena la suscripción.
+    const r = this.route.snapshot.queryParamMap.get('suscripcion');
+    if (r) this.clearReturnParam();
+
+    if (r === 'ok') {
+      this.activate();
+      return;
+    }
+    if (r === 'cancelada') this.snack.info('No se realizó ningún cobro.');
     this.cargar();
   }
 
@@ -102,21 +97,58 @@ export class SubscriptionComponent implements OnInit {
     });
   }
 
-  contratar(plan: Plan): void {
-    if (this.enviando()) return;
-    this.enviando.set(plan);
+  button(card: PlanCard): PlanButton {
+    return planButton(card, this.info());
+  }
 
-    this.billing.checkout(plan).subscribe({
-      next: res => { window.location.href = res.checkout_url; },   // se va a Stripe
-      error: err => {
-        this.enviando.set(null);
-        // 503 = el cobro no está configurado en este entorno; vale la pena
-        // distinguirlo de un error del negocio para no confundir a nadie.
-        const msg = err?.status === 503
-          ? (err?.error?.error ?? 'El cobro no está disponible todavía')
-          : (err?.error?.error ?? 'No se pudo iniciar el pago');
-        this.snack.error(msg);
+  isCurrent(card: PlanCard): boolean {
+    return isCurrentPlan(card, this.info());
+  }
+
+  /** El botón de una tarjeta. Sin suscripción abre el primer pago (15A). */
+  choose(card: PlanCard): void {
+    const b = this.button(card);
+    if (!b.disabled && b.action === 'checkout') this.checkoutCard.set(card);
+  }
+
+  /**
+   * "Activando tu plan…": el pago llega por webhook unos segundos después.
+   * Pregunta cada 2 s, hasta 5 veces, mientras no haya suscripción. Un
+   * intento que falla (red) cuenta como intento, y se sigue preguntando.
+   */
+  activate(): void {
+    this.polling?.unsubscribe();
+    this.activation.set('waiting');
+    this.loading.set(false);
+
+    let last: PlanInfo | null = null;
+    this.polling = timer(0, ACTIVATION_POLL_MS).pipe(
+      take(ACTIVATION_POLL_TRIES),
+      switchMap(() => this.billing.getPlan().pipe(catchError(() => EMPTY))),
+      takeWhile(info => !info.has_subscription, true),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: info => { last = info; this.info.set(info); },
+      complete: () => {
+        if (last?.has_subscription) this.activated(last);
+        else this.activation.set('slow');
       },
+    });
+  }
+
+  private activated(info: PlanInfo): void {
+    this.activation.set(null);
+    // El menú se redibuja ya con lo que trajo /billing/plan, y se confirma con /auth/me.
+    if (info.access) this.plan.apply(info.access);
+    this.plan.refresh().subscribe({ error: () => {} });
+    const nombre = PLAN_CARDS.find(c => c.key === info.plan)?.nombre ?? 'nuevo';
+    this.snack.success(`¡Listo! Tu plan ${nombre} está activo`);
+  }
+
+  /** Quita `?suscripcion=` de la dirección: al recargar no se vuelve a esperar ni a avisar. */
+  private clearReturnParam(): void {
+    this.router.navigate([], {
+      relativeTo: this.route, queryParams: { suscripcion: null }, queryParamsHandling: 'merge', replaceUrl: true,
     });
   }
 }

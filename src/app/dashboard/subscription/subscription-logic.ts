@@ -1,0 +1,89 @@
+/**
+ * Lógica pura de la pantalla de Suscripción (§14 y §15 de
+ * `docs/Planes_contrato_frontend.md`): qué dice y qué hace el botón de cada
+ * plan, y los textos de las mitades. No decide reglas: lee `PlanInfo`.
+ */
+import { Channel, Plan, PlanInfo } from '../../core/models/plan.models';
+
+/** Un plan tal como se presenta al negocio. */
+export interface PlanCard {
+  key: Plan;
+  nombre: string;
+  /**
+   * Solo texto: el importe que de verdad se cobra es el precio configurado en
+   * Stripe. Si cambias uno allá, actualiza este a mano.
+   */
+  precio: number;
+  resumen: string;
+  incluye: string[];
+  destacado?: boolean;
+}
+
+export const PLAN_CARDS: PlanCard[] = [
+  {
+    key: 'starter', nombre: 'Starter', precio: 299,
+    resumen: 'Para negocios que empiezan: elige punto de venta o tienda en línea.',
+    incluye: ['Una mitad: punto de venta o tienda en línea', 'Hasta 50 productos', 'Hasta 2 personas en el equipo', 'Inventario y alertas de stock bajo'],
+  },
+  {
+    key: 'pro', nombre: 'Pro', precio: 599, destacado: true,
+    resumen: 'Para quien ya vende todos los días.',
+    incluye: ['Punto de venta y tienda en línea', 'Productos y equipo sin límite', 'Envíos a domicilio', 'Reporte de ventas descargable', 'Recetas con descuento en cascada'],
+  },
+  {
+    key: 'enterprise', nombre: 'Enterprise', precio: 1199,
+    resumen: 'Para cadenas con varias sucursales.',
+    incluye: ['Todo lo de Pro', 'Varias sucursales', 'Soporte prioritario', 'Acceso anticipado a nuevas funciones'],
+  },
+];
+
+/** Las dos mitades de Starter, con el texto de la guía (§15A). */
+export const CHANNEL_OPTIONS: { key: Channel; nombre: string; detalle: string }[] = [
+  { key: 'pos', nombre: 'Punto de venta', detalle: 'Cobra en tu mostrador con caja, ticket y corte.' },
+  { key: 'store', nombre: 'Tienda en línea', detalle: 'Recibe pedidos en tu tienda y aparece en Explorar.' },
+];
+
+export function channelName(channel: Channel): string {
+  return CHANNEL_OPTIONS.find(c => c.key === channel)!.nombre;
+}
+
+const RANK: Record<Plan, number> = { starter: 1, pro: 2, enterprise: 3 };
+
+/**
+ * Qué hace el botón: `checkout` = primer pago (15A); `upgrade`/`downgrade` =
+ * cambio con prorrateo (15B/15C); `none` = es su plan.
+ */
+export type PlanButtonAction = 'checkout' | 'upgrade' | 'downgrade' | 'none';
+
+export interface PlanButton {
+  label: string;
+  action: PlanButtonAction;
+  disabled: boolean;
+}
+
+/**
+ * El botón de una tarjeta según `has_subscription` (§14 C). Sin suscripción
+ * vigente siempre es "Elegir", incluso si antes tuvo ese plan y lo canceló:
+ * para volver hace un pago nuevo.
+ */
+export function planButton(card: PlanCard, info: PlanInfo | null): PlanButton {
+  if (!info?.has_subscription) return { label: 'Elegir', action: 'checkout', disabled: false };
+
+  if (info.plan === card.key) return { label: 'Tu plan', action: 'none', disabled: true };
+
+  // Subir y bajar con prorrateo son los flujos 15B y 15C: hasta que existan,
+  // el botón se ve pero no se puede usar (checkout cobraría dos veces).
+  const up = !info.plan || RANK[card.key] > RANK[info.plan];
+  return up
+    ? { label: `Subir a ${card.nombre}`, action: 'upgrade', disabled: true }
+    : { label: `Cambiar a ${card.nombre}`, action: 'downgrade', disabled: true };
+}
+
+/** La tarjeta del plan vigente (solo con suscripción: en la prueba o vencido no hay "Tu plan"). */
+export function isCurrentPlan(card: PlanCard, info: PlanInfo | null): boolean {
+  return !!info?.has_subscription && info.plan === card.key;
+}
+
+/** Cada cuánto y cuántas veces se pregunta si ya llegó el pago (§15A paso 5). */
+export const ACTIVATION_POLL_MS = 2000;
+export const ACTIVATION_POLL_TRIES = 5;

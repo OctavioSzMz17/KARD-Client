@@ -1,6 +1,19 @@
 <div class="sub-page">
 
-  @if (loading()) {
+  @if (activation() === 'waiting') {
+    <!-- Volvió de Stripe: el plan se activa por webhook unos segundos después. -->
+    <div class="sub-loading activando" role="status">
+      <div class="spinner-lg"></div>
+      <p class="activando-titulo">Activando tu plan…</p>
+      <p>Estamos confirmando tu pago con Stripe. Tarda unos segundos.</p>
+    </div>
+  } @else if (activation() === 'slow') {
+    <div class="sub-loading activando" role="status">
+      <p class="activando-titulo">Tu pago se está procesando</p>
+      <p>Puede tardar un minuto. No vuelvas a pagar: en cuanto Stripe lo confirme, tu plan se activa solo.</p>
+      <button type="button" class="activando-btn" (click)="activate()">Actualizar</button>
+    </div>
+  } @else if (loading()) {
     <div class="sub-loading"><div class="spinner-lg"></div><p>Cargando tu suscripción…</p></div>
   } @else {
 
@@ -34,11 +47,12 @@
     <!-- Planes -->
     <div class="planes">
       @for (p of planes; track p.key; let i = $index) {
-        <div class="plan" [style.--i]="i" [class.plan-destacado]="p.destacado" [class.plan-actual]="planActual() === p.key">
-          @if (p.destacado && planActual() !== p.key) {
+        @let b = button(p);
+        <div class="plan" [style.--i]="i" [class.plan-destacado]="p.destacado" [class.plan-actual]="isCurrent(p)">
+          @if (p.destacado && !isCurrent(p)) {
             <span class="plan-tag">Más elegido</span>
           }
-          @if (planActual() === p.key) {
+          @if (isCurrent(p)) {
             <span class="plan-tag plan-tag-actual">Tu plan</span>
           }
 
@@ -62,18 +76,9 @@
             }
           </ul>
 
-          <button class="plan-btn" [class.plan-btn-ghost]="!p.destacado"
-            (click)="contratar(p.key)"
-            [disabled]="enviando() !== null || planActual() === p.key">
-            @if (enviando() === p.key) {
-              Redirigiendo…
-            } @else if (planActual() === p.key) {
-              Plan activo
-            } @else if (planActual()) {
-              Cambiar a {{ p.nombre }}
-            } @else {
-              Contratar {{ p.nombre }}
-            }
+          <button type="button" class="plan-btn" [class.plan-btn-ghost]="!p.destacado"
+            (click)="choose(p)" [disabled]="b.disabled">
+            {{ b.label }}
           </button>
         </div>
       }
@@ -84,3 +89,7 @@
     </p>
   }
 </div>
+
+@if (checkoutCard(); as card) {
+  <app-checkout-dialog [card]="card" [initialChannel]="lastChannel()" (closed)="checkoutCard.set(null)" />
+}

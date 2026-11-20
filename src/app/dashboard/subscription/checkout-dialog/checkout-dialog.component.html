@@ -1,0 +1,55 @@
+<div class="scrim" (click)="close()" aria-hidden="true"></div>
+<section class="dialog" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+
+  @if (step() === 'channel') {
+    <h2 id="checkout-title" #heading tabindex="-1">¿Qué mitad quieres?</h2>
+    <p class="lead">Starter incluye una de las dos. Tu catálogo y tu inventario son los mismos en ambas.</p>
+
+    <div class="mitades" role="radiogroup" aria-labelledby="checkout-title">
+      @for (c of channels; track c.key) {
+        <button type="button" class="mitad" role="radio"
+          [class.selected]="channel() === c.key" [attr.aria-checked]="channel() === c.key"
+          (click)="pick(c.key)">
+          <span class="mitad-icon" aria-hidden="true">
+            @if (c.key === 'pos') {
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/>
+              </svg>
+            } @else {
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v7h14v-7"/>
+              </svg>
+            }
+          </span>
+          <strong>{{ c.nombre }}</strong>
+          <span class="mitad-detalle">{{ c.detalle }}</span>
+        </button>
+      }
+    </div>
+
+    <p class="nota">Puedes cambiarla una vez al mes. Lo de la otra mitad se guarda, no se borra.</p>
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="close()">Cancelar</button>
+      <button type="button" class="primary" (click)="next()" [disabled]="!channel()">Continuar</button>
+    </div>
+  } @else {
+    <h2 id="checkout-title" #heading tabindex="-1">Resumen</h2>
+
+    <div class="resumen">
+      <span class="resumen-plan">{{ summaryName() }}</span>
+      <span class="resumen-precio"><strong>${{ card().precio }}</strong> al mes</span>
+    </div>
+
+    <p class="nota">El pago se hace en Stripe. Al terminar vuelves aquí y tu plan se activa en unos segundos.</p>
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="back()" [disabled]="sending()">
+        {{ needsChannel() ? 'Atrás' : 'Cancelar' }}
+      </button>
+      <button type="button" class="primary" (click)="pay()" [disabled]="sending()">
+        {{ sending() ? 'Redirigiendo…' : 'Ir a pagar' }}
+      </button>
+    </div>
+  }
+</section>

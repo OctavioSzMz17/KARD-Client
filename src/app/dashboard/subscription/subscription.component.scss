@@ -24,6 +24,22 @@
 
 .spinner-lg { @include spinner(38px); }
 
+// "Activando tu plan…" al volver de Stripe.
+.activando {
+  @include glass;
+  max-width: 520px;
+  margin: 40px auto 0;
+  padding: 44px 32px;
+  border-radius: 26px;
+  text-align: center;
+
+  p { max-width: 380px; line-height: 1.55; }
+}
+
+.activando-titulo { color: $text; font-size: 19px; font-weight: 700; }
+
+.activando-btn { @include action; margin-top: 6px; padding: 12px 22px; }
+
 // ── Estado actual ─────────────────────────────────────────
 .estado-card {
   @include glass;
