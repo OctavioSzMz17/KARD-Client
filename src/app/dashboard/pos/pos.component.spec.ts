@@ -20,6 +20,7 @@ import { ProductStore } from '../../core/store/product.store';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { POLL_MS } from '../../core/ticket-sync-logic';
 import { environment } from '../../../environments/environment';
+import { DEV_PLAN_PRESETS } from '../../core/plan-logic';
 
 function sesion(position: string, role = 'staff') {
   return {
@@ -71,6 +72,22 @@ describe('PC-13 · Entrar a Cobrar sin esperar autorización', () => {
       expect((fixture.nativeElement as HTMLElement).textContent).not.toMatch(/equipo no es una caja/i);
     },
   );
+
+  it('en solo lectura, en lugar de la caja se ve el candado (§13)', () => {
+    TestBed.inject(AuthService).profile.set({ ...sesion('empleado'), plan: DEV_PLAN_PRESETS['vencido'](Date.now()) } as any);
+    const fixture = TestBed.createComponent(PosComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('app-read-only-lock')?.textContent).toContain('Tu cuenta está en solo lectura');
+    expect(el.querySelector('.pos-page')).toBeNull();
+  });
+
+  it('con la cuenta al día, la caja normal', () => {
+    const { fixture } = abrir('empleado');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('app-read-only-lock')).toBeNull();
+    expect(el.querySelector('.pos-page')).not.toBeNull();
+  });
 
   it('la ruta de Cobrar solo exige el permiso, no un equipo autorizado', () => {
     const dashboard = routes.find(r => r.path === 'dashboard')!;

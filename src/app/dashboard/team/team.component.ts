@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { WriteActionDirective } from '../../core/directives/write-action.directive';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
@@ -23,7 +24,7 @@ type Dialog =
  */
 @Component({
   selector: 'app-team',
-  imports: [DatePipe],
+  imports: [DatePipe, WriteActionDirective],
   templateUrl: './team.component.html',
   styleUrl: './team.component.scss',
 })

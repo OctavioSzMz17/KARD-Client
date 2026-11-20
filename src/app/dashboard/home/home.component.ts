@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, computed, signal } from '@angular/core';
+import { WriteActionDirective } from '../../core/directives/write-action.directive';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { Fulfillment, FulfillmentService } from '../../core/services/fulfillment.service';
@@ -21,7 +22,7 @@ interface ModoEntrega {
 
 @Component({
   selector: 'app-home',
-  imports: [FormsModule],
+  imports: [FormsModule, WriteActionDirective],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })

@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { WriteActionDirective } from '../../core/directives/write-action.directive';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { ChallengeInfo, DeviceService } from '../../core/services/device.service';
@@ -24,7 +25,7 @@ import { BRAND_NAME } from '../../shared/brand';
  */
 @Component({
   selector: 'app-scan-access',
-  imports: [ScannerComponent],
+  imports: [ScannerComponent, WriteActionDirective],
   templateUrl: './scan-access.component.html',
   styleUrl: './scan-access.component.scss',
 })

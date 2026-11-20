@@ -18,6 +18,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+// ── Solo lectura ───────────────────────────────────────────
+// Una acción que modifica datos con la cuenta vencida (directiva `appWrite`):
+// se ve apagada aunque su botón no tenga estilo de deshabilitado propio.
+.write-locked {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
 // ── Impresión de tickets, cortes de caja y etiquetas ───────
 // `printSheet()` (dashboard/pos/print.ts) copia la hoja `.print-sheet` a
 // #print-root; al imprimir solo queda esa capa, sin menú ni pantalla.

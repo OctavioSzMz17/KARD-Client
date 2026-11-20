@@ -157,11 +157,11 @@
                   }
                 </td>
                 <td>
-                  <select
+                  <select appWrite
                     class="status-select"
                     [class]="'badge-' + sale.status"
                     [value]="sale.status"
-                    [disabled]="savingStatusFor() === sale.order_id"
+                    [appWriteDisabled]="savingStatusFor() === sale.order_id"
                     (change)="changeStatus(sale, $event)"
                     [attr.aria-label]="'Estado del pedido ' + sale.order_id">
                     @for (opt of assignableStatuses(); track opt.value) {

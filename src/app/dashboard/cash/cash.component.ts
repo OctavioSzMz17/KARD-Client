@@ -1,6 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { ReadOnlyLockComponent } from '../read-only-lock/read-only-lock.component';
+import { PlanStore } from '../../core/store/plan.store';
 import { CashService, CashSession } from '../../core/services/cash.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { centsToApi, formatCents, formatMoney, toCents } from '../pos/pos-math';
@@ -15,12 +17,14 @@ const PAGE_SIZE = 10;
  */
 @Component({
   selector: 'app-cash',
-  imports: [DatePipe, RouterLink, CutSheetComponent],
+  imports: [DatePipe, RouterLink, CutSheetComponent, ReadOnlyLockComponent],
   templateUrl: './cash.component.html',
   styleUrl: './cash.component.scss',
 })
 export class CashComponent implements OnInit {
   private cashSvc = inject(CashService);
+  /** En solo lectura la caja se cambia por una pantalla de candado (§13). */
+  protected readonly plan = inject(PlanStore);
   private snack = inject(SnackbarService);
 
   readonly money = formatMoney;

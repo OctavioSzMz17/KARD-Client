@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { WriteActionDirective } from '../../core/directives/write-action.directive';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService, UserSession } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
@@ -9,7 +10,7 @@ type FilterKey = 'all' | 'in-stock' | 'low-stock' | 'out-of-stock';
 
 @Component({
   selector: 'app-inventory',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, WriteActionDirective],
   templateUrl: './inventory.component.html',
   styleUrl:    './inventory.component.scss'
 })

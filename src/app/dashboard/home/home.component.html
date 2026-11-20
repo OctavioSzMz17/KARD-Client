@@ -271,8 +271,8 @@
 
     <div class="set-footer">
       <button class="btn-outline" (click)="closeSettings()" [disabled]="settingsSaving()">Cancelar</button>
-      <button class="btn-primary-set" (click)="saveSettings()"
-        [disabled]="settingsSaving() || settingsLoading() || !algunModoActivo()">
+      <button appWrite class="btn-primary-set" (click)="saveSettings()"
+        [appWriteDisabled]="settingsSaving() || settingsLoading() || !algunModoActivo()">
         {{ settingsSaving() ? 'Guardando…' : 'Guardar' }}
       </button>
     </div>

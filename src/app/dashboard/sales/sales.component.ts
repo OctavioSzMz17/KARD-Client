@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { WriteActionDirective } from '../../core/directives/write-action.directive';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
@@ -31,7 +32,7 @@ interface StatusOption {
 
 @Component({
   selector: 'app-sales',
-  imports: [FormsModule, DecimalPipe],
+  imports: [FormsModule, DecimalPipe, WriteActionDirective],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.scss',
 })

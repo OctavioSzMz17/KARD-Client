@@ -86,18 +86,18 @@
                   @if (confirming() === sale.order_id) {
                     <div class="confirm">
                       <span>¿Cancelar este pedido? Los insumos vuelven al inventario y ya no se puede reabrir.</span>
-                      <button type="button" class="danger-btn" (click)="cancel(sale)">Sí, cancelar</button>
+                      <button appWrite type="button" class="danger-btn" (click)="cancel(sale)">Sí, cancelar</button>
                       <button type="button" class="link-btn" (click)="keep()">No</button>
                     </div>
                   } @else {
                     <div class="actions">
                       @if (step(sale); as paso) {
-                        <button type="button" class="primary-btn" [disabled]="busy() !== null" (click)="advance(sale)">{{ paso.label }}</button>
+                        <button appWrite type="button" class="primary-btn" [appWriteDisabled]="busy() !== null" (click)="advance(sale)">{{ paso.label }}</button>
                       }
                       @if (needsPayment(sale)) {
-                        <button type="button" class="ghost-btn small" [disabled]="busy() !== null" (click)="markPaid(sale)">Marcar pagado</button>
+                        <button appWrite type="button" class="ghost-btn small" [appWriteDisabled]="busy() !== null" (click)="markPaid(sale)">Marcar pagado</button>
                       }
-                      <button type="button" class="link-btn muted" [disabled]="busy() !== null" (click)="askCancel(sale)">Cancelar</button>
+                      <button appWrite type="button" class="link-btn muted" [appWriteDisabled]="busy() !== null" (click)="askCancel(sale)">Cancelar</button>
                     </div>
                   }
                 }
@@ -127,7 +127,7 @@
                 <span class="tag done">Entregada</span>
                 <span class="total">{{ money(sale.total) }}</span>
                 @if (canManage()) {
-                  <button type="button" class="link-btn" [disabled]="busy() !== null" (click)="reopen(sale)">Reabrir</button>
+                  <button appWrite type="button" class="link-btn" [appWriteDisabled]="busy() !== null" (click)="reopen(sale)">Reabrir</button>
                 }
               </li>
             }

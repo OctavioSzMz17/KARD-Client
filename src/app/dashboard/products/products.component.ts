@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { WriteActionDirective } from '../../core/directives/write-action.directive';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, concatMap, map } from 'rxjs/operators';
@@ -56,7 +57,7 @@ interface BulkRow {
 
 @Component({
   selector: 'app-products',
-  imports: [ReactiveFormsModule, FormsModule, LabelSheetComponent],
+  imports: [ReactiveFormsModule, FormsModule, LabelSheetComponent, WriteActionDirective],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })

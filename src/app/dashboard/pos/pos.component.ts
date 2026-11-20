@@ -1,5 +1,7 @@
 import { Component, ElementRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ReadOnlyLockComponent } from '../read-only-lock/read-only-lock.component';
+import { PlanStore } from '../../core/store/plan.store';
 import { AuthService } from '../../core/services/auth.service';
 import { PERM } from '../../core/permissions';
 import { CashService, CashSession } from '../../core/services/cash.service';
@@ -44,7 +46,7 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
  */
 @Component({
   selector: 'app-pos',
-  imports: [RouterLink, ReceiptComponent, ScannerComponent],
+  imports: [RouterLink, ReceiptComponent, ScannerComponent, ReadOnlyLockComponent],
   templateUrl: './pos.component.html',
   styleUrl: './pos.component.scss',
   // Una por pantalla de cobro: se detiene sola al salir.
@@ -52,6 +54,8 @@ const PAYMENT_OPTIONS: { value: PaymentMethod; label: string }[] = [
 })
 export class PosComponent implements OnInit {
   private store = inject(ProductStore);
+  /** En solo lectura la caja se cambia por una pantalla de candado (§13). */
+  protected readonly plan = inject(PlanStore);
   private cashSvc = inject(CashService);
   private sales = inject(SalesService);
   private snack = inject(SnackbarService);

@@ -1,0 +1,15 @@
+<section class="lock" role="status" aria-labelledby="lock-title">
+  <span class="lock-icon" aria-hidden="true">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+    </svg>
+  </span>
+  <h2 id="lock-title">Tu cuenta está en solo lectura</h2>
+
+  @if (plan.isOwner()) {
+    <p>Puedes consultar tus datos, pero para {{ action() }} necesitas un plan. Nada se borró: al elegirlo vuelve todo.</p>
+    <a class="lock-btn" routerLink="/dashboard/suscripcion">Elegir plan</a>
+  } @else {
+    <p>Por ahora no se puede {{ action() }}. Avísale al dueño para que elija un plan.</p>
+  }
+</section>

@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { WriteActionDirective } from '../../core/directives/write-action.directive';
 import { AuthService } from '../../core/services/auth.service';
 import { OrdersBoardService } from '../../core/services/orders-board.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
@@ -17,6 +18,7 @@ import {
  */
 @Component({
   selector: 'app-orders',
+  imports: [WriteActionDirective],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.scss',
 })

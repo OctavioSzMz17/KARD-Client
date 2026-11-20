@@ -5,7 +5,7 @@
       @if (!loading()) { <strong>{{ members().length }}</strong> persona(s) · {{ activeCount() }} activa(s) }
     </p>
     @if (assignable().length) {
-      <button type="button" class="btn-primary" (click)="openAdd()">
+      <button appWrite type="button" class="btn-primary" (click)="openAdd()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Agregar persona
       </button>
@@ -41,11 +41,11 @@
           @if (m.can_manage) {
             <div class="actions">
               <button type="button" class="link" (click)="openEdit(m)">Editar</button>
-              <button type="button" class="link" (click)="openPassword(m)">Contraseña</button>
+              <button appWrite type="button" class="link" (click)="openPassword(m)">Contraseña</button>
               @if (m.is_active) {
-                <button type="button" class="link danger" (click)="openDeactivate(m)">Dar de baja</button>
+                <button appWrite type="button" class="link danger" (click)="openDeactivate(m)">Dar de baja</button>
               } @else {
-                <button type="button" class="link" (click)="reactivate(m)">Reactivar</button>
+                <button appWrite type="button" class="link" (click)="reactivate(m)">Reactivar</button>
               }
             </div>
           }
@@ -82,7 +82,7 @@
                   @if (d.last_seen_at) { · visto {{ d.last_seen_at | date: 'HH:mm' }} }
                 </span>
               </div>
-              <button type="button" class="link danger" (click)="revokeDevice(d)">Desautorizar</button>
+              <button appWrite type="button" class="link danger" (click)="revokeDevice(d)">Desautorizar</button>
             </li>
           }
         </ul>
@@ -162,10 +162,10 @@
       <div class="dialog-actions">
         <button type="button" class="btn-ghost" [disabled]="saving()" (click)="closeDialog()">Cancelar</button>
         @switch (d.kind) {
-          @case ('add')        { <button type="button" class="btn-primary" [disabled]="saving()" (click)="submitAdd()">{{ saving() ? 'Registrando…' : 'Registrar' }}</button> }
-          @case ('edit')       { <button type="button" class="btn-primary" [disabled]="saving()" (click)="submitEdit()">{{ saving() ? 'Guardando…' : 'Guardar' }}</button> }
-          @case ('password')   { <button type="button" class="btn-primary" [disabled]="saving()" (click)="submitPassword()">{{ saving() ? 'Guardando…' : 'Cambiar contraseña' }}</button> }
-          @case ('deactivate') { <button type="button" class="btn-danger" [disabled]="saving()" (click)="confirmToggleActive()">{{ saving() ? 'Guardando…' : (d.member.is_active ? 'Dar de baja' : 'Reactivar') }}</button> }
+          @case ('add')        { <button appWrite type="button" class="btn-primary" [appWriteDisabled]="saving()" (click)="submitAdd()">{{ saving() ? 'Registrando…' : 'Registrar' }}</button> }
+          @case ('edit')       { <button appWrite type="button" class="btn-primary" [appWriteDisabled]="saving()" (click)="submitEdit()">{{ saving() ? 'Guardando…' : 'Guardar' }}</button> }
+          @case ('password')   { <button appWrite type="button" class="btn-primary" [appWriteDisabled]="saving()" (click)="submitPassword()">{{ saving() ? 'Guardando…' : 'Cambiar contraseña' }}</button> }
+          @case ('deactivate') { <button appWrite type="button" class="btn-danger" [appWriteDisabled]="saving()" (click)="confirmToggleActive()">{{ saving() ? 'Guardando…' : (d.member.is_active ? 'Dar de baja' : 'Reactivar') }}</button> }
         }
       </div>
     </div>

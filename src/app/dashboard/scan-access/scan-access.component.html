@@ -43,7 +43,7 @@
 
           <div class="actions">
             <button type="button" class="btn-ghost" [disabled]="busy()" (click)="cancel()">Cancelar</button>
-            <button type="button" class="btn-primary" [disabled]="busy()" (click)="approve()">{{ busy() ? 'Autorizando…' : 'Autorizar equipo' }}</button>
+            <button appWrite type="button" class="btn-primary" [appWriteDisabled]="busy()" (click)="approve()">{{ busy() ? 'Autorizando…' : 'Autorizar equipo' }}</button>
           </div>
         }
       } @else {
@@ -55,7 +55,7 @@
 
         <div class="actions">
           <button type="button" class="btn-ghost" [disabled]="busy()" (click)="cancel()">Cancelar</button>
-          <button type="button" class="btn-primary" [disabled]="busy()" (click)="approve()">{{ busy() ? 'Entrando…' : 'Entrar en esta caja' }}</button>
+          <button appWrite type="button" class="btn-primary" [appWriteDisabled]="busy()" (click)="approve()">{{ busy() ? 'Entrando…' : 'Entrar en esta caja' }}</button>
         </div>
       }
     </section>

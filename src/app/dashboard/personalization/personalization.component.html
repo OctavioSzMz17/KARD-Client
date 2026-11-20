@@ -18,7 +18,7 @@
       @if (dirty()) {
         <button class="btn-ghost" (click)="discard()" [disabled]="saving()">Descartar</button>
       }
-      <button class="btn-save" (click)="save()" [disabled]="saving() || !dirty()">
+      <button appWrite class="btn-save" (click)="save()" [appWriteDisabled]="saving() || !dirty()">
         {{ saving() ? 'Guardando...' : 'Guardar' }}
       </button>
     </div>

@@ -1,0 +1,41 @@
+@use '../dark' as *;
+
+.lock {
+  @include glass;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 520px;
+  margin: 48px auto 0;
+  padding: 44px 32px;
+  border-radius: 28px;
+  color: $text;
+  text-align: center;
+  animation: aparece 0.45s ease backwards;
+
+  h2 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+
+  p { max-width: 380px; color: $text-soft; font-size: 14px; line-height: 1.55; }
+
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+}
+
+.lock-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: rgba(242, 195, 139, 0.12);
+  border: 1px solid rgba(242, 195, 139, 0.35);
+  color: $accent;
+}
+
+.lock-btn {
+  @include action;
+  margin-top: 8px;
+  padding: 12px 22px;
+  text-decoration: none;
+}

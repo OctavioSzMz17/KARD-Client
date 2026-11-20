@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { WriteActionDirective } from '../../core/directives/write-action.directive';
 import { AuthService, UserSession } from '../../core/services/auth.service';
 import { SnackbarService } from '../../core/services/snackbar.service';
 import { Branding, BrandingService } from '../../core/services/branding.service';
@@ -13,7 +14,7 @@ interface Preset { label: string; primary: string; accent: string; }
 
 @Component({
   selector: 'app-personalization',
-  imports: [],
+  imports: [WriteActionDirective],
   templateUrl: './personalization.component.html',
   styleUrl: './personalization.component.scss'
 })
